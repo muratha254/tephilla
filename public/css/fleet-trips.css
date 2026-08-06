@@ -1,0 +1,1761 @@
+.fleet-trip-booking-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 16px;
+    align-items: start;
+}
+
+.fleet-trip-booking-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fleet-trip-section {
+    background: #fff;
+    border: 1px solid #e3e8ef;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+.fleet-trip-section-blue {
+    border-top: 3px solid #3c8dbc;
+}
+
+.fleet-trip-section-green {
+    border-top: 3px solid #00a65a;
+}
+
+.fleet-trip-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eef2f6;
+    background: #fbfcfd;
+}
+
+.fleet-trip-section-head .fa {
+    color: #3c8dbc;
+    font-size: 18px;
+}
+
+.fleet-trip-section-green .fleet-trip-section-head .fa {
+    color: #00a65a;
+}
+
+.fleet-trip-section-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-trip-section-body {
+    padding: 18px;
+}
+
+.fleet-trip-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.fleet-trip-row-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fleet-trip-row:last-child,
+.fleet-trip-field:last-child {
+    margin-bottom: 0;
+}
+
+.fleet-trip-field {
+    margin-bottom: 16px;
+}
+
+.fleet-trip-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+}
+
+.fleet-trip-field .required {
+    color: #dd4b39;
+}
+
+.fleet-trip-input {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #444;
+    background: #fff;
+}
+
+.fleet-trip-input:focus {
+    outline: none;
+    border-color: #3c8dbc;
+    box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);
+}
+
+.fleet-trip-location-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.fleet-trip-location-wrap:focus-within {
+    border-color: #3c8dbc;
+    box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);
+}
+
+.fleet-trip-location-icon {
+    width: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f6f9;
+    border-right: 1px solid #e3e8ef;
+}
+
+.fleet-trip-location-wrap.pickup .fleet-trip-location-icon {
+    color: #00a65a;
+}
+
+.fleet-trip-location-wrap.drop .fleet-trip-location-icon {
+    color: #dd4b39;
+}
+
+.fleet-trip-field-full {
+    grid-column: 1 / -1;
+}
+
+.fleet-trip-date-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+    min-width: 0;
+}
+
+.fleet-trip-date-wrap:focus-within {
+    border-color: #3c8dbc;
+    box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);
+}
+
+.fleet-trip-date-icon {
+    width: 42px;
+    min-width: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f6f9;
+    border: none;
+    border-right: 1px solid #e3e8ef;
+    color: #3c8dbc;
+    cursor: pointer;
+    padding: 0;
+}
+
+.fleet-trip-date-icon:hover {
+    background: #e8f4fa;
+}
+
+.fleet-trip-date-wrap .fleet-trip-input {
+    border: none;
+    box-shadow: none;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    background: #fff;
+}
+
+.fleet-date-input::placeholder {
+    color: #9aa8b8;
+}
+
+.datepicker {
+    z-index: 1060 !important;
+}
+
+.datepicker table tr td.active,
+.datepicker table tr td.active:hover,
+.datepicker table tr td.active.disabled,
+.datepicker table tr td.active.disabled:hover {
+    background: #3c8dbc !important;
+    background-image: none;
+}
+
+.fleet-trip-container-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2e3d4f;
+    cursor: pointer;
+    user-select: none;
+}
+
+.fleet-trip-container-fields {
+    display: none;
+}
+
+.fleet-trip-container-fields.is-visible {
+    display: block;
+}
+
+.fleet-trip-stops-container-row {
+    align-items: start;
+}
+
+.fleet-trip-stops-container-row > .fleet-trip-field {
+    margin-bottom: 0;
+}
+
+.fleet-trip-stops-container-row .fleet-trip-container-fields .fleet-trip-field:last-of-type {
+    margin-bottom: 0;
+}
+
+.fleet-trip-deposit-section {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px dashed #d7dee8;
+}
+
+.fleet-trip-deposit-head label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 4px;
+}
+
+.fleet-trip-deposit-head .fleet-trip-field-help {
+    margin-bottom: 12px;
+}
+
+.fleet-trip-field-help {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+.fleet-trip-location-input:focus {
+    box-shadow: none;
+}
+
+.fleet-trip-stop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.fleet-trip-stop-add {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 4px;
+    background: #00a65a;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.fleet-trip-stop-add:hover {
+    background: #008d4c;
+}
+
+.fleet-trip-stop-remove {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #dd4b39;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.fleet-billing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.fleet-billing-option {
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #444;
+    padding: 10px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.fleet-billing-option.active {
+    border-color: #00a65a;
+    background: #edfbf3;
+    color: #008d4c;
+    box-shadow: inset 0 0 0 1px #00a65a;
+}
+
+.fleet-trip-amount-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fleet-trip-currency {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    padding: 0 8px;
+    background: #f4f6f9;
+    border-right: 1px solid #e3e8ef;
+    color: #6b7c93;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.fleet-trip-amount-input {
+    border: none;
+    box-shadow: none;
+}
+
+.fleet-trip-coupon-wrap {
+    display: flex;
+    gap: 8px;
+}
+
+.fleet-trip-coupon-wrap .fleet-trip-input {
+    flex: 1;
+}
+
+.fleet-trip-apply-btn {
+    min-width: 72px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #f4f6f9;
+    color: #444;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fleet-trip-apply-btn:hover {
+    background: #eef2f6;
+}
+
+.fleet-trip-book-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-btn-save-trip {
+    width: 100%;
+    justify-content: center;
+    background: #00a65a;
+    color: #fff;
+    border: none;
+    padding: 11px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.fleet-btn-save-trip:hover {
+    background: #008d4c;
+    color: #fff;
+}
+
+.fleet-menu-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #f39c12;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.fleet-empty-row {
+    text-align: center;
+    color: #6b7c93;
+    padding: 32px 14px !important;
+}
+
+.fleet-trip-status-pills .fleet-pill {
+    text-decoration: none;
+    display: inline-block;
+}
+
+.fleet-pill-cyan {
+    background: #00c0ef;
+    color: #fff;
+}
+
+.fleet-pill-yellow {
+    background: #f39c12;
+    color: #fff;
+}
+
+.fleet-trip-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-trip-list-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fleet-trip-list-table td {
+    padding: 14px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: top;
+}
+
+.fleet-trip-list-table tbody tr:hover {
+    background: #fbfcfd;
+}
+
+.fleet-trip-amount-col {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.fleet-trip-list-table th.fleet-trip-amount-col {
+    text-align: right;
+}
+
+.fleet-trip-list-amount {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-trip-list-amount.paid {
+    color: #00a65a;
+}
+
+.fleet-trip-list-amount.balance-due {
+    color: #dd4b39;
+}
+
+.fleet-trip-list-amount.balance-clear {
+    color: #6b7c93;
+}
+
+.fleet-trip-code {
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 6px;
+}
+
+.fleet-trip-datetime {
+    color: #6b7c93;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.fleet-trip-datetime .fa {
+    color: #3c8dbc;
+    margin-right: 4px;
+}
+
+.fleet-trip-customer,
+.fleet-trip-phone {
+    color: #444;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.fleet-trip-customer .fa,
+.fleet-trip-phone .fa {
+    color: #9aa5b1;
+    margin-right: 4px;
+    width: 14px;
+}
+
+.fleet-trip-route-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #444;
+    margin-bottom: 4px;
+}
+
+.fleet-route-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+
+.fleet-trip-route-line.pickup .fleet-route-dot {
+    background: #00a65a;
+}
+
+.fleet-trip-route-line.drop .fleet-route-dot {
+    background: #dd4b39;
+}
+
+.fleet-trip-muted {
+    color: #8a97a8;
+    font-style: italic;
+}
+
+.fleet-trip-return-badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: #e8f4fc;
+    color: #3c8dbc;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.fleet-trip-status-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.fleet-trip-status-booked,
+.fleet-trip-status-pending {
+    background: #6b7c93;
+    color: #fff;
+}
+
+.fleet-trip-status-ongoing {
+    background: #3c8dbc;
+    color: #fff;
+}
+
+.fleet-trip-status-completed {
+    background: #00a65a;
+    color: #fff;
+}
+
+.fleet-trip-status-cancelled {
+    background: #dd4b39;
+    color: #fff;
+}
+
+.fleet-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.fleet-detail-item {
+    padding: 12px 14px;
+    border: 1px solid #eef2f6;
+    border-radius: 4px;
+    background: #fbfcfd;
+}
+
+.fleet-detail-item span {
+    display: block;
+    font-size: 12px;
+    color: #8a97a8;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.fleet-detail-item strong {
+    display: block;
+    font-size: 14px;
+    color: #2e3d4f;
+}
+
+.fleet-delete-form {
+    display: inline;
+}
+
+.fleet-action-btn.payment {
+    background: #00a65a;
+}
+
+.fleet-action-btn.payment:hover {
+    background: #008d4c;
+}
+
+.fleet-trip-payment-modal {
+    max-width: 520px;
+    width: calc(100% - 32px);
+}
+
+.fleet-trip-payment-trip-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.fleet-trip-payment-trip-meta span {
+    display: block;
+    font-size: 11px;
+    color: #6b7c93;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.fleet-trip-payment-trip-meta strong {
+    font-size: 13px;
+    color: #2e3d4f;
+}
+
+.fleet-payments-trip-balance {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e8edf3;
+    border-radius: 4px;
+}
+
+.fleet-payments-trip-balance span {
+    display: block;
+    font-size: 11px;
+    color: #6b7c93;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.fleet-payments-trip-balance strong {
+    font-size: 13px;
+    color: #2e3d4f;
+}
+
+.fleet-payments-trip-balance .is-paid {
+    color: #00a65a;
+}
+
+.fleet-payments-trip-balance .is-outstanding {
+    color: #dd4b39;
+}
+
+button.fleet-trip-record-payment-link {
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+
+.fleet-trip-payment-modal .fleet-trip-field {
+    margin-bottom: 12px;
+}
+
+.fleet-trip-payment-modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, .06);
+}
+
+.fleet-trip-payment-receipt-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2e3d4f;
+    cursor: pointer;
+    user-select: none;
+}
+
+.fleet-payment-success-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.fleet-payment-receipt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.fleet-payment-receipt-label {
+    font-size: 13px;
+}
+
+.fleet-btn-sm {
+    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.fleet-btn-receipt-pdf {
+    background: #3c8dbc;
+    color: #fff;
+    border: none;
+}
+
+.fleet-btn-receipt-pdf:hover {
+    background: #367fa9;
+    color: #fff;
+}
+
+.fleet-btn-receipt-print {
+    background: #00a65a;
+    color: #fff;
+    border: none;
+}
+
+.fleet-btn-receipt-print:hover {
+    background: #008d4c;
+    color: #fff;
+}
+
+.fleet-action-btn.receipt-pdf {
+    background: #3c8dbc;
+}
+
+.fleet-action-btn.receipt-print {
+    background: #00a65a;
+}
+
+.fleet-delete-form .fleet-action-btn {
+    border: none;
+    cursor: pointer;
+}
+
+.fleet-page-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fleet-trip-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fleet-trip-detail-status {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #3c8dbc;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fleet-trip-detail-layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr) 300px;
+    gap: 16px;
+    align-items: start;
+}
+
+.fleet-trip-detail-card {
+    background: #fff;
+    border: 1px solid #eef2f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fleet-trip-driver-card {
+    padding: 28px 20px 24px;
+    text-align: center;
+}
+
+.fleet-trip-driver-avatar {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: #e8eaf6;
+    color: #5c6bc0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.fleet-trip-driver-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 4px;
+}
+
+.fleet-trip-driver-role {
+    color: #8a97a8;
+    font-size: 13px;
+    margin-bottom: 18px;
+}
+
+.fleet-trip-driver-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid #eef2f6;
+    font-size: 13px;
+}
+
+.fleet-trip-driver-meta span {
+    color: #8a97a8;
+}
+
+.fleet-trip-driver-meta a {
+    color: #3c8dbc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fleet-trip-driver-meta a:hover {
+    text-decoration: underline;
+}
+
+.fleet-trip-driver-meta strong {
+    color: #2e3d4f;
+}
+
+.fleet-trip-action-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.fleet-trip-action-btn {
+    background: #fff;
+    border: 1px solid #eef2f6;
+    border-radius: 4px;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: box-shadow .15s ease;
+}
+
+.fleet-trip-action-btn:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
+
+.fleet-trip-action-btn span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+}
+
+.fleet-trip-action-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.fleet-trip-action-icon {
+    font-size: 22px;
+}
+
+.fleet-trip-action-icon.invoice { color: #3c8dbc; }
+.fleet-trip-action-icon.expense { color: #f39c12; }
+.fleet-trip-action-icon.sms { color: #00a65a; }
+.fleet-trip-action-icon.email { color: #3c8dbc; }
+.fleet-trip-action-icon.payment { color: #444; }
+
+.fleet-trip-route-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-trip-route-head h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-trip-live-map-btn {
+    border: 1px solid #d2e8f5;
+    background: #fff;
+    color: #3c8dbc;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fleet-trip-live-map-btn .fa {
+    margin-right: 4px;
+}
+
+.fleet-trip-route-timeline {
+    position: relative;
+    padding: 24px 18px 20px 42px;
+}
+
+.fleet-trip-route-timeline::before {
+    content: '';
+    position: absolute;
+    left: 26px;
+    top: 36px;
+    bottom: 36px;
+    width: 2px;
+    background: #dce3ea;
+}
+
+.fleet-trip-route-step {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.fleet-trip-route-step:last-child {
+    margin-bottom: 0;
+}
+
+.fleet-trip-route-marker {
+    position: absolute;
+    left: -28px;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.fleet-trip-route-step.start .fleet-trip-route-marker {
+    color: #00a65a;
+    font-size: 10px;
+}
+
+.fleet-trip-route-step.destination .fleet-trip-route-marker {
+    color: #dd4b39;
+    font-size: 16px;
+}
+
+.fleet-trip-route-step.end .fleet-trip-route-marker {
+    background: #eef2f6;
+    color: #8a97a8;
+    font-size: 11px;
+}
+
+.fleet-trip-route-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.fleet-trip-route-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.fleet-trip-route-top strong {
+    font-size: 15px;
+    color: #2e3d4f;
+}
+
+.fleet-trip-route-time {
+    color: #8a97a8;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.fleet-trip-route-sub {
+    color: #8a97a8;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.fleet-trip-info-section {
+    padding: 18px;
+}
+
+.fleet-trip-info-label {
+    color: #8a97a8;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.fleet-trip-info-label .fa {
+    margin-right: 6px;
+}
+
+.fleet-trip-info-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 4px;
+}
+
+.fleet-trip-info-plate {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 4px;
+}
+
+.fleet-trip-info-line {
+    color: #6b7c93;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.fleet-trip-info-divider {
+    height: 1px;
+    background: #eef2f6;
+}
+
+.fleet-trip-finance-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid #eef2f6;
+    font-size: 15px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-trip-finance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid #eef2f6;
+    font-size: 13px;
+    color: #6b7c93;
+}
+
+.fleet-trip-finance-row strong {
+    color: #2e3d4f;
+    font-weight: 600;
+}
+
+.fleet-trip-finance-row.total {
+    border-bottom: none;
+    font-size: 14px;
+}
+
+.fleet-trip-finance-row.total strong {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.fleet-trip-finance-row.remaining strong,
+.fleet-trip-finance-remaining {
+    color: #dd4b39;
+}
+
+.fleet-trip-finance-paid {
+    color: #00a65a;
+}
+
+.fleet-trip-record-payment-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3c8dbc;
+    text-decoration: none;
+}
+
+.fleet-trip-record-payment-link:hover {
+    color: #367fa9;
+    text-decoration: underline;
+}
+
+.fleet-trip-payment-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.fleet-trip-payment-summary-card {
+    background: #fff;
+    border: 1px solid #eef2f6;
+    border-radius: 6px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.fleet-trip-payment-summary-card span {
+    display: block;
+    font-size: 12px;
+    color: #6b7c93;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.fleet-trip-payment-summary-card strong {
+    font-size: 22px;
+    color: #2e3d4f;
+}
+
+.fleet-trip-payment-summary-card.paid strong {
+    color: #00a65a;
+}
+
+.fleet-trip-payment-summary-card.remaining strong {
+    color: #dd4b39;
+}
+
+.fleet-trip-payment-customer-note {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #eef2f6;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #6b7c93;
+}
+
+.fleet-field-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #9aa8b8;
+}
+
+.fleet-trip-detail-side .fleet-trip-detail-card + .fleet-trip-detail-card {
+    margin-top: 16px;
+}
+
+@media (max-width: 1100px) {
+    .fleet-trip-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-trip-action-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .fleet-trip-booking-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-trip-row-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-trip-action-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .fleet-trip-row {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-billing-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .fleet-trip-expense-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fleet-trip-expense-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fleet-trip-expense-form-panel .fleet-panel-header {
+    padding: 14px 18px;
+    font-weight: 700;
+    color: #2e3d4f;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+}
+
+.fleet-trip-expense-form-panel .fleet-panel-body {
+    padding: 18px;
+}
+
+.fleet-trip-expense-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.fleet-trip-expense-form-grid .fleet-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7c93;
+    margin-bottom: 6px;
+}
+
+.fleet-field-wide {
+    grid-column: span 2;
+}
+
+.fleet-trip-expense-form-actions {
+    margin-top: 16px;
+}
+
+.fleet-trip-expense-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #eef2f6;
+    flex-wrap: wrap;
+}
+
+.fleet-trip-expense-list-head h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-trip-expense-list-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fleet-trip-expense-total {
+    font-size: 14px;
+    color: #6b7c93;
+}
+
+.fleet-trip-expense-total strong {
+    color: #f39c12;
+    font-size: 16px;
+}
+
+.fleet-alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-success {
+    background: #edfbf3;
+    color: #008d4c;
+    border: 1px solid #c3e6cb;
+}
+
+.fleet-alert-error {
+    background: #fdf2f2;
+    color: #dd4b39;
+    border: 1px solid #f5c6cb;
+}
+
+.fleet-alert-error ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.fleet-live-map-dialog {
+    width: 92%;
+    max-width: 960px;
+}
+
+.fleet-live-map-content {
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.fleet-live-map-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-live-map-header .modal-title {
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-live-map-body {
+    padding: 0;
+}
+
+.fleet-live-map-status {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #6b7c93;
+    background: #fbfcfd;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-live-map-status.is-error {
+    color: #dd4b39;
+    background: #fdf2f2;
+}
+
+.fleet-live-map-canvas {
+    width: 100%;
+    height: 420px;
+    background: #eef2f6;
+}
+
+.fleet-live-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 10px 16px 14px;
+    font-size: 12px;
+    color: #6b7c93;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-live-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.fleet-live-dot.start { background: #00a65a; }
+.fleet-live-dot.end { background: #dd4b39; }
+.fleet-live-dot.vehicle { background: #3c8dbc; }
+
+.fleet-map-marker-wrap {
+    background: transparent;
+    border: none;
+}
+
+.fleet-map-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+}
+
+.fleet-trip-customer-select-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.fleet-trip-customer-select-wrap .fleet-trip-input {
+    flex: 1;
+}
+
+.fleet-trip-create-customer-btn {
+    border: 1px solid #3c8dbc;
+    background: #fff;
+    color: #3c8dbc;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.fleet-trip-total-readonly .fleet-trip-amount-input {
+    background: #f4f6f9;
+    font-weight: 700;
+    color: #00a65a;
+}
+
+.fleet-trip-finance-row.billing-breakdown span,
+.fleet-trip-finance-row.billing-breakdown strong {
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+.fleet-trip-finance-row.billing-breakdown strong {
+    color: #2e3d4f;
+}
+
+.fleet-trip-textarea {
+    min-height: 90px;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.fleet-trip-customer-modal {
+    max-width: 520px;
+}
+
+.fleet-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.fleet-modal[hidden] {
+    display: none !important;
+}
+
+.fleet-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .45);
+}
+
+.fleet-modal-dialog {
+    position: relative;
+    width: 100%;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    overflow: hidden;
+    margin: auto 0;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+}
+
+.fleet-modal-dialog form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.fleet-modal-header,
+.fleet-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    flex-shrink: 0;
+}
+
+.fleet-modal-header {
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.fleet-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    color: #9aa8b8;
+    cursor: pointer;
+}
+
+.fleet-modal-body {
+    padding: 18px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.fleet-modal-footer {
+    border-top: 1px solid #eef2f6;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #fff;
+}
+
+body.fleet-modal-open {
+    overflow: hidden;
+}
+
+.fleet-alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-error {
+    background: #fdecea;
+    color: #a94442;
+    border: 1px solid #f5c6cb;
+}
+
+.fleet-alert ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.fleet-trip-status-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.fleet-trip-status-form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7c93;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.fleet-trip-status-select {
+    appearance: none;
+    border: 1px solid #d7dee8;
+    border-radius: 20px;
+    padding: 6px 32px 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    background-color: #3c8dbc;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23ffffff' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.fleet-trip-status-select.fleet-trip-status-booked,
+.fleet-trip-status-select.fleet-trip-status-pending {
+    background-color: #3c8dbc;
+}
+
+.fleet-trip-status-select.fleet-trip-status-ongoing {
+    background-color: #f39c12;
+}
+
+.fleet-trip-status-select.fleet-trip-status-completed {
+    background-color: #00a65a;
+}
+
+.fleet-trip-status-select.fleet-trip-status-cancelled {
+    background-color: #dd4b39;
+}
+
+.fleet-trip-status-select option {
+    color: #2e3d4f;
+    background: #fff;
+}
+
+.fleet-trip-status-select-inline {
+    min-width: 120px;
+}
+
+.fleet-trip-status-edit-card {
+    max-width: 640px;
+}
+
+.fleet-trip-status-edit-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-trip-status-edit-form .fleet-form-group {
+    margin-bottom: 18px;
+}
+
+.fleet-trip-status-edit-form .fleet-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2e3d4f;
+    margin-bottom: 8px;
+}
+
+.fleet-trip-status-edit-form .fleet-trip-status-select {
+    width: 100%;
+    max-width: 280px;
+    border-radius: 4px;
+    color: #2e3d4f;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b7c93' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.fleet-trip-status-edit-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fleet-btn-light {
+    background: #fff;
+    color: #444;
+    border: 1px solid #d7dee8;
+    text-decoration: none;
+}
+
+.fleet-btn-light:hover {
+    background: #f8fafc;
+    color: #444;
+}
+
+.fleet-trip-invoice-edit-layout {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.fleet-trip-invoice-summary-card .fleet-panel-header,
+.fleet-trip-invoice-form-card .fleet-panel-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+    font-weight: 700;
+}
+
+.fleet-page-title-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fleet-trip-invoice-totals-preview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-trip-invoice-totals-preview span {
+    display: block;
+    font-size: 11px;
+    color: #6b7c93;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.fleet-trip-invoice-totals-preview strong {
+    font-size: 15px;
+    color: #2e3d4f;
+}
+
+.fleet-trip-invoice-totals-preview .is-total {
+    color: #3c8dbc;
+    font-size: 18px;
+}
+
+.fleet-trip-invoice-totals-preview .is-paid {
+    color: #00a65a;
+}
+
+.fleet-trip-invoice-totals-preview .is-outstanding {
+    color: #dd4b39;
+}
+
+.fleet-trip-invoice-edit-form .fleet-trip-field {
+    margin-bottom: 16px;
+}
+
+.fleet-trip-invoice-edit-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+@media (max-width: 1100px) {
+    .fleet-trip-invoice-edit-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-trip-customer-select-wrap {
+        flex-direction: column;
+    }
+
+    .fleet-trip-create-customer-btn {
+        min-height: 40px;
+    }
+
+    .fleet-trip-status-edit-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-trip-invoice-totals-preview {
+        grid-template-columns: 1fr;
+    }
+}

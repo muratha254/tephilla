@@ -1,0 +1,98 @@
+═══════════════════════════════════════════════════════════════
+  LARAVEL LAN DEPLOYMENT - QUICK CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+PROJECT: _________________________
+SERVER IP: _________________________
+DATE: _________________________
+
+═══════════════════════════════════════════════════════════════
+  PRE-DEPLOYMENT
+═══════════════════════════════════════════════════════════════
+[ ] XAMPP installed and running
+[ ] Laravel app deployed to server
+[ ] Database created and migrated
+[ ] Composer dependencies installed
+
+═══════════════════════════════════════════════════════════════
+  STEP 1: NETWORK
+═══════════════════════════════════════════════════════════════
+[ ] Find server IP (ipconfig)
+[ ] Record IP: _________________________
+
+═══════════════════════════════════════════════════════════════
+  STEP 2: APACHE
+═══════════════════════════════════════════════════════════════
+[ ] Enable mod_rewrite in httpd.conf
+[ ] Enable VirtualHosts in httpd.conf
+[ ] Add VirtualHost to httpd-vhosts.conf
+    - ServerName: [SERVER_IP]
+    - DocumentRoot: [PROJECT]/public
+    - AllowOverride All
+[ ] Restart Apache
+[ ] Verify no errors in error.log
+
+═══════════════════════════════════════════════════════════════
+  STEP 3: LARAVEL .ENV
+═══════════════════════════════════════════════════════════════
+[ ] APP_URL=http://[SERVER_IP]
+[ ] APP_ENV=production
+[ ] APP_DEBUG=false
+[ ] DB_HOST=127.0.0.1 (NOT server IP!)
+[ ] DB credentials configured
+[ ] Run: php artisan config:clear
+[ ] Run: php artisan cache:clear
+
+═══════════════════════════════════════════════════════════════
+  STEP 4: PERMISSIONS
+═══════════════════════════════════════════════════════════════
+[ ] storage/ folder - Full control for Everyone
+[ ] bootstrap/cache/ folder - Full control for Everyone
+[ ] Run: php artisan storage:link (if needed)
+
+═══════════════════════════════════════════════════════════════
+  STEP 5: FIREWALL
+═══════════════════════════════════════════════════════════════
+[ ] Add Apache to Windows Firewall allowed apps
+[ ] OR run: netsh advfirewall firewall add rule name="Apache HTTP Server" dir=in action=allow protocol=TCP localport=80
+[ ] Verify rule enabled
+
+═══════════════════════════════════════════════════════════════
+  STEP 6: TESTING
+═══════════════════════════════════════════════════════════════
+[ ] Test from server: http://[SERVER_IP]
+[ ] Test /ping: http://[SERVER_IP]/ping
+[ ] Test from client: http://[SERVER_IP]
+[ ] Verify static assets load
+[ ] Test login/functionality
+
+═══════════════════════════════════════════════════════════════
+  DEPLOYMENT COMPLETE
+═══════════════════════════════════════════════════════════════
+[ ] All tests passed
+[ ] Documentation updated
+[ ] Team notified
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+Cannot access from client?
+  → Check firewall
+  → Verify Apache running
+  → Check IP address
+  → Test ping [SERVER_IP]
+
+500 Error?
+  → Check storage/logs/laravel.log
+  → Verify permissions
+  → Check .env config
+
+404 Error?
+  → Verify mod_rewrite enabled
+  → Check .htaccess exists
+  → Verify AllowOverride All
+
+═══════════════════════════════════════════════════════════════
+
+
+

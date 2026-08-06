@@ -1,0 +1,24 @@
+/**
+ * Highlight expandable sidebar categories (treeview parents) for skin-green.
+ * Amber accent — solid backgrounds (no transparency).
+ */
+.skin-green .sidebar-menu > li.treeview > a {
+    background-color: #6d560e !important;
+    border-left: 3px solid #ffc107 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    color: #fff !important;
+}
+
+.skin-green .sidebar-menu > li.treeview:hover > a {
+    background-color: #8a7312 !important;
+    border-left-color: #ffeb3b !important;
+    color: #fff !important;
+}
+
+.skin-green .sidebar-menu > li.treeview.menu-open > a,
+.skin-green .sidebar-menu > li.treeview.active > a {
+    background-color: #7a6210 !important;
+    border-left-color: #ffca28 !important;
+    color: #fff !important;
+}

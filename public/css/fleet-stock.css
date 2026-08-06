@@ -1,0 +1,554 @@
+.fleet-page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.fleet-stock-panel {
+    padding: 0;
+    overflow: hidden;
+}
+
+.fleet-stock-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #eef2f6;
+    flex-wrap: wrap;
+}
+
+.fleet-stock-summary {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.fleet-stock-summary-item {
+    font-size: 14px;
+    color: #2e3d4f;
+}
+
+.fleet-stock-summary-item strong {
+    font-size: 18px;
+    color: #3c8dbc;
+    margin-right: 4px;
+}
+
+.fleet-stock-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fleet-stock-filters .fleet-search-wrap {
+    min-width: 240px;
+}
+
+.fleet-view-toggle .fleet-view-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.fleet-stock-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    padding: 18px;
+}
+
+.fleet-stock-card {
+    background: #fff;
+    border: 1px solid #eef2f6;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+}
+
+.fleet-stock-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px 0;
+}
+
+.fleet-stock-card-head h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-stock-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+
+.fleet-stock-status.is-active {
+    background: #00a65a;
+    color: #fff;
+}
+
+.fleet-stock-status.is-inactive {
+    background: #d2d6de;
+    color: #444;
+}
+
+.fleet-stock-card-desc {
+    margin: 10px 18px 0;
+    font-size: 13px;
+    color: #6b7c93;
+    line-height: 1.5;
+    min-height: 40px;
+}
+
+.fleet-stock-card-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 18px;
+    margin-top: auto;
+}
+
+.fleet-stock-card-stats span {
+    display: block;
+    font-size: 12px;
+    color: #9aa8b8;
+    margin-bottom: 4px;
+}
+
+.fleet-stock-card-stats strong {
+    font-size: 18px;
+    color: #2e3d4f;
+}
+
+.fleet-stock-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-stock-action {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.fleet-stock-action.history { background: #f39c12; }
+.fleet-stock-action.add { background: #3c8dbc; }
+.fleet-stock-action.edit { background: #3c8dbc; }
+.fleet-stock-action.delete { background: #dd4b39; }
+
+.fleet-stock-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-stock-list-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+}
+
+.fleet-stock-list-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: middle;
+    color: #2e3d4f;
+}
+
+.fleet-stock-item-name {
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-stock-item-desc {
+    font-size: 12px;
+    color: #6b7c93;
+    margin-top: 2px;
+}
+
+.fleet-stock-empty {
+    grid-column: 1 / -1;
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7c93;
+}
+
+.fleet-stock-form-card {
+    max-width: 760px;
+}
+
+.fleet-stock-manage-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.fleet-stock-manage-form {
+    display: block;
+}
+
+.fleet-stock-manage-row {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+    padding: 18px 24px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-stock-manage-row label {
+    margin: 10px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2e3d4f;
+}
+
+.fleet-stock-manage-field {
+    min-width: 0;
+}
+
+.fleet-stock-manage-input {
+    width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #2e3d4f;
+    background: #fff;
+}
+
+.fleet-stock-manage-textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.fleet-stock-manage-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px 24px;
+    background: #fbfcfd;
+}
+
+.fleet-stock-manage-submit {
+    min-width: 90px;
+    justify-content: center;
+}
+
+.fleet-stock-form-head {
+    background: #3c8dbc;
+    color: #fff;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.fleet-stock-form-body {
+    padding: 20px 18px;
+}
+
+.fleet-stock-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.fleet-stock-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2e3d4f;
+}
+
+.fleet-stock-field-full {
+    grid-column: 1 / -1;
+}
+
+.fleet-stock-input {
+    width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: #2e3d4f;
+}
+
+.fleet-stock-textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.fleet-stock-price-wrap {
+    display: flex;
+    align-items: stretch;
+}
+
+.fleet-stock-price-prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    background: #f8fafc;
+    border: 1px solid #d7dee8;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    color: #6b7c93;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.fleet-stock-price-input {
+    border-radius: 0 4px 4px 0;
+}
+
+.fleet-stock-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.fleet-stock-pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-incident-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fleet-incident-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #3c8dbc;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fleet-incident-page-btn.active {
+    background: #3c8dbc;
+    border-color: #3c8dbc;
+    color: #fff;
+}
+
+.fleet-incident-page-btn.disabled {
+    color: #9aa8b8;
+    background: #f8fafc;
+    cursor: default;
+}
+
+.fleet-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.fleet-modal[hidden] {
+    display: none !important;
+}
+
+.fleet-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .45);
+}
+
+.fleet-stock-modal-dialog,
+.fleet-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    overflow: hidden;
+}
+
+.fleet-stock-add-modal {
+    max-width: 520px;
+}
+
+.fleet-stock-add-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fleet-stock-add-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2e3d4f;
+}
+
+.fleet-stock-add-input {
+    width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #2e3d4f;
+    background: #fff;
+}
+
+.fleet-stock-add-modal-footer {
+    justify-content: space-between;
+}
+
+.fleet-stock-add-modal-footer .fleet-btn-primary {
+    min-width: 90px;
+    justify-content: center;
+}
+
+.fleet-modal-header,
+.fleet-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+}
+
+.fleet-modal-header {
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    color: #9aa8b8;
+    cursor: pointer;
+}
+
+.fleet-modal-body {
+    padding: 18px;
+}
+
+.fleet-modal-footer {
+    border-top: 1px solid #eef2f6;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.fleet-stock-modal-item-name {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3c8dbc;
+}
+
+body.fleet-modal-open {
+    overflow: hidden;
+}
+
+.fleet-alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-error {
+    background: #fdf2f2;
+    color: #dd4b39;
+    border: 1px solid #f5c6cb;
+}
+
+.fleet-alert-error ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.fleet-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+.fleet-btn-default {
+    background: #fff;
+    border: 1px solid #d7dee8;
+    color: #2e3d4f;
+}
+
+.fleet-btn-default:hover {
+    background: #f8fafc;
+    color: #2e3d4f;
+}
+
+@media (max-width: 992px) {
+    .fleet-stock-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-stock-grid,
+    .fleet-stock-form-grid,
+    .fleet-stock-manage-row {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-stock-manage-row label {
+        margin-top: 0;
+    }
+}

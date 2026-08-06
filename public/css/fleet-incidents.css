@@ -1,0 +1,297 @@
+.fleet-incident-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-incident-search label {
+    font-size: 14px;
+    color: #2e3d4f;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.fleet-incident-search-input {
+    width: 220px;
+    max-width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 14px;
+}
+
+.fleet-incident-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-incident-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fleet-incident-table td {
+    padding: 14px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: top;
+    color: #2e3d4f;
+}
+
+.fleet-incident-table tbody tr:hover {
+    background: #fbfcfd;
+}
+
+.fleet-incident-vehicle-name {
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 2px;
+}
+
+.fleet-incident-vehicle-meta {
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+.fleet-incident-desc-list {
+    margin: 0;
+    padding-left: 16px;
+    color: #6b7c93;
+    line-height: 1.6;
+}
+
+.fleet-incident-desc-list li {
+    margin-bottom: 2px;
+}
+
+.fleet-incident-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.fleet-incident-status-open {
+    background: #17a2b8;
+    color: #fff;
+}
+
+.fleet-incident-status-converted {
+    background: #00a65a;
+    color: #fff;
+}
+
+.fleet-incident-status-closed {
+    background: #eef2f6;
+    color: #6b7c93;
+}
+
+.fleet-incident-convert-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: none;
+    border-radius: 4px;
+    background: #00a65a;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.fleet-incident-convert-btn:hover {
+    background: #008d4c;
+}
+
+.fleet-incident-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fleet-incident-actions .fleet-action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.fleet-incident-actions .fleet-action-btn.delete {
+    background: #dd4b39;
+}
+
+.fleet-incident-view-maint {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3c8dbc;
+    text-decoration: none;
+}
+
+.fleet-incident-view-maint:hover {
+    text-decoration: underline;
+}
+
+.fleet-incident-no-action {
+    color: #9aa8b8;
+}
+
+.fleet-incident-pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-incident-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fleet-incident-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #3c8dbc;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fleet-incident-page-btn.active {
+    background: #3c8dbc;
+    border-color: #3c8dbc;
+    color: #fff;
+}
+
+.fleet-incident-page-btn.disabled {
+    color: #9aa8b8;
+    background: #f8fafc;
+    cursor: default;
+}
+
+.fleet-incident-form-card {
+    padding: 20px;
+}
+
+.fleet-incident-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.fleet-incident-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7c93;
+    margin-bottom: 6px;
+}
+
+.fleet-incident-field .required {
+    color: #dd4b39;
+}
+
+.fleet-incident-input,
+.fleet-incident-textarea {
+    width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #2e3d4f;
+}
+
+.fleet-incident-field-wide {
+    grid-column: span 2;
+}
+
+.fleet-incident-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #9aa8b8;
+}
+
+.fleet-incident-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-btn-outline {
+    background: #fff;
+    color: #6b7c93;
+    border: 1px solid #d7dee8;
+    text-decoration: none;
+}
+
+.fleet-alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-error {
+    background: #fdf2f2;
+    color: #dd4b39;
+    border: 1px solid #f5c6cb;
+}
+
+.fleet-alert-error ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.fleet-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .fleet-incident-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-incident-field-wide {
+        grid-column: auto;
+    }
+
+    .fleet-incident-search {
+        flex-wrap: wrap;
+    }
+
+    .fleet-incident-search-input {
+        width: 100%;
+    }
+}

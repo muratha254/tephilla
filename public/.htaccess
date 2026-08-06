@@ -1,0 +1,31 @@
+# Allow large Excel imports (200MB+); requires PHP as Apache module (XAMPP).
+<IfModule mod_php.c>
+    php_value upload_max_filesize 250M
+    php_value post_max_size 250M
+    php_value memory_limit 1024M
+    php_value max_execution_time 900
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 250M
+    php_value post_max_size 250M
+    php_value memory_limit 1024M
+    php_value max_execution_time 900
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

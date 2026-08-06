@@ -1,0 +1,50 @@
+.report-filters {
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.report-filters .form-group {
+    margin-right: 15px;
+}
+
+.report-filters label {
+    margin-right: 5px;
+}
+
+.report-total {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: right;
+    padding: 10px;
+    background-color: #f5f5f5;
+}
+
+.table th {
+    background-color: #f4f4f4;
+}
+
+.amount-column {
+    text-align: right;
+}
+
+.export-buttons {
+    margin: 10px 0;
+}
+
+.date-range-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@media print {
+    .no-print {
+        display: none;
+    }
+    
+    .table-responsive {
+        overflow: visible !important;
+    }
+}

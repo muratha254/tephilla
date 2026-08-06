@@ -1,0 +1,113 @@
+═══════════════════════════════════════════════════════════════
+  DEPLOYMENT VARIABLES TEMPLATE
+  Copy and fill in for each new deployment
+═══════════════════════════════════════════════════════════════
+
+PROJECT INFORMATION
+───────────────────────────────────────────────────────────────
+Project Name:        _________________________
+Project Code:        _________________________
+Deployment Date:     _________________________
+Deployed By:         _________________________
+Client/Company:      _________________________
+
+SERVER CONFIGURATION
+───────────────────────────────────────────────────────────────
+Server IP Address:   _________________________
+Server Hostname:     _________________________ (optional)
+Server OS:           Windows 10 / 11 / Server
+XAMPP Version:       _________________________
+PHP Version:         _________________________
+MySQL Version:       _________________________
+
+NETWORK CONFIGURATION
+───────────────────────────────────────────────────────────────
+Network Type:        LAN / WLAN
+Subnet:              _________________________ (e.g., 192.168.1.0/24)
+Gateway:             _________________________
+DNS:                 _________________________ (if applicable)
+Port:                80 / 8080 / Other: _______
+
+LARAVEL CONFIGURATION
+───────────────────────────────────────────────────────────────
+Laravel Version:     _________________________
+Project Path:        _________________________
+                      (Full path to Laravel root)
+Public Path:        _________________________
+                      (Full path to public folder)
+Environment:        production / staging
+
+DATABASE CONFIGURATION
+───────────────────────────────────────────────────────────────
+Database Name:       _________________________
+Database User:       root / _________________________
+Database Password:   _________________________
+Database Host:       127.0.0.1 (always localhost)
+Database Port:       3306
+
+APACHE CONFIGURATION
+───────────────────────────────────────────────────────────────
+VirtualHost File:    C:\xampp\apache\conf\extra\httpd-vhosts.conf
+ServerName:          _________________________ (server IP)
+DocumentRoot:        _________________________
+Error Log:           C:\xampp\apache\logs\[PROJECT]_error.log
+Access Log:          C:\xampp\apache\logs\[PROJECT]_access.log
+
+ENVIRONMENT VARIABLES (.env)
+───────────────────────────────────────────────────────────────
+APP_NAME=            _________________________
+APP_URL=             http://[SERVER_IP]
+APP_ENV=             production
+APP_DEBUG=           false
+APP_KEY=             _________________________ (generate if needed)
+
+DB_CONNECTION=       mysql
+DB_HOST=             127.0.0.1
+DB_PORT=             3306
+DB_DATABASE=         [DATABASE_NAME]
+DB_USERNAME=         [DATABASE_USER]
+DB_PASSWORD=         [DATABASE_PASSWORD]
+
+SESSION_DRIVER=       file
+CACHE_DRIVER=        file
+
+ACCESS INFORMATION
+───────────────────────────────────────────────────────────────
+Application URL:     http://[SERVER_IP]
+Health Check URL:    http://[SERVER_IP]/ping
+Admin Login URL:     http://[SERVER_IP]/login (if applicable)
+
+CLIENT ACCESS
+───────────────────────────────────────────────────────────────
+Number of Clients:   _________________________
+Client Devices:      _________________________
+                      (Windows, Mac, Tablets, etc.)
+
+SECURITY INFORMATION
+───────────────────────────────────────────────────────────────
+Firewall Rule:       Apache HTTP Server (Port 80)
+Backup Location:     _________________________
+Backup Schedule:     _________________________
+
+NOTES
+───────────────────────────────────────────────────────────────
+Special Requirements:
+_________________________________________________________________
+_________________________________________________________________
+
+Custom Configurations:
+_________________________________________________________________
+_________________________________________________________________
+
+Issues Encountered:
+_________________________________________________________________
+_________________________________________________________________
+
+Resolution:
+_________________________________________________________________
+_________________________________________________________________
+
+═══════════════════════════════════════════════════════════════
+
+
+

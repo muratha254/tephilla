@@ -1,0 +1,172 @@
+.fleet-pms-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.fleet-pms-form-card,
+.fleet-pms-rules-card,
+.fleet-pms-check-card {
+    overflow: hidden;
+}
+
+.fleet-pms-card-head,
+.fleet-pms-rules-head {
+    background: #3c8dbc;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 18px;
+}
+
+.fleet-pms-rules-head {
+    background: #fff;
+    color: #2e3d4f;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-pms-card-body {
+    padding: 18px;
+}
+
+.fleet-pms-left {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fleet-pms-field {
+    margin-bottom: 14px;
+}
+
+.fleet-pms-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7c93;
+    margin-bottom: 6px;
+}
+
+.fleet-pms-input {
+    width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #2e3d4f;
+    background: #fff;
+}
+
+.fleet-pms-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.fleet-pms-hint {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #9aa8b8;
+    line-height: 1.5;
+}
+
+.fleet-pms-submit {
+    width: 100%;
+    justify-content: center;
+}
+
+.fleet-pms-check-card .fleet-pms-card-body p {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #6b7c93;
+    line-height: 1.5;
+}
+
+.fleet-pms-check-btn {
+    width: 100%;
+    justify-content: center;
+    background: #00a65a;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fleet-pms-check-btn:hover {
+    background: #008d4c;
+}
+
+.fleet-pms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-pms-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fleet-pms-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: top;
+    color: #2e3d4f;
+}
+
+.fleet-pms-table tbody tr:hover {
+    background: #fbfcfd;
+}
+
+.fleet-pms-vehicle-name {
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 2px;
+}
+
+.fleet-pms-vehicle-meta {
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+.fleet-alert-warning {
+    background: #fff8e8;
+    color: #9a6700;
+    border: 1px solid #ffe08a;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-warning ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}
+
+@media (max-width: 1100px) {
+    .fleet-pms-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-pms-row {
+        grid-template-columns: 1fr;
+    }
+}

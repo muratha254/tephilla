@@ -1,0 +1,174 @@
+.fleet-tyre-form .fleet-pms-submit {
+    margin-top: 4px;
+}
+
+.fleet-tyre-cost-wrap {
+    display: flex;
+    align-items: stretch;
+}
+
+.fleet-tyre-cost-prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    background: #f8fafc;
+    border: 1px solid #d7dee8;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    color: #6b7c93;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.fleet-tyre-cost-input {
+    border-radius: 0 4px 4px 0;
+}
+
+.fleet-tyre-table-card .fleet-pms-rules-head {
+    display: none;
+}
+
+.fleet-tyre-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.fleet-tyre-search label {
+    font-size: 14px;
+    color: #2e3d4f;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.fleet-tyre-search-input {
+    width: 220px;
+    max-width: 100%;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 14px;
+}
+
+.fleet-tyre-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-tyre-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fleet-tyre-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: top;
+    color: #2e3d4f;
+}
+
+.fleet-tyre-table tbody tr:hover {
+    background: #fbfcfd;
+}
+
+.fleet-tyre-vehicle-name {
+    font-weight: 700;
+    color: #2e3d4f;
+    margin-bottom: 2px;
+}
+
+.fleet-tyre-vehicle-meta {
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+.fleet-tyre-odometer {
+    font-size: 12px;
+    color: #6b7c93;
+    margin-top: 2px;
+}
+
+.fleet-tyre-pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 16px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-incident-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fleet-incident-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #3c8dbc;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fleet-incident-page-btn.active {
+    background: #3c8dbc;
+    border-color: #3c8dbc;
+    color: #fff;
+}
+
+.fleet-incident-page-btn.disabled {
+    color: #9aa8b8;
+    background: #f8fafc;
+    cursor: default;
+}
+
+.fleet-alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.fleet-alert-error {
+    background: #fdf2f2;
+    color: #dd4b39;
+    border: 1px solid #f5c6cb;
+}
+
+.fleet-alert-error ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.fleet-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .fleet-tyre-search {
+        flex-wrap: wrap;
+    }
+
+    .fleet-tyre-search-input {
+        width: 100%;
+    }
+}

@@ -1,0 +1,463 @@
+.fleet-vendor-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fleet-vendor-add-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: #3c8dbc;
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.fleet-vendor-add-icon:hover {
+    background: #367fa9;
+    color: #fff;
+}
+
+.fleet-vendor-card {
+    overflow: hidden;
+}
+
+.fleet-vendor-table-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px;
+    border-bottom: 1px solid #eef2f6;
+    flex-wrap: wrap;
+}
+
+.fleet-export-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fleet-export-btn {
+    border: none;
+    border-radius: 3px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.fleet-export-copy { background: #3c8dbc; }
+.fleet-export-excel { background: #00a65a; }
+.fleet-export-csv { background: #00c0ef; }
+.fleet-export-pdf { background: #dd4b39; }
+
+.fleet-vendor-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #444;
+}
+
+.fleet-vendor-search input {
+    min-width: 180px;
+    height: 34px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 0 10px;
+    font-size: 14px;
+}
+
+.fleet-vendor-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fleet-vendor-table th {
+    background: #f8fafc;
+    color: #6b7c93;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f6;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fleet-vendor-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f6;
+    vertical-align: middle;
+    color: #444;
+}
+
+.fleet-vendor-table tbody tr:hover {
+    background: #fbfcfd;
+}
+
+.fleet-vendor-action-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.fleet-vendor-action-btn {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: #6b7c93;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.fleet-vendor-action-btn.delete {
+    color: #dd4b39;
+}
+
+.fleet-vendor-action-btn:hover {
+    color: #2e3d4f;
+}
+
+.fleet-vendor-action-btn.delete:hover {
+    color: #c23321;
+}
+
+.fleet-vendor-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 14px;
+    border-top: 1px solid #eef2f6;
+}
+
+.fleet-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #3c8dbc;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.fleet-page-link.active {
+    background: #3c8dbc;
+    border-color: #3c8dbc;
+    color: #fff;
+}
+
+.fleet-page-link.disabled {
+    color: #b8c4d4;
+    pointer-events: none;
+}
+
+.fleet-vendor-form-card .fleet-panel-header {
+    padding: 12px 16px;
+    font-weight: 700;
+    color: #2e3d4f;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+}
+
+.fleet-vendor-add-card {
+    border-top: 3px solid #3c8dbc;
+    overflow: hidden;
+}
+
+.fleet-vendor-add-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eef2f6;
+    background: #fff;
+}
+
+.fleet-vendor-add-card-head h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2e3d4f;
+}
+
+.fleet-btn-back-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    color: #444;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.fleet-btn-back-list:hover {
+    background: #f8fafc;
+    color: #2e3d4f;
+}
+
+.fleet-vendor-add-body {
+    padding: 24px 20px 20px;
+}
+
+.fleet-vendor-form {
+    width: 100%;
+}
+
+.fleet-vendor-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px 18px;
+}
+
+.fleet-vendor-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+}
+
+.fleet-vendor-field-full {
+    grid-column: 1 / -1;
+}
+
+.fleet-vendor-form .required {
+    color: #dd4b39;
+}
+
+.fleet-input-icon-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.fleet-input-icon-wrap:focus-within {
+    border-color: #3c8dbc;
+    box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);
+}
+
+.fleet-input-icon {
+    width: 42px;
+    min-width: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f6f9;
+    color: #8a97a8;
+    border-right: 1px solid #e3e8ef;
+}
+
+.fleet-input-icon-wrap-textarea .fleet-input-icon {
+    align-items: flex-start;
+    padding-top: 12px;
+}
+
+.fleet-vendor-input {
+    flex: 1;
+    width: 100%;
+    min-height: 42px;
+    border: none;
+    outline: none;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #444;
+    background: #fff;
+}
+
+.fleet-vendor-input::placeholder {
+    color: #b8c4d4;
+}
+
+.fleet-vendor-textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.fleet-file-upload-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.fleet-file-upload-wrap .fleet-vendor-input {
+    border: 1px solid #d7dee8;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+}
+
+.fleet-file-browse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    padding: 0 16px;
+    margin: 0;
+    border: 1px solid #d7dee8;
+    border-radius: 0 4px 4px 0;
+    background: #f4f6f9;
+    color: #444;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fleet-file-browse-btn:hover {
+    background: #eef2f6;
+}
+
+.fleet-file-browse-btn input {
+    display: none;
+}
+
+.fleet-vendor-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 8px;
+}
+
+.fleet-btn-save-vendor {
+    min-width: 150px;
+    justify-content: center;
+    padding: 10px 22px;
+    font-size: 15px;
+}
+
+.fleet-vendor-form .fleet-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.fleet-vendor-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+}
+
+.fleet-vendor-form .fleet-input {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid #d7dee8;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #444;
+    background: #fff;
+}
+
+.fleet-vendor-form .fleet-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.fleet-page-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fleet-btn-outline {
+    background: #fff;
+    color: #3c8dbc;
+    border: 1px solid #3c8dbc;
+    padding: 7px 14px;
+    font-size: 13px;
+}
+
+.fleet-btn-light {
+    background: #f4f4f4;
+    color: #444;
+    border: 1px solid #ddd;
+}
+
+.fleet-delete-form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.fleet-status-inactive {
+    background: #dd4b39;
+    color: #fff;
+}
+
+.fleet-empty-row {
+    text-align: center;
+    color: #6b7c93;
+    padding: 32px 14px !important;
+}
+
+.fleet-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+    margin: 0;
+    cursor: pointer;
+}
+
+.fleet-field-help {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #8a97a8;
+}
+
+.fleet-form-errors {
+    margin: 0;
+    padding-left: 18px;
+}
+
+@media (max-width: 1100px) {
+    .fleet-vendor-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-vendor-form-grid,
+    .fleet-vendor-form .fleet-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-vendor-add-card-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
