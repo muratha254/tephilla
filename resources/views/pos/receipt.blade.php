@@ -71,7 +71,15 @@
     if ($received <= 0) {
         $received = (float) $sale->paid_amount;
     }
-    $change = max(0, $received - (float) $sale->total);
+    $cashReceived = (float) $sale->payments->where('method', 'cash')->sum('amount');
+    $nonCashReceived = (float) $sale->payments->filter(function ($payment) {
+        return $payment->method !== 'cash';
+    })->sum('amount');
+    $dueAfterNonCash = max(0, (float) $sale->total - min($nonCashReceived, (float) $sale->total));
+    $change = max(0, $cashReceived - $dueAfterNonCash);
+    if ($cashReceived <= 0) {
+        $change = max(0, $received - (float) $sale->total);
+    }
     $website = $profile['companyWebsite'] ?? '';
 @endphp
 <div class="ticket">
@@ -135,8 +143,17 @@
                 <span>Ksh {{ number_format((float) $payment->amount, 2) }}</span>
             </div>
         @empty
-            <div class="row"><span class="label">Paid:</span><span>Ksh {{ number_format((float) $sale->paid_amount, 2) }}</span></div>
+            @if((float) $sale->paid_amount > 0)
+                <div class="row"><span class="label">Paid:</span><span>Ksh {{ number_format((float) $sale->paid_amount, 2) }}</span></div>
+            @else
+                <div class="row"><span class="label">Paid:</span><span>Ksh 0.00</span></div>
+            @endif
         @endforelse
+        @php $balanceDue = max(0, (float) $sale->total - (float) $sale->paid_amount); @endphp
+        @if($balanceDue > 0.009)
+            <div class="row bold"><span class="label">BALANCE DUE</span><span>Ksh {{ number_format($balanceDue, 2) }}</span></div>
+            <div class="center muted" style="margin-top:4px;">ON CREDIT</div>
+        @endif
         @if($change > 0)
             <div class="row"><span class="label">CHANGE</span><span>Ksh {{ number_format($change, 2) }}</span></div>
         @endif

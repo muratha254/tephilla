@@ -3147,18 +3147,30 @@ body.pos-body {
 }
 
 .pos-pay-close,
-.pos-pay-complete {
-    min-width: 220px;
+.pos-pay-complete,
+.pos-pay-credit {
+    min-width: 180px;
     border: 0;
     border-radius: 8px;
     color: #fff;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    padding: 12px 20px;
+    padding: 12px 16px;
 }
 
 .pos-pay-close { background: #e74c3c; }
 .pos-pay-complete { background: #00a65a; }
+.pos-pay-credit { background: #3c8dbc; }
+
+.pos-pay-credit-note {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: #d9edf7;
+    color: #31708f;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+}
 
 .pos-pay-logout {
     height: 46px;

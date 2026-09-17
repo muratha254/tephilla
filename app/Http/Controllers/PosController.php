@@ -30,6 +30,9 @@ class PosController extends Controller
         $walkIn = $this->walkInCustomer();
         $customers = Customer::query()
             ->where('is_active', true)
+            ->withSum(['sales as credit_sales' => function ($query) {
+                $query->where('status', Sale::STATUS_COMPLETED);
+            }], 'balance')
             ->orderByDesc('is_walk_in')
             ->orderBy('name')
             ->get();
@@ -141,6 +144,8 @@ class PosController extends Controller
             'id' => $customer->id,
             'name' => $customer->name,
             'phone' => $customer->phone,
+            'credit_limit' => (float) $customer->credit_limit,
+            'credit_used' => $customer->creditAmount(),
         ]);
     }
 
@@ -248,9 +253,40 @@ class PosController extends Controller
             }
         }
 
+        // Preview total for payment normalization (same formula as writeSale).
+        $previewTotal = (float) ($this->cartTotals($data)['total'] ?? 0);
+        $payments = $this->normalizeSalePayments($payments, $previewTotal);
+        $payAmount = round((float) $payments->sum('amount'), 2);
+
+        $customer = Customer::query()->find($data['customer_id'] ?? null);
+        $balanceDue = round(max(0, $previewTotal - min($payAmount, $previewTotal)), 2);
+        if ($balanceDue > 0.009) {
+            if (! $customer || $customer->is_walk_in) {
+                return response()->json([
+                    'message' => 'Walk-in customers cannot buy on credit. Select a customer account or receive full payment.',
+                ], 422);
+            }
+
+            $limit = round((float) $customer->credit_limit, 2);
+            if ($limit > 0) {
+                $projected = round($customer->creditAmount() + $balanceDue, 2);
+                if ($projected - $limit > 0.009) {
+                    return response()->json([
+                        'message' => 'Credit limit exceeded. Available: Ksh '
+                            . number_format(max(0, $limit - $customer->creditAmount()), 2)
+                            . ', this sale would add Ksh ' . number_format($balanceDue, 2) . '.',
+                    ], 422);
+                }
+            }
+
+            // Credit sales are stored as invoices so they appear in receivables.
+            $data['document_type'] = Sale::TYPE_INVOICE;
+        }
+
         $noteParts = array_filter([
             $data['service_type'] ?? null,
             $data['notes'] ?? null,
+            $balanceDue > 0.009 ? 'On credit' : null,
         ]);
         $data['notes'] = $noteParts ? implode(' | ', $noteParts) : null;
 
@@ -480,6 +516,61 @@ class PosController extends Controller
         return ['total' => round(max(0, $subtotal - $discount), 2)];
     }
 
+    private function normalizeSalePayments($payments, float $saleTotal)
+    {
+        $saleTotal = round(max(0, $saleTotal), 2);
+        $payments = collect($payments)->values();
+
+        // Accidental double-fill: Cash 60 + Bank 60 on a 60 sale → keep the first method only.
+        if ($saleTotal > 0 && $payments->count() > 1) {
+            $allFull = $payments->every(function ($row) use ($saleTotal) {
+                return abs(round((float) ($row['amount'] ?? 0), 2) - $saleTotal) < 0.009;
+            });
+            if ($allFull) {
+                $payments = $payments->take(1)->values();
+            }
+        }
+
+        $remaining = $saleTotal;
+        $others = [];
+        $cash = [];
+
+        foreach ($payments as $row) {
+            $method = strtolower((string) ($row['method'] ?? Payment::METHOD_CASH));
+            $amount = round((float) ($row['amount'] ?? 0), 2);
+            if ($amount <= 0) {
+                continue;
+            }
+            $row['method'] = $method;
+            $row['amount'] = $amount;
+            if ($method === Payment::METHOD_CASH) {
+                $cash[] = $row;
+            } else {
+                $others[] = $row;
+            }
+        }
+
+        $normalized = collect();
+        foreach ($others as $row) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $amount = min((float) $row['amount'], $remaining);
+            if ($amount <= 0) {
+                continue;
+            }
+            $row['amount'] = round($amount, 2);
+            $normalized->push($row);
+            $remaining = round(max(0, $remaining - $amount), 2);
+        }
+
+        foreach ($cash as $row) {
+            // Cash can exceed remaining — that excess is change.
+            $normalized->push($row);
+        }
+
+        return $normalized->values();
+    }
     private function productPayload(Product $product, ?int $branchId): array
     {
         $rate = (float) optional($product->tax)->rate;

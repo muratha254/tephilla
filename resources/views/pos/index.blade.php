@@ -15,7 +15,13 @@
             <div class="pos-customer-wrap">
                 <select id="sx-pos-customer" class="form-control">
                     @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" @if((int) $customer->id === (int) $walkInId) selected @endif>
+                        <option
+                            value="{{ $customer->id }}"
+                            data-walk-in="{{ $customer->is_walk_in ? '1' : '0' }}"
+                            data-credit-limit="{{ (float) $customer->credit_limit }}"
+                            data-credit-used="{{ $customer->creditAmount() }}"
+                            @if((int) $customer->id === (int) $walkInId) selected @endif
+                        >
                             {{ $customer->is_walk_in ? 'WALK-IN' : $customer->name }}{{ $customer->phone ? ' - '.$customer->phone : '' }}
                         </option>
                     @endforeach
@@ -82,8 +88,8 @@
                 <div class="pos-meta-field">
                     <label for="sx-pos-doctype">Inv No</label>
                     <select id="sx-pos-doctype" class="form-control">
+                        <option value="pos" selected>Receipt</option>
                         <option value="invoice">Invoice</option>
-                        <option value="pos">Receipt</option>
                     </select>
                 </div>
             </div>
@@ -214,10 +220,14 @@
                         <div><span>Total Received:</span><strong id="sx-pay-received">0.00</strong></div>
                         <div><span>Balance:</span><strong id="sx-pay-balance">0.00</strong></div>
                         <div class="is-orange"><span>Change Return:</span><strong id="sx-pay-change">0.00</strong></div>
+                        <div class="pos-pay-credit-note" id="sx-pay-credit-note" hidden>
+                            Credit sale allowed for this customer. Leave unpaid amount as account balance.
+                        </div>
                     </div>
                 </div>
                 <div class="pos-pay-actions">
                     <button type="button" class="pos-pay-close" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+                    <button type="button" class="pos-pay-credit" id="sx-pay-credit" hidden><i class="fa fa-book"></i> Charge Account</button>
                     <button type="submit" class="pos-pay-complete"><i class="fa fa-check"></i> Complete</button>
                     <select id="sx-pay-logout" class="pos-pay-logout">
                         <option value="stay">Don't Logout</option>
@@ -590,7 +600,16 @@
             headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
             data: $(this).serialize()
         }).done(function (data) {
-            $('#sx-pos-customer').append($('<option>', { value: data.id, text: data.name + (data.phone ? ' - ' + data.phone : ''), selected: true }));
+            var $opt = $('<option>', {
+                value: data.id,
+                text: data.name + (data.phone ? ' - ' + data.phone : ''),
+                selected: true
+            });
+            $opt.attr('data-walk-in', '0');
+            $opt.attr('data-credit-limit', data.credit_limit != null ? data.credit_limit : 0);
+            $opt.attr('data-credit-used', data.credit_used != null ? data.credit_used : 0);
+            $('#sx-pos-customer').append($opt);
+            updateCreditUi();
             $('#sx-pos-customer-modal').modal('hide');
         }).fail(function () {
             Swal.fire({ icon: 'error', title: 'Could not save customer' });
@@ -621,12 +640,37 @@
         });
     });
 
-    function tendered() {
+    var walkInId = @json($walkInId);
+
+    function selectedCustomerOption() {
+        return $('#sx-pos-customer option:selected');
+    }
+    function canSellOnCredit() {
+        var $opt = selectedCustomerOption();
+        if (!$opt.length) return false;
+        if (String($opt.data('walk-in')) === '1') return false;
+        if (walkInId && String($opt.val()) === String(walkInId)) return false;
+        return true;
+    }
+    function updateCreditUi() {
+        var creditOk = canSellOnCredit();
+        $('#sx-pay-credit-note').prop('hidden', !creditOk);
+        $('#sx-pay-credit').prop('hidden', !creditOk);
+    }
+
+    function roundMoney(n) {
+        return Math.round((n || 0) * 100) / 100;
+    }
+    function tendered($except) {
         var total = 0;
         $('.pos-tender').each(function () {
+            if ($except && this === $except[0]) return;
             total += parseFloat($(this).val()) || 0;
         });
-        return total;
+        return roundMoney(total);
+    }
+    function remainingDue($except) {
+        return roundMoney(Math.max(0, totals().grand - tendered($except)));
     }
     function refreshPayPanel() {
         var t = totals();
@@ -636,11 +680,13 @@
         $('#sx-pay-discount').text(money(t.discount));
         $('#sx-pay-tax').text(money(t.tax));
         $('#sx-pay-payable').text(money(t.grand));
-        $('#sx-pay-grand-due').text(money(0));
+        $('#sx-pay-grand-due').text(money(Math.max(0, t.grand - received)));
         $('#sx-pay-received').text(money(received));
         $('#sx-pay-balance').text(money(Math.max(0, t.grand - received)));
         $('#sx-pay-change').text(money(Math.max(0, received - t.grand)));
+        updateCreditUi();
     }
+    $('#sx-pos-customer').on('change', updateCreditUi);
     $('#sx-pos-order').on('click', function () {
         if (!requireCart()) return;
         $('.pos-tender').val('0.00');
@@ -654,7 +700,8 @@
     });
     function fillTender($input) {
         if ((parseFloat($input.val()) || 0) <= 0) {
-            $input.val(money(totals().grand));
+            // Fill only the unpaid remainder — never re-apply the full total onto a second method.
+            $input.val(money(remainingDue($input)));
             refreshPayPanel();
         }
         if ($input.is('#sx-pay-mpesa')) {
@@ -668,22 +715,28 @@
         fillTender($(this));
     });
     $(document).on('input', '.pos-tender', refreshPayPanel);
-    $('#sx-pos-pay-form').on('submit', function (e) {
-        e.preventDefault();
+
+    function buildPaymentsFromTenders() {
         var t = totals();
-        var received = tendered();
-        if (received <= 0) {
-            Swal.fire({ icon: 'warning', title: 'Enter a payment amount' });
-            return;
-        }
-        var payload = cartPayload();
-        payload.notes = $('#sx-pay-note').val();
-        payload.service_type = $('#sx-pay-service').val();
-        payload.payments = [];
+        var remaining = t.grand;
+        var payments = [];
+        var adjusted = false;
         $('.pos-tender').each(function () {
-            var amount = parseFloat($(this).val()) || 0;
+            var amount = roundMoney(parseFloat($(this).val()) || 0);
             if (amount <= 0) return;
-            var row = { method: $(this).data('method'), amount: amount };
+            var method = String($(this).data('method') || 'cash');
+            var isCash = method === 'cash';
+            if (!isCash) {
+                if (amount - remaining > 0.009) {
+                    amount = remaining;
+                    adjusted = true;
+                }
+                remaining = roundMoney(Math.max(0, remaining - amount));
+            } else {
+                remaining = roundMoney(Math.max(0, remaining - Math.min(amount, remaining)));
+            }
+            if (amount <= 0) return;
+            var row = { method: method, amount: amount };
             if ($(this).is('#sx-pay-mpesa')) {
                 row.reference = $.trim($('#sx-pay-mpesa-code').val());
             }
@@ -691,10 +744,60 @@
                 row.bank_name = $.trim($('#sx-pay-bank-name').val());
                 row.reference = $.trim($('#sx-pay-bank-ref').val());
             }
-            payload.payments.push(row);
+            payments.push(row);
         });
-        payload.payment_amount = Math.min(t.grand, received);
-        payload.payment_method = payload.payments[0] ? payload.payments[0].method : 'cash';
+        return { payments: payments, adjusted: adjusted, grand: t.grand };
+    }
+
+    function submitSale(payments, opts) {
+        opts = opts || {};
+        var t = totals();
+        var paySum = payments.reduce(function (sum, row) { return sum + row.amount; }, 0);
+        var balanceDue = roundMoney(Math.max(0, t.grand - paySum));
+        var creditOk = canSellOnCredit();
+
+        if (balanceDue > 0.009 && !creditOk) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Full payment required',
+                text: 'Walk-in customers cannot buy on credit. Select a customer account or receive full payment.'
+            });
+            return;
+        }
+
+        if (balanceDue > 0.009 && creditOk && !opts.confirmedCredit) {
+            var $opt = selectedCustomerOption();
+            var limit = parseFloat($opt.data('credit-limit')) || 0;
+            var used = parseFloat($opt.data('credit-used')) || 0;
+            var nextUsed = roundMoney(used + balanceDue);
+            var limitNote = limit > 0
+                ? (' Credit used after this sale: ' + money(nextUsed) + ' / limit ' + money(limit) + '.')
+                : '';
+            Swal.fire({
+                icon: 'question',
+                title: 'Charge ' + money(balanceDue) + ' to account?',
+                text: 'Customer will owe the unpaid balance.' + limitNote,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, charge account',
+                cancelButtonText: 'Cancel'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    submitSale(payments, { confirmedCredit: true });
+                }
+            });
+            return;
+        }
+
+        var payload = cartPayload();
+        payload.notes = $('#sx-pay-note').val();
+        payload.service_type = $('#sx-pay-service').val();
+        payload.payments = payments;
+        payload.payment_amount = Math.min(t.grand, paySum);
+        payload.payment_method = payments[0] ? payments[0].method : 'cash';
+        payload.on_credit = balanceDue > 0.009 ? 1 : 0;
+        if (balanceDue > 0.009) {
+            payload.document_type = 'invoice';
+        }
         $.ajax({
             url: orderUrl,
             method: 'POST',
@@ -702,6 +805,12 @@
             data: payload
         }).done(function (data) {
             $('#sx-pos-pay-modal').modal('hide');
+            // Refresh credit used for selected customer after a credit sale.
+            if (balanceDue > 0.009) {
+                var $opt = selectedCustomerOption();
+                var used = parseFloat($opt.data('credit-used')) || 0;
+                $opt.attr('data-credit-used', roundMoney(used + balanceDue));
+            }
             resetCart();
             loadCatalog();
             if (data.receipt_url) {
@@ -711,10 +820,42 @@
                 $('.pos-logout-form').first().trigger('submit');
                 return;
             }
-            Swal.fire({ icon: 'success', title: 'Sale saved', text: data.receipt_number || data.invoice_number || data.number, timer: 1600, showConfirmButton: false });
+            var msg = data.receipt_number || data.invoice_number || data.number;
+            if (balanceDue > 0.009) {
+                msg = (msg || 'Sale') + ' — balance due ' + money(balanceDue);
+            }
+            Swal.fire({ icon: 'success', title: 'Sale saved', text: msg, timer: 1800, showConfirmButton: false });
         }).fail(function (xhr) {
             Swal.fire({ icon: 'error', title: 'Order failed', text: (xhr.responseJSON && xhr.responseJSON.message) || 'Could not complete order.' });
         });
+    }
+
+    $('#sx-pay-credit').on('click', function () {
+        if (!canSellOnCredit()) {
+            Swal.fire({ icon: 'warning', title: 'Select a customer account', text: 'Walk-in cannot be charged on credit.' });
+            return;
+        }
+        $('.pos-tender').val('0.00');
+        refreshPayPanel();
+        submitSale([], { confirmedCredit: false });
+    });
+
+    $('#sx-pos-pay-form').on('submit', function (e) {
+        e.preventDefault();
+        var built = buildPaymentsFromTenders();
+        var paySum = built.payments.reduce(function (sum, row) { return sum + row.amount; }, 0);
+        if (paySum <= 0 && !canSellOnCredit()) {
+            Swal.fire({ icon: 'warning', title: 'Enter a payment amount' });
+            return;
+        }
+        if (built.adjusted) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Split payment adjusted',
+                text: 'Bank/M-Pesa was limited to the unpaid balance. Extra change must be cash only.'
+            });
+        }
+        submitSale(built.payments);
     });
 
     function openHolds() {
