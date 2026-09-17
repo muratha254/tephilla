@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\LedgerAccount;
@@ -103,6 +104,32 @@ class AccountingPoster
             $payment,
             'sale_payment',
             'Payment ' . ($payment->number ?: $payment->id) . ' for sale ' . ($sale->number ?: $sale->id),
+            optional($payment->paid_at)->toDateString() ?: now()->toDateString(),
+            [
+                ['account' => $cash, 'debit' => $amount, 'credit' => 0, 'description' => 'Customer payment'],
+                ['account' => $ar, 'debit' => 0, 'credit' => $amount, 'description' => 'Clear receivable'],
+            ]
+        );
+    }
+
+    public function postCustomerArPayment(Customer $customer, Payment $payment): ?JournalEntry
+    {
+        $amount = round((float) $payment->amount, 2);
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $this->ensureControlAccounts((int) $customer->company_id);
+
+        $cash = $this->paymentMethodAccount((int) $customer->company_id, (string) $payment->method);
+        $ar = $this->accountByName((int) $customer->company_id, 'Accounts Receivable');
+
+        return $this->postBalanced(
+            (int) $customer->company_id,
+            $payment->branch_id ? (int) $payment->branch_id : ($customer->branch_id ? (int) $customer->branch_id : null),
+            $payment,
+            'customer_ar_payment',
+            'Payment ' . ($payment->number ?: $payment->id) . ' for customer ' . ($customer->name ?: $customer->id),
             optional($payment->paid_at)->toDateString() ?: now()->toDateString(),
             [
                 ['account' => $cash, 'debit' => $amount, 'credit' => 0, 'description' => 'Customer payment'],

@@ -436,6 +436,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/customers/{customer}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
     });
 
+    Route::middleware('permission:payments.create')->group(function () {
+        Route::post('/customers/{customer}/payments', [CustomerController::class, 'storePayment'])->name('customers.payments.store');
+    });
+
     Route::middleware('permission:customers.delete')->group(function () {
         Route::delete('/customers/categories/{category}', [CustomerCategoryController::class, 'destroy'])->name('customers.categories.destroy');
         Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');

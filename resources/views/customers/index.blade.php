@@ -88,6 +88,17 @@
                                         Action <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-right sx-action-menu">
+                                        @if(($canPay ?? false) && ! $customer->is_walk_in && $customer->creditAmount() > 0)
+                                            <li>
+                                                <a href="#" class="sx-open-customer-pay"
+                                                    data-url="{{ route('customers.payments.store', $customer) }}"
+                                                    data-name="{{ $customer->name }}"
+                                                    data-due="{{ number_format($customer->creditAmount(), 2) }}"
+                                                    data-due-raw="{{ number_format($customer->creditAmount(), 2, '.', '') }}">
+                                                    <i class="fa fa-money"></i> Pay
+                                                </a>
+                                            </li>
+                                        @endif
                                         @if($canUpdate && ! $customer->is_walk_in)
                                             <li><a href="{{ route('customers.edit', $customer) }}"><i class="fa fa-pencil"></i> Edit</a></li>
                                         @endif
@@ -114,6 +125,57 @@
 <form id="sx-writeoff-form" method="post" action="{{ route('customers.write-off') }}" class="hidden">
     @csrf
 </form>
+
+@if($canPay ?? false)
+<div class="modal fade" id="sx-customer-pay-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content sx-conversion-modal">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-money"></i> Receive Customer Payment</h4>
+            </div>
+            <div class="modal-body">
+                <div class="sx-po-pay-meta">
+                    <div><span>Customer</span> <strong id="sx-cu-pay-name">-</strong></div>
+                    <div><span>Outstanding</span> <strong id="sx-cu-pay-due">0.00</strong></div>
+                </div>
+                <form method="post" action="#" id="sx-customer-pay-form">
+                    @csrf
+                    <div class="form-group">
+                        <label class="sx-req">Amount*</label>
+                        <input type="number" step="0.01" min="0.01" name="amount" id="sx-cu-pay-amount" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="sx-req">Payment Type*</label>
+                        <select name="method" class="form-control" required>
+                            <option value="">-Select-</option>
+                            @foreach(($paymentMethods ?? []) as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Reference / Voucher No</label>
+                        <input type="text" name="reference" class="form-control" placeholder="Reference">
+                    </div>
+                    <div class="form-group">
+                        <label class="sx-req">Payment Date*</label>
+                        <input type="date" name="paid_at" class="form-control" required value="{{ now()->toDateString() }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Note</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="sx-form-actions">
+                        <button type="submit" class="btn btn-success">Submit</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 @if($canCreate)
 <div class="modal fade" id="sx-customer-import" tabindex="-1">
@@ -289,6 +351,21 @@
             return;
         }
         if (window.confirm('Archive this customer?')) form.submit();
+    });
+
+    $(document).on('click', '.sx-open-customer-pay', function (e) {
+        e.preventDefault();
+        var btn = $(this);
+        var due = parseFloat(btn.data('due-raw')) || 0;
+        $('#sx-customer-pay-form').attr('action', btn.data('url'));
+        $('#sx-cu-pay-name').text(btn.data('name') || '-');
+        $('#sx-cu-pay-due').text(btn.data('due') || '0.00');
+        $('#sx-cu-pay-amount').attr('max', due.toFixed(2)).val(due > 0 ? due.toFixed(2) : '');
+        $('#sx-customer-pay-form').find('select[name="method"]').val('');
+        $('#sx-customer-pay-form').find('input[name="reference"]').val('');
+        $('#sx-customer-pay-form').find('textarea[name="notes"]').val('');
+        $('#sx-customer-pay-form').find('input[name="paid_at"]').val(@json(now()->toDateString()));
+        $('#sx-customer-pay-modal').modal('show');
     });
 })(jQuery);
 </script>

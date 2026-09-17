@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\CustomerCategory;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\AuditLogger;
+use App\Services\CustomerPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -246,6 +248,51 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Selected customer opening balances were written off.');
     }
 
+    public function storePayment(Request $request, Customer $customer, CustomerPaymentService $payments, AuditLogger $audit)
+    {
+        $this->authorizePermission('payments.create');
+        abort_if($customer->is_walk_in, 422, 'Walk-in customers cannot hold credit balances.');
+
+        $due = $customer->creditAmount();
+        if ($due <= 0) {
+            return back()->with('error', 'This customer has no outstanding balance.');
+        }
+
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:0.01|max:' . max($due, 0.01),
+            'method' => 'required|in:' . implode(',', array_keys(config('sellix.payment_methods', ['cash' => 'Cash']))),
+            'reference' => 'nullable|string|max:64',
+            'notes' => 'nullable|string|max:1000',
+            'paid_at' => 'required|date',
+        ]);
+
+        try {
+            $result = $payments->apply(
+                $customer,
+                (float) $data['amount'],
+                $data['method'],
+                $data['paid_at'],
+                $data['reference'] ?? null,
+                $data['notes'] ?? null,
+                $this->currentBranchId() ?: $customer->branch_id
+            );
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+
+        $audit->record('payment', 'customers', $customer, null, [
+            'customer_id' => $customer->id,
+            'amount' => $result['applied'],
+            'method' => $data['method'],
+            'payment_count' => count($result['payments']),
+        ]);
+
+        return redirect()->route('customers.index')->with(
+            'success',
+            'Received Ksh ' . number_format($result['applied'], 2) . ' from ' . $customer->name . '.'
+        );
+    }
+
     private function listData(bool $archived): array
     {
         $customers = $this->customerQuery($archived)->get();
@@ -256,6 +303,8 @@ class CustomerController extends Controller
             'canCreate' => auth()->user()->hasPermission('customers.create'),
             'canUpdate' => auth()->user()->hasPermission('customers.update'),
             'canDelete' => auth()->user()->hasPermission('customers.delete'),
+            'canPay' => auth()->user()->hasPermission('payments.create'),
+            'paymentMethods' => config('sellix.payment_methods', []),
         ];
     }
 
