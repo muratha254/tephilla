@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\CustomerCategory;
+use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -246,6 +247,48 @@ class CustomerController extends Controller
             ->update(['opening_balance' => 0]);
 
         return redirect()->route('customers.index')->with('success', 'Selected customer opening balances were written off.');
+    }
+
+    public function payments(Customer $customer)
+    {
+        $this->authorizePermission('customers.view');
+
+        $customer->load(['payments' => function ($query) {
+            $query->with(['user', 'payable'])->orderByDesc('paid_at')->orderByDesc('id');
+        }]);
+
+        $methods = config('sellix.payment_methods', []);
+        $paidTotal = round((float) $customer->payments->sum('amount'), 2);
+        $due = $customer->creditAmount();
+
+        return response()->json([
+            'name' => $customer->name,
+            'phone' => $customer->phone ?: '-',
+            'credit_limit' => number_format((float) $customer->credit_limit, 2),
+            'outstanding' => number_format($due, 2),
+            'paid_total' => number_format($paidTotal, 2),
+            'payments' => $customer->payments->map(function (Payment $payment) use ($methods) {
+                $appliedTo = '-';
+                if ($payment->payable_type === Sale::class && $payment->payable) {
+                    $appliedTo = method_exists($payment->payable, 'documentNumber')
+                        ? $payment->payable->documentNumber()
+                        : (string) ($payment->payable->number ?: ('Sale #' . $payment->payable->id));
+                } elseif ($payment->payable_type === Customer::class) {
+                    $appliedTo = 'Opening balance';
+                }
+
+                return [
+                    'number' => $payment->number ?: '-',
+                    'date' => optional($payment->paid_at)->format('d-m-Y H:i') ?: '-',
+                    'method' => $methods[$payment->method] ?? ucfirst((string) $payment->method),
+                    'reference' => $payment->reference ?: '-',
+                    'applied_to' => $appliedTo,
+                    'amount' => number_format((float) $payment->amount, 2),
+                    'notes' => $payment->notes ?: '-',
+                    'user' => optional($payment->user)->name ?: '-',
+                ];
+            })->values(),
+        ]);
     }
 
     public function storePayment(Request $request, Customer $customer, CustomerPaymentService $payments, AuditLogger $audit)

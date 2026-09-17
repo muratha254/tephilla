@@ -419,6 +419,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/customers/template', [CustomerController::class, 'template'])->name('customers.template');
         Route::get('/customers/download', [CustomerController::class, 'download'])->name('customers.download');
         Route::get('/customers/statement', [CustomerController::class, 'statement'])->name('customers.statement');
+        Route::get('/customers/{customer}/payments', [CustomerController::class, 'payments'])->name('customers.payments');
     });
 
     Route::middleware('permission:customers.create')->group(function () {

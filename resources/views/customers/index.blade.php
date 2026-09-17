@@ -88,6 +88,13 @@
                                         Action <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-right sx-action-menu">
+                                        @if(! $customer->is_walk_in)
+                                            <li>
+                                                <a href="#" class="sx-view-customer-payments" data-url="{{ route('customers.payments', $customer) }}">
+                                                    <i class="fa fa-list-alt"></i> Payment History
+                                                </a>
+                                            </li>
+                                        @endif
                                         @if(($canPay ?? false) && ! $customer->is_walk_in && $customer->creditAmount() > 0)
                                             <li>
                                                 <a href="#" class="sx-open-customer-pay"
@@ -125,6 +132,47 @@
 <form id="sx-writeoff-form" method="post" action="{{ route('customers.write-off') }}" class="hidden">
     @csrf
 </form>
+
+<div class="modal fade" id="sx-customer-payments-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content sx-conversion-modal">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-list-alt"></i> Customer Payment History</h4>
+            </div>
+            <div class="modal-body">
+                <div class="sx-po-pay-meta">
+                    <div><span>Customer</span> <strong id="sx-cu-hist-name">-</strong></div>
+                    <div><span>Phone</span> <strong id="sx-cu-hist-phone">-</strong></div>
+                    <div><span>Paid Total</span> <strong id="sx-cu-hist-paid">0.00</strong></div>
+                    <div><span>Outstanding</span> <strong id="sx-cu-hist-due">0.00</strong></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered sx-gold-table" width="100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Payment No</th>
+                                <th>Date</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th>Applied To</th>
+                                <th>Amount</th>
+                                <th>Received by</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sx-cu-hist-rows">
+                            <tr><td colspan="8">No payments found.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="sx-form-actions">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if($canPay ?? false)
 <div class="modal fade" id="sx-customer-pay-modal" tabindex="-1" role="dialog">
@@ -366,6 +414,42 @@
         $('#sx-customer-pay-form').find('textarea[name="notes"]').val('');
         $('#sx-customer-pay-form').find('input[name="paid_at"]').val(@json(now()->toDateString()));
         $('#sx-customer-pay-modal').modal('show');
+    });
+
+    $(document).on('click', '.sx-view-customer-payments', function (e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        $('#sx-cu-hist-rows').html('<tr><td colspan="8">Loading...</td></tr>');
+        $('#sx-customer-payments-modal').modal('show');
+        $.ajax({
+            url: url,
+            headers: { 'Accept': 'application/json' }
+        }).done(function (data) {
+            $('#sx-cu-hist-name').text(data.name || '-');
+            $('#sx-cu-hist-phone').text(data.phone || '-');
+            $('#sx-cu-hist-paid').text(data.paid_total || '0.00');
+            $('#sx-cu-hist-due').text(data.outstanding || '0.00');
+            if (!data.payments || !data.payments.length) {
+                $('#sx-cu-hist-rows').html('<tr><td colspan="8">No payments found.</td></tr>');
+                return;
+            }
+            var html = '';
+            data.payments.forEach(function (row, i) {
+                html += '<tr>'
+                    + '<td>' + (i + 1) + '</td>'
+                    + '<td>' + (row.number || '-') + '</td>'
+                    + '<td>' + (row.date || '-') + '</td>'
+                    + '<td>' + (row.method || '-') + '</td>'
+                    + '<td>' + (row.reference || '-') + '</td>'
+                    + '<td>' + (row.applied_to || '-') + '</td>'
+                    + '<td>' + (row.amount || '0.00') + '</td>'
+                    + '<td>' + (row.user || '-') + '</td>'
+                    + '</tr>';
+            });
+            $('#sx-cu-hist-rows').html(html);
+        }).fail(function () {
+            $('#sx-cu-hist-rows').html('<tr><td colspan="8">Could not load payment history.</td></tr>');
+        });
     });
 })(jQuery);
 </script>
