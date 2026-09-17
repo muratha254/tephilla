@@ -105,12 +105,13 @@
         <div class="pos-cats" id="sx-pos-cats"></div>
         <div class="pos-grid-wrap">
             <div class="pos-grid" id="sx-pos-grid"></div>
-            <div class="pos-nav">
-                <button type="button" class="pos-nav-btn" id="sx-pos-prev" title="Previous"><i class="fa fa-arrow-left"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-next" title="Next"><i class="fa fa-arrow-right"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-ok" title="Refresh"><i class="fa fa-thumbs-up"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-cust-nav" title="Customer"><i class="fa fa-user"></i></button>
-                <button type="button" class="pos-nav-btn pos-nav-refresh" id="sx-pos-refresh"><i class="fa fa-refresh"></i></button>
+            <div class="pos-nav" id="sx-pos-nav">
+                <button type="button" class="pos-nav-btn" id="sx-pos-prev" title="Previous page" aria-label="Previous page"><i class="fa fa-arrow-left"></i></button>
+                <button type="button" class="pos-nav-btn" id="sx-pos-next" title="Next page" aria-label="Next page"><i class="fa fa-arrow-right"></i></button>
+                <button type="button" class="pos-nav-btn" id="sx-pos-ok" title="Reload items" aria-label="Reload items"><i class="fa fa-thumbs-up"></i></button>
+                <button type="button" class="pos-nav-btn" id="sx-pos-cust-nav" title="Add customer" aria-label="Add customer"><i class="fa fa-user"></i></button>
+                <div class="pos-page-indicator" id="sx-pos-page" aria-live="polite">1 / 1</div>
+                <button type="button" class="pos-nav-btn pos-nav-refresh" id="sx-pos-refresh" title="Refresh catalog" aria-label="Refresh catalog"><i class="fa fa-refresh"></i></button>
             </div>
         </div>
     </div>
@@ -384,29 +385,66 @@
         renderCart();
     }
 
-    function loadCatalog() {
-        $.getJSON(catalogUrl, { category_id: categoryId || '', page: page }).done(function (data) {
-            pages = data.pages || 1;
-            var cats = '<button type="button" class="pos-cat' + (!categoryId ? ' is-active' : '') + '" data-id="">All</button>';
-            (data.categories || []).forEach(function (cat) {
-                cats += '<button type="button" class="pos-cat' + (String(categoryId) === String(cat.id) ? ' is-active' : '') + '" data-id="' + cat.id + '">' + escapeHtml(cat.name) + '</button>';
-            });
-            $('#sx-pos-cats').html(cats);
-            var tiles = '';
-            (data.products || []).forEach(function (item) {
-                var empty = !(item.qty > 0);
-                tiles += '<button type="button" class="pos-tile' + (empty ? ' is-empty' : '') + '" data-item=\'' + JSON.stringify(item).replace(/'/g, '&#39;') + '\'>';
-                tiles += '<div class="pos-tile-meta">Qty: ' + item.qty + ' Price: ' + Number(item.price || 0).toFixed(0) + '</div>';
-                tiles += '<div class="pos-tile-icon">';
-                if (item.image) {
-                    tiles += '<img src="' + item.image + '" alt="">';
-                } else {
-                    tiles += '<span class="pos-no-photo"><i class="fa fa-camera"></i></span>';
+    function updateNavState() {
+        pages = Math.max(1, pages || 1);
+        page = Math.min(Math.max(1, page), pages);
+        $('#sx-pos-page').text(page + ' / ' + pages);
+        $('#sx-pos-prev').prop('disabled', page <= 1).toggleClass('is-disabled', page <= 1);
+        $('#sx-pos-next').prop('disabled', page >= pages).toggleClass('is-disabled', page >= pages);
+    }
+
+    function flashNav($btn) {
+        $btn.addClass('is-flash');
+        setTimeout(function () { $btn.removeClass('is-flash'); }, 280);
+    }
+
+    function loadCatalog(opts) {
+        opts = opts || {};
+        var $busy = $('#sx-pos-nav .pos-nav-btn');
+        $busy.addClass('is-busy');
+        return $.getJSON(catalogUrl, { category_id: categoryId || '', page: page })
+            .done(function (data) {
+                pages = data.pages || 1;
+                if (data.page) {
+                    page = data.page;
                 }
-                tiles += '</div><div class="pos-tile-name">' + escapeHtml(item.name) + '</div></button>';
+                updateNavState();
+                var cats = '<button type="button" class="pos-cat' + (!categoryId ? ' is-active' : '') + '" data-id="">All</button>';
+                (data.categories || []).forEach(function (cat) {
+                    cats += '<button type="button" class="pos-cat' + (String(categoryId) === String(cat.id) ? ' is-active' : '') + '" data-id="' + cat.id + '">' + escapeHtml(cat.name) + '</button>';
+                });
+                $('#sx-pos-cats').html(cats);
+                var tiles = '';
+                (data.products || []).forEach(function (item) {
+                    var empty = !(item.qty > 0);
+                    tiles += '<button type="button" class="pos-tile' + (empty ? ' is-empty' : '') + '" data-item=\'' + JSON.stringify(item).replace(/'/g, '&#39;') + '\'>';
+                    tiles += '<div class="pos-tile-meta">Qty: ' + item.qty + ' Price: ' + Number(item.price || 0).toFixed(0) + '</div>';
+                    tiles += '<div class="pos-tile-icon">';
+                    if (item.image) {
+                        tiles += '<img src="' + item.image + '" alt="">';
+                    } else {
+                        tiles += '<span class="pos-no-photo"><i class="fa fa-camera"></i></span>';
+                    }
+                    tiles += '</div><div class="pos-tile-name">' + escapeHtml(item.name) + '</div></button>';
+                });
+                $('#sx-pos-grid').html(tiles || '<div class="pos-empty">No items</div>');
+                if (opts.notify) {
+                    var $grid = $('#sx-pos-grid');
+                    $grid.addClass('is-reloaded');
+                    setTimeout(function () { $grid.removeClass('is-reloaded'); }, 450);
+                }
+            })
+            .fail(function (xhr) {
+                updateNavState();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Catalog failed',
+                    text: (xhr.responseJSON && xhr.responseJSON.message) || 'Could not load POS items.'
+                });
+            })
+            .always(function () {
+                $busy.removeClass('is-busy');
             });
-            $('#sx-pos-grid').html(tiles || '<div class="pos-empty">No items</div>');
-        });
     }
 
     $(document).on('click', '.pos-cat', function () {
@@ -414,13 +452,42 @@
         page = 1;
         loadCatalog();
     });
-    $('#sx-pos-prev').on('click', function () {
-        if (page > 1) { page -= 1; loadCatalog(); }
+    $(document).on('click', '#sx-pos-prev', function (e) {
+        e.preventDefault();
+        flashNav($(this));
+        if (page <= 1) {
+            return;
+        }
+        page -= 1;
+        loadCatalog();
     });
-    $('#sx-pos-next').on('click', function () {
-        if (page < pages) { page += 1; loadCatalog(); }
+    $(document).on('click', '#sx-pos-next', function (e) {
+        e.preventDefault();
+        flashNav($(this));
+        if (page >= pages) {
+            return;
+        }
+        page += 1;
+        loadCatalog();
     });
-    $('#sx-pos-refresh, #sx-pos-ok').on('click', loadCatalog);
+    $(document).on('click', '#sx-pos-refresh, #sx-pos-ok', function (e) {
+        e.preventDefault();
+        flashNav($(this));
+        if ($(this).is('#sx-pos-refresh') && $(this).find('i').length) {
+            $(this).find('i').addClass('fa-spin');
+            var $icon = $(this).find('i');
+            loadCatalog({ notify: true }).always(function () {
+                setTimeout(function () { $icon.removeClass('fa-spin'); }, 400);
+            });
+            return;
+        }
+        loadCatalog({ notify: true });
+    });
+    $(document).on('click', '#sx-pos-cust-nav', function (e) {
+        e.preventDefault();
+        flashNav($(this));
+        openCustomer();
+    });
 
     $(document).on('click', '.pos-tile', function () {
         var item = $(this).data('item');
@@ -514,7 +581,7 @@
         $('#sx-pos-customer-form')[0].reset();
         $('#sx-pos-customer-modal').modal('show');
     }
-    $('#sx-pos-add-cust, #sx-pos-cust, #sx-pos-cust-nav').on('click', openCustomer);
+    $('#sx-pos-add-cust, #sx-pos-cust').on('click', openCustomer);
     $('#sx-pos-customer-form').on('submit', function (e) {
         e.preventDefault();
         $.ajax({

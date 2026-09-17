@@ -2926,11 +2926,15 @@ body.pos-body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    width: 52px;
+    width: 56px;
     margin-left: 16px;
     padding-left: 12px;
     border-left: 1px solid #eee;
     flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+    align-self: stretch;
+    pointer-events: auto;
 }
 
 .pos-nav-btn {
@@ -2940,6 +2944,45 @@ body.pos-body {
     background: #f0f0f0;
     border-radius: 4px;
     color: #666;
+    cursor: pointer;
+    position: relative;
+    z-index: 6;
+    pointer-events: auto;
+    flex-shrink: 0;
+}
+
+.pos-nav-btn i {
+    pointer-events: none;
+}
+
+.pos-nav-btn:hover:not(:disabled):not(.is-disabled) {
+    background: #e4e4e4;
+}
+
+.pos-nav-btn.is-disabled,
+.pos-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.pos-nav-btn.is-busy {
+    opacity: 0.7;
+}
+
+.pos-nav-btn.is-flash {
+    box-shadow: inset 0 0 0 2px #3c8dbc;
+}
+
+.pos-page-indicator {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    text-align: center;
+    line-height: 1.2;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .pos-nav-refresh {
@@ -2950,6 +2993,21 @@ body.pos-body {
     height: 46px;
     border-radius: 4px;
     font-size: 18px;
+}
+
+.pos-nav-refresh:hover:not(:disabled) {
+    background: #008d4c;
+    color: #fff;
+}
+
+.pos-grid.is-reloaded {
+    animation: posGridFlash 0.45s ease;
+}
+
+@keyframes posGridFlash {
+    0% { outline: 2px solid transparent; }
+    35% { outline: 2px solid rgba(0, 166, 90, 0.55); }
+    100% { outline: 2px solid transparent; }
 }
 
 .pos-empty {
@@ -2964,7 +3022,18 @@ body.pos-body {
     .pos-left, .pos-right { width: 100%; height: auto; }
     .pos-wrap { height: auto; }
     .pos-cart-wrap { min-height: 220px; }
-    .pos-nav-refresh { margin-top: 16px; }
+    .pos-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: auto;
+        margin-left: 0;
+        margin-top: 12px;
+        padding-left: 0;
+        border-left: 0;
+        border-top: 1px solid #eee;
+        padding-top: 12px;
+    }
+    .pos-nav-refresh { margin-top: 0; }
 }
 
 .pos-pay-dialog {
