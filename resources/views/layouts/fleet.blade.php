@@ -10,7 +10,9 @@
     <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/bootstrap/dist/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-    <link rel="stylesheet" href="{{ asset('css/fleet-theme.css') }}?v=9">
+    <link rel="stylesheet" href="{{ asset('css/fleet-theme.css') }}?v=10">
+    <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=59">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     @if (! empty($fleetSetting))
     <style>
         :root {
@@ -31,7 +33,7 @@
     @endif
     @stack('css')
 </head>
-<body class="fleet-app">
+<body class="fleet-app sellix-app">
     <div class="fleet-wrapper">
         @include('layouts.fleet-sidebar')
 
@@ -45,6 +47,18 @@
                     {{ session('success') }}
                 </div>
                 @endif
+                @if(session('error'))
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ session('error') }}
+                </div>
+                @endif
+                @if($errors->any())
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ $errors->first() }}
+                </div>
+                @endif
 
                 @yield('content')
             </main>
@@ -53,6 +67,50 @@
 
     <script src="{{ asset('AdminLTE-2/bower_components/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ asset('AdminLTE-2/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.sxConfirmDelete = function (options) {
+            options = options || {};
+            return Swal.fire({
+                title: options.title || 'Are you sure?',
+                text: options.text || "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dd4b39',
+                cancelButtonColor: '#00a65a',
+                confirmButtonText: options.confirmText || 'Yes, delete it!',
+                cancelButtonText: options.cancelText || 'Cancel',
+                reverseButtons: true
+            }).then(function (result) {
+                return !!result.isConfirmed;
+            });
+        };
+
+        $(document).on('submit', 'form.sx-swal-delete', function (e) {
+            var form = this;
+            if (form.getAttribute('data-swal-ok') === '1') {
+                return true;
+            }
+            e.preventDefault();
+            window.sxConfirmDelete({ text: form.getAttribute('data-swal-text') || undefined }).then(function (ok) {
+                if (!ok) return;
+                form.setAttribute('data-swal-ok', '1');
+                HTMLFormElement.prototype.submit.call(form);
+            });
+        });
+
+        $(document).on('click', '.sx-swal-delete[data-url]', function (e) {
+            e.preventDefault();
+            var trigger = this;
+            var form = document.getElementById(trigger.getAttribute('data-form') || '');
+            if (!form) return;
+            window.sxConfirmDelete({ text: trigger.getAttribute('data-swal-text') || undefined }).then(function (ok) {
+                if (!ok) return;
+                form.action = trigger.getAttribute('data-url');
+                HTMLFormElement.prototype.submit.call(form);
+            });
+        });
+    </script>
     <script>
         (function () {
             var toggle = document.getElementById('fleet-sidebar-toggle');

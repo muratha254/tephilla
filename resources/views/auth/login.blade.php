@@ -1,34 +1,14 @@
 @extends('layouts.auth')
 
 @section('login')
-<div class="login-split">
-    <section class="login-split-brand">
-        <img
-            src="{{ asset('img/login-brand-bg.png') }}"
-            alt=""
-            class="login-brand-image"
-            aria-hidden="true"
-        >
-        <div class="login-brand-overlay" aria-hidden="true"></div>
-        <div class="login-brand-content">
-            <h1>{{ $systemName ?? fleet_system_name() }}</h1>
-            <p>
-                Advanced Fleet Management &amp; Tracking Solution.
-                Seamlessly manage your vehicles, drivers, and trips in one centralized platform.
-            </p>
-        </div>
-        <div class="login-brand-tags">Tracking &bull; Trips &bull; GPS Tracking</div>
-    </section>
+<img src="{{ asset('img/login-bg.jpg') }}" alt="" class="login-bg-image" aria-hidden="true">
 
-    <section class="login-split-form-wrap">
-        <div class="login-split-form">
-            <div class="login-logo">
-                <span class="login-logo-icon"><i class="fa fa-truck"></i></span>
-                <span class="login-logo-text">
-                    <span class="track">{{ $systemShortName ?? fleet_system_short_name() }}</span>
-                </span>
+<div class="login-shell">
+    <div class="login-card">
+        <div class="login-card-body">
+            <div class="login-logo" aria-label="Sellix POS">
+                <span class="login-logo-prime">Sellix</span><span class="login-logo-pos">POS</span>
             </div>
-            <p class="login-subtitle">Sign in to your dashboard</p>
 
             @if(!empty($dbUnavailable))
             <div class="login-alert login-alert-danger">
@@ -56,16 +36,16 @@
                 @csrf
 
                 <div class="login-field">
-                    <div class="login-input-wrap @error('email') has-error @enderror">
-                        <i class="fa fa-envelope-o"></i>
+                    <div class="login-input-group @error('email') has-error @enderror">
+                        <span class="login-input-addon"><i class="fa fa-user"></i></span>
                         <input
-                            type="email"
+                            type="text"
                             name="email"
                             value="{{ old('email') }}"
-                            placeholder="Email Address"
+                            placeholder="Username"
                             required
                             autofocus
-                            autocomplete="email"
+                            autocomplete="username"
                         >
                     </div>
                     @error('email')
@@ -74,8 +54,8 @@
                 </div>
 
                 <div class="login-field">
-                    <div class="login-input-wrap @error('password') has-error @enderror">
-                        <i class="fa fa-lock"></i>
+                    <div class="login-input-group @error('password') has-error @enderror">
+                        <span class="login-input-addon"><i class="fa fa-lock"></i></span>
                         <input
                             type="password"
                             name="password"
@@ -91,24 +71,36 @@
                     @enderror
                 </div>
 
-                <div class="login-options">
-                    <label class="login-remember">
-                        <input type="checkbox" name="remember">
-                        <span>Remember me</span>
-                    </label>
-                    <a href="#" class="login-forgot" onclick="return false;">Forgot Password?</a>
-                </div>
+                <a href="#" class="login-forgot" onclick="return false;">Forgot Password?</a>
 
                 <button type="submit" class="login-submit">
                     Sign In
-                    <i class="fa fa-arrow-right"></i>
+                    <i class="fa fa-sign-in"></i>
                 </button>
             </form>
-
-            <div class="login-footer">
-                &copy; {{ date('Y') }} {{ $systemName ?? fleet_system_name() }}. All rights reserved.
-            </div>
         </div>
-    </section>
+
+        <div class="login-card-footer">
+            <p>{{ optional($setting)->poweredByText() ?? 'Powered by Sellix POS' }}</p>
+            @if(optional($setting)->poweredByWebsite())
+            <p>
+                <a href="{{ $setting->poweredByWebsiteUrl() }}" target="_blank" rel="noopener">
+                    {{ $setting->poweredByWebsite() }}
+                </a>
+            </p>
+            @endif
+            @if(optional($setting)->poweredByEmail())
+            <p>
+                <a href="mailto:{{ $setting->poweredByEmail() }}">
+                    {{ $setting->poweredByEmail() }}
+                </a>
+            </p>
+            @endif
+        </div>
+    </div>
+
+    <p class="login-copyright">
+        &copy; {{ date('Y') }}. {{ optional($setting)->poweredByText() ?? 'Powered by Sellix POS' }}
+    </p>
 </div>
 @endsection

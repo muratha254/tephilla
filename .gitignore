@@ -1,6 +1,11 @@
 .env
 .env.*
 !.env.example
+production.env
+setup-live.php
+extract-deploy.php
+tmp-live-controller.php
+.phpunit.result.cache
 /node_modules
 /public/hot
 /public/storage

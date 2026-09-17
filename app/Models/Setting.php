@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use HasFactory;
+    use BelongsToCompany;
 
-    protected $table = 'setting';
-    protected $primaryKey = 'id_setting';
-    protected $guarded = [];
+    protected $fillable = [
+        'company_id',
+        'group',
+        'key',
+        'value',
+    ];
 }

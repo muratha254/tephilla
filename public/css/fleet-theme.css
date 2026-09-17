@@ -149,6 +149,39 @@ body.fleet-app {
     border-left-color: var(--fleet-accent);
 }
 
+.fleet-submenu > li.has-submenu > a {
+    position: relative;
+    padding-right: 28px;
+}
+
+.fleet-submenu > li.has-submenu > a .menu-caret {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    margin-top: -6px;
+    font-size: 12px;
+    opacity: .55;
+    transition: transform .2s ease;
+}
+
+.fleet-submenu > li.has-submenu.open > a .menu-caret {
+    transform: rotate(-90deg);
+}
+
+.fleet-submenu .fleet-submenu {
+    display: none;
+    background: rgba(0, 0, 0, .12);
+}
+
+.fleet-submenu > li.has-submenu.open > .fleet-submenu {
+    display: block;
+}
+
+.fleet-submenu .fleet-submenu a {
+    padding-left: 62px;
+    font-size: 12px;
+}
+
 .fleet-page-head {
     display: flex;
     align-items: flex-start;

@@ -85,6 +85,27 @@
                             <span class="help-block with-errors"></span>
                         </div>
                     </div>
+                    <hr>
+                    <h4 style="margin: 0 0 18px 0;">Login page footer</h4>
+                    <div class="form-group row">
+                        <label for="powered_by" class="col-lg-2 control-label">Powered By</label>
+                        <div class="col-lg-6">
+                            <input type="text" name="powered_by" class="form-control" id="powered_by" placeholder="Powered By REOPRIME SOLUTIONS LTD 254722555849">
+                            <span class="help-block">Shown at the bottom of the login card and copyright line.</span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="powered_by_website" class="col-lg-2 control-label">Website</label>
+                        <div class="col-lg-6">
+                            <input type="text" name="powered_by_website" class="form-control" id="powered_by_website" placeholder="www.reoprime.com">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="powered_by_email" class="col-lg-2 control-label">Email</label>
+                        <div class="col-lg-6">
+                            <input type="text" name="powered_by_email" class="form-control" id="powered_by_email" placeholder="info@gmail.com">
+                        </div>
+                    </div>
                 </div>
                 <div class="box-footer text-right">
                     <button type="button" class="btn btn-sm btn-flat btn-primary" id="save-settings-btn"><i class="fa fa-save"></i> Save Changes</button>
@@ -214,6 +235,9 @@
                 $('[name=alamat]').val(response.alamat);
                 $('[name=diskon]').val(response.diskon);
                 $('[name=tipe_nota]').val(response.tipe_nota);
+                $('[name=powered_by]').val(response.powered_by || '');
+                $('[name=powered_by_website]').val(response.powered_by_website || '');
+                $('[name=powered_by_email]').val(response.powered_by_email || '');
                 
                 // Always set driver_commission_rate, default to 0 if not set
                 let commissionRate = response.driver_commission_rate !== undefined ? response.driver_commission_rate : 0;

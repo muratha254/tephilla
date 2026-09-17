@@ -37,6 +37,12 @@ class SettingController extends Controller
             $setting->alamat = $request->alamat;
             $setting->diskon = $request->diskon;
             $setting->tipe_nota = $request->tipe_nota;
+
+            if (Schema::hasColumn('setting', 'powered_by')) {
+                $setting->powered_by = $request->input('powered_by');
+                $setting->powered_by_website = $request->input('powered_by_website');
+                $setting->powered_by_email = $request->input('powered_by_email');
+            }
             
             // Update driver commission rate - always set it, even if 0
             $commissionRate = $request->input('driver_commission_rate', 0);

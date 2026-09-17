@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\FleetSetting;
+use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class FleetSettingsController extends Controller
@@ -21,6 +23,7 @@ class FleetSettingsController extends Controller
             'activeMenu' => 'settings-general',
             'openMenu' => 'settings',
             'settings' => $settings,
+            'posSetting' => Setting::query()->first(),
             'dateFormats' => FleetSetting::dateFormatOptions(),
             'timezones' => FleetSetting::timezoneOptions(),
             'themePresets' => FleetSetting::themePresets(),
@@ -77,6 +80,9 @@ class FleetSettingsController extends Controller
             'mobile_app_name' => 'nullable|string|max:150',
             'mobile_android_url' => 'nullable|string|max:255',
             'mobile_ios_url' => 'nullable|string|max:255',
+            'powered_by' => 'nullable|string|max:255',
+            'powered_by_website' => 'nullable|string|max:255',
+            'powered_by_email' => 'nullable|string|max:255',
         ]);
 
         if ($request->boolean('remove_logo') && $settings->logo_path) {
@@ -187,6 +193,14 @@ class FleetSettingsController extends Controller
         $settings->save();
 
         FleetSetting::clearCached();
+
+        $posSetting = Setting::query()->first();
+        if ($posSetting && Schema::hasColumn('setting', 'powered_by')) {
+            $posSetting->powered_by = $data['powered_by'] ?? null;
+            $posSetting->powered_by_website = $data['powered_by_website'] ?? null;
+            $posSetting->powered_by_email = $data['powered_by_email'] ?? null;
+            $posSetting->save();
+        }
 
         return redirect()
             ->route('settings.general')

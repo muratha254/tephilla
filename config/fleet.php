@@ -12,8 +12,8 @@ return [
     |
     */
 
-    'system_name' => env('FLEET_SYSTEM_NAME', 'Fleet Management & Tracking Solution'),
+    'system_name' => env('FLEET_SYSTEM_NAME', 'Sellix POS'),
 
-    'system_short_name' => env('FLEET_SYSTEM_SHORT_NAME', 'Fleet Management'),
+    'system_short_name' => env('FLEET_SYSTEM_SHORT_NAME', 'Sellix POS'),
 
 ];

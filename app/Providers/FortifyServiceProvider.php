@@ -9,6 +9,7 @@ use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
@@ -49,6 +50,26 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot()
     {
         Fortify::loginView(fn () => view('auth.login'));
+
+        Fortify::authenticateUsing(function (Request $request) {
+            $login = $request->input(Fortify::username());
+
+            $user = User::query()
+                ->where(function ($query) use ($login) {
+                    $query->where('email', $login)->orWhere('username', $login);
+                })
+                ->first();
+
+            if (
+                $user
+                && $user->is_active
+                && Hash::check($request->password, $user->password)
+            ) {
+                $user->forceFill(['last_login_at' => now()])->save();
+
+                return $user;
+            }
+        });
 
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);

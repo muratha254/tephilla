@@ -91,6 +91,22 @@
                                 </label>
                             @endif
                         </div>
+                        <div class="fleet-settings-field fleet-settings-field-full">
+                            <label>Login page footer</label>
+                            <small class="fleet-settings-help">These lines appear on the login screen under the Sign In button.</small>
+                        </div>
+                        <div class="fleet-settings-field fleet-settings-field-full">
+                            <label for="powered_by">Powered By</label>
+                            <input type="text" id="powered_by" name="powered_by" class="fleet-settings-input" value="{{ old('powered_by', optional($posSetting)->powered_by) }}" placeholder="Powered By REOPRIME SOLUTIONS LTD 254722555849">
+                        </div>
+                        <div class="fleet-settings-field">
+                            <label for="powered_by_website">Website</label>
+                            <input type="text" id="powered_by_website" name="powered_by_website" class="fleet-settings-input" value="{{ old('powered_by_website', optional($posSetting)->powered_by_website) }}" placeholder="www.reoprime.com">
+                        </div>
+                        <div class="fleet-settings-field">
+                            <label for="powered_by_email">Email</label>
+                            <input type="text" id="powered_by_email" name="powered_by_email" class="fleet-settings-input" value="{{ old('powered_by_email', optional($posSetting)->powered_by_email) }}" placeholder="info@gmail.com">
+                        </div>
                     </div>
                 </div>
 

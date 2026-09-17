@@ -372,6 +372,7 @@ class FleetTripController extends Controller
             'activeMenu' => 'trip-list',
             'openMenu' => 'trips',
             'trip' => $trip,
+            'formOptions' => $this->formOptions(),
             'statuses' => FleetTrip::statusOptions(),
         ]));
     }
@@ -413,6 +414,10 @@ class FleetTripController extends Controller
         $validated['base_amount'] = $validated['base_amount'] ?? 0;
         $validated['tax_type'] = $validated['tax_type'] ?? 'No Tax';
         $this->applyCustomerFields($validated);
+
+        if (empty($validated['status'])) {
+            unset($validated['status']);
+        }
 
         $previousTotal = $trip->totalAmount();
         $previousCustomerId = $trip->fleet_customer_id;
@@ -462,7 +467,7 @@ class FleetTripController extends Controller
             'base_amount' => 'nullable|numeric|min:0',
             'tax_type' => 'nullable|string|max:50',
             'coupon_code' => 'nullable|string|max:50',
-            'status' => 'nullable|string|max:30',
+            'status' => 'nullable|in:' . implode(',', FleetTrip::allowedStatuses()),
         ]);
     }
 
@@ -656,7 +661,7 @@ class FleetTripController extends Controller
             'customers' => FleetCustomer::query()->where('status', 'Active')->orderBy('name')->get(),
             'billing_types' => ['Fixed', 'Per Tonne', 'Per KG', 'Per KM', 'Per Trip', 'Per Day', 'Per Hour', 'Per Litre', 'Per Bag'],
             'billing_unit_config' => FleetTrip::billingUnitConfig(),
-            'tax_types' => ['No Tax', 'GST 5%', 'GST 12%', 'GST 18%'],
+            'tax_types' => ['No Tax', 'VAT 16%'],
             'statuses' => array_keys(FleetTrip::statusOptions()),
             'vehicles' => FleetVehicle::query()->where('status', 'Active')->orderBy('name')->get(),
             'drivers' => FleetDriver::query()->where('status', 'Active')->orderBy('name')->get(),

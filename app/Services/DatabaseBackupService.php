@@ -5,22 +5,17 @@ namespace App\Services;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use Exception;
+use ZipArchive;
 
 class DatabaseBackupService
 {
     /**
-     * Create a database backup (schema + data) and store it in the specified location.
-     *
-     * @param  string  $tag  Optional tag to include in filename (e.g. 'manual' or 'auto')
-     * @param  string|null  $customPath  Optional custom path to save the backup file
      * @return array{filename:string, path:string}
-     *
-     * @throws \Exception
      */
-    public function createBackup(string $tag = 'manual', ?string $customPath = null): array
+    public function createBackup(string $tag = 'manual', ?string $customPath = null, ?string $createdBy = null): array
     {
         $connection = config('database.connections.mysql');
-        if (!$connection) {
+        if (! $connection) {
             throw new Exception('Database connection [mysql] not configured.');
         }
 
@@ -30,59 +25,32 @@ class DatabaseBackupService
         $host = $connection['host'] ?? '127.0.0.1';
         $port = $connection['port'] ?? '3306';
 
-        if (!$database || !$username) {
+        if (! $database || ! $username) {
             throw new Exception('Database name or username not set in configuration.');
         }
 
-        $timestamp = now()->format('Ymd_His');
-        $filename = sprintf('backup_%s_%s.sql', $tag, $timestamp);
+        $stamp = now()->format('Y-m-d-H-i-s');
+        $sqlName = 'backup-on-' . $stamp . '.sql';
+        $zipName = 'backup-on-' . $stamp . '.zip';
 
-        // If custom path is provided, save directly to that location
-        if ($customPath) {
-            // Ensure the directory exists
-            $directory = dirname($customPath);
-            if (!is_dir($directory)) {
-                if (!mkdir($directory, 0755, true)) {
-                    throw new Exception('Failed to create backup directory: ' . $directory);
-                }
-            }
+        Storage::disk('local')->makeDirectory('backups');
+        $sqlRelative = 'backups/' . $sqlName;
+        $sqlFullPath = Storage::disk('local')->path($sqlRelative);
 
-            // Use the custom path directly
-            $fullPath = $customPath;
-            if (!str_ends_with($fullPath, '.sql')) {
-                $fullPath = rtrim($fullPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
-            } else {
-                // If path ends with .sql, use it as the full filename
-                $fullPath = $customPath;
-                $filename = basename($fullPath);
-            }
-        } else {
-            // Default: save to storage/backups
-            $relativePath = "backups/{$filename}";
-            Storage::disk('local')->makeDirectory('backups');
-            $fullPath = Storage::disk('local')->path($relativePath);
-        }
-
-        // Allow overriding mysqldump binary via env to support Windows (e.g. C:\xampp\mysql\bin\mysqldump.exe)
         $dumpBinary = env('MYSQLDUMP_PATH');
-        if (empty($dumpBinary)) {
-            // Auto-detect XAMPP mysqldump on Windows
-            if (PHP_OS_FAMILY === 'Windows') {
-                $xamppPaths = [
-                    'C:\\xampp\\mysql\\bin\\mysqldump.exe',
-                    'C:\\laragon\\bin\\mysql\\mysql-8\\bin\\mysqldump.exe',
-                ];
-                foreach ($xamppPaths as $path) {
-                    if (file_exists($path)) {
-                        $dumpBinary = $path;
-                        break;
-                    }
+        if (empty($dumpBinary) && PHP_OS_FAMILY === 'Windows') {
+            foreach ([
+                'C:\\xampp\\mysql\\bin\\mysqldump.exe',
+                'C:\\laragon\\bin\\mysql\\mysql-8\\bin\\mysqldump.exe',
+            ] as $path) {
+                if (file_exists($path)) {
+                    $dumpBinary = $path;
+                    break;
                 }
             }
         }
         $dumpBinary = $dumpBinary ?: 'mysqldump';
 
-        // Build mysqldump process (captures output, then we save to file)
         $process = new Process([
             $dumpBinary,
             '--user=' . $username,
@@ -95,22 +63,47 @@ class DatabaseBackupService
             '--triggers',
             $database,
         ]);
-
-        $process->setTimeout(120);
+        $process->setTimeout(180);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             throw new Exception('Backup failed: ' . $process->getErrorOutput());
         }
 
-        $dump = $process->getOutput();
-        
-        // Write to file
-        if ($customPath) {
-            file_put_contents($fullPath, $dump);
-        } else {
-            Storage::disk('local')->put($relativePath, $dump);
+        Storage::disk('local')->put($sqlRelative, $process->getOutput());
+
+        $filename = $sqlName;
+        $fullPath = $sqlFullPath;
+
+        if (class_exists(ZipArchive::class)) {
+            $zipRelative = 'backups/' . $zipName;
+            $zipFullPath = Storage::disk('local')->path($zipRelative);
+            $zip = new ZipArchive();
+            if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                $zip->addFile($sqlFullPath, $sqlName);
+                $zip->close();
+                Storage::disk('local')->delete($sqlRelative);
+                $filename = $zipName;
+                $fullPath = $zipFullPath;
+            }
         }
+
+        if ($customPath) {
+            $directory = is_dir($customPath) ? $customPath : dirname($customPath);
+            if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+                throw new Exception('Failed to create backup directory: ' . $directory);
+            }
+            $dest = is_dir($customPath)
+                ? rtrim($customPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename
+                : $customPath;
+            copy($fullPath, $dest);
+        }
+
+        $this->writeMeta($filename, [
+            'created_by' => $createdBy ?: (auth()->user()->name ?? auth()->user()->username ?? 'System'),
+            'created_at' => now()->toDateTimeString(),
+            'tag' => $tag,
+        ]);
 
         return [
             'filename' => $filename,
@@ -119,9 +112,7 @@ class DatabaseBackupService
     }
 
     /**
-     * Get list of existing backups sorted by newest first.
-     *
-     * @return array<int, array{filename:string, path:string, size:int, datetime:\DateTimeInterface}>
+     * @return array<int, array{filename:string, path:string, size:int, datetime:\DateTimeInterface, created_by:string}>
      */
     public function listBackups(): array
     {
@@ -129,20 +120,57 @@ class DatabaseBackupService
         $backups = [];
 
         foreach ($files as $file) {
+            $name = basename($file);
+            if (str_ends_with($name, '.meta.json')) {
+                continue;
+            }
+
+            $meta = $this->readMeta($name);
             $backups[] = [
-                'filename' => basename($file),
+                'filename' => $name,
                 'path' => Storage::disk('local')->path($file),
                 'size' => Storage::disk('local')->size($file),
                 'datetime' => \Carbon\Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
+                'created_by' => $meta['created_by'] ?? 'System',
             ];
         }
 
-        // Newest first
-        usort($backups, function ($a, $b) {
-            return $b['datetime']->timestamp <=> $a['datetime']->timestamp;
-        });
+        usort($backups, fn ($a, $b) => $b['datetime']->timestamp <=> $a['datetime']->timestamp);
 
         return $backups;
     }
-}
 
+    public function deleteBackup(string $filename): bool
+    {
+        $filename = basename($filename);
+        $path = 'backups/' . $filename;
+        if (! Storage::disk('local')->exists($path)) {
+            return false;
+        }
+
+        Storage::disk('local')->delete($path);
+        Storage::disk('local')->delete('backups/' . $filename . '.meta.json');
+
+        return true;
+    }
+
+    private function writeMeta(string $filename, array $meta): void
+    {
+        Storage::disk('local')->put(
+            'backups/' . $filename . '.meta.json',
+            json_encode($meta, JSON_PRETTY_PRINT)
+        );
+    }
+
+    private function readMeta(string $filename): array
+    {
+        $path = 'backups/' . $filename . '.meta.json';
+        if (! Storage::disk('local')->exists($path)) {
+            return [];
+        }
+
+        $decoded = json_decode(Storage::disk('local')->get($path), true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+}

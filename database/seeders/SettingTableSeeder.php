@@ -23,6 +23,9 @@ class SettingTableSeeder extends Seeder
             'diskon' => 5,
             'path_logo' => '/img/logo.png',
             'path_kartu_member' => '/img/member.png',
+            'powered_by' => 'Powered By REOPRIME SOLUTIONS LTD 254722555849',
+            'powered_by_website' => 'www.reoprime.com',
+            'powered_by_email' => 'info@gmail.com',
         ]);
     }
 }

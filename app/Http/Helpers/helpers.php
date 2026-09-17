@@ -2,46 +2,59 @@
 
 function fleet_system_name(): string
 {
-    return (string) config('fleet.system_name', 'Fleet Management & Tracking Solution');
+    return (string) config('fleet.system_name', 'Sellix POS');
 }
 
 function fleet_system_short_name(): string
 {
-    return (string) config('fleet.system_short_name', 'Fleet Management');
+    return (string) config('fleet.system_short_name', 'Sellix POS');
 }
 
 function fleet_document_profile(string $type): array
 {
-    try {
-        return \App\Models\FleetSetting::current()->documentProfile($type);
-    } catch (\Throwable $e) {
-        $base = fleet_company_profile();
+    $base = fleet_company_profile();
 
-        return array_merge($base, [
-            'documentHeader' => '',
-            'documentFooter' => $base['invoiceFooter'] ?? '',
-            'documentHeaderImageUrl' => null,
-            'documentHeaderImagePdfPath' => null,
-            'hasDocumentHeaderImage' => false,
-            'documentFooterImageUrl' => null,
-            'documentFooterImagePdfPath' => null,
-            'hasDocumentFooterImage' => false,
-            'documentHeaderImageHeightMm' => null,
-            'documentFooterImageHeightMm' => null,
-            'documentHeaderImageHeightPt' => null,
-            'documentFooterImageHeightPt' => null,
-            'documentFooterIsCustom' => false,
-        ]);
-    }
+    return array_merge($base, [
+        'documentHeader' => '',
+        'documentFooter' => $base['invoiceFooter'] ?? '',
+        'documentHeaderImageUrl' => null,
+        'documentHeaderImagePdfPath' => null,
+        'hasDocumentHeaderImage' => false,
+        'documentFooterImageUrl' => null,
+        'documentFooterImagePdfPath' => null,
+        'hasDocumentFooterImage' => false,
+        'documentHeaderImageHeightMm' => null,
+        'documentFooterImageHeightMm' => null,
+        'documentHeaderImageHeightPt' => null,
+        'documentFooterImageHeightPt' => null,
+        'documentFooterIsCustom' => false,
+    ]);
 }
 
 function fleet_company_profile(): array
 {
     try {
-        return \App\Models\FleetSetting::current()->companyProfile();
+        $company = auth()->user()->company ?? \App\Models\Company::query()->orderBy('id')->first();
+        if (! $company) {
+            throw new RuntimeException('No company');
+        }
+
+        $logoUrl = $company->logo_path ? asset('storage/' . ltrim($company->logo_path, '/')) : null;
+
+        return [
+            'companyName' => $company->name,
+            'companyAddress' => $company->address ?: '-',
+            'companyPhone' => $company->phone ?: '-',
+            'companyEmail' => $company->email ?: '-',
+            'companyWebsite' => $company->website ?: '',
+            'companyTaxPin' => $company->tax_pin ?: '',
+            'invoiceFooter' => 'Thank you for your business.',
+            'logo_url' => $logoUrl,
+            'logo_pdf_path' => $company->logo_path ? storage_path('app/public/' . ltrim($company->logo_path, '/')) : null,
+        ];
     } catch (\Throwable $e) {
         return [
-            'companyName' => 'Your Company Name',
+            'companyName' => fleet_system_name(),
             'companyAddress' => '-',
             'companyPhone' => '-',
             'companyEmail' => '-',
@@ -54,20 +67,58 @@ function fleet_company_profile(): array
     }
 }
 
-function fleet_shared_view_data(int $notificationCount = 11): array
+function fleet_shared_view_data(int $notificationCount = 0): array
 {
-    $settings = \App\Models\FleetSetting::current();
-    $documentProfile = $settings->companyProfile();
+    $documentProfile = fleet_company_profile();
+    $branches = collect();
+    $branch = null;
+    $outOfStockNotifications = collect();
+    $resolvedNotificationCount = $notificationCount;
+
+    try {
+        if (auth()->check()) {
+            $user = auth()->user();
+            $branches = \App\Models\Branch::query()->where('is_active', true)->orderBy('name')->get();
+
+            if (! $user->canSwitchBranches()) {
+                $branches = $branches->where('id', $user->branch_id)->values();
+            }
+
+            $currentId = session('current_branch_id', $user->branch_id);
+            if (! $user->canSwitchBranches()) {
+                $currentId = $user->branch_id;
+            }
+            $branch = $branches->firstWhere('id', $currentId) ?: $branches->first();
+
+            $canSeeStockAlerts = $user->hasPermission('inventory.view')
+                || $user->hasPermission('products.view')
+                || $user->hasPermission('pos.view');
+
+            if ($canSeeStockAlerts && $branch) {
+                $alerts = app(\App\Services\StockAlertService::class);
+                $resolvedNotificationCount = $alerts->outOfStockCount((int) $branch->id);
+                $outOfStockNotifications = $alerts->outOfStock((int) $branch->id, 8);
+            }
+        }
+    } catch (\Throwable $e) {
+        $branches = collect();
+        $branch = null;
+        $outOfStockNotifications = collect();
+        $resolvedNotificationCount = $notificationCount;
+    }
 
     return [
-        'companyName' => fleet_system_name(),
+        'companyName' => $documentProfile['companyName'] ?? fleet_system_name(),
         'systemName' => fleet_system_name(),
         'systemShortName' => fleet_system_short_name(),
         'documentCompanyProfile' => $documentProfile,
         'companyProfile' => $documentProfile,
-        'companyLogoUrl' => null,
-        'notificationCount' => $notificationCount,
-        'fleetSetting' => $settings,
+        'companyLogoUrl' => $documentProfile['logo_url'] ?? null,
+        'notificationCount' => $resolvedNotificationCount,
+        'outOfStockNotifications' => $outOfStockNotifications,
+        'fleetSetting' => null,
+        'branches' => $branches,
+        'branch' => $branch,
     ];
 }
 

@@ -1,0 +1,102 @@
+@extends('layouts.fleet')
+
+@section('title', 'Sales Commission')
+
+@section('content')
+@include('layouts.partials.page-header', [
+    'title' => 'Sales Commission',
+    'backUrl' => route('dashboard'),
+    'breadcrumbs' => [
+        ['label' => 'Home', 'url' => route('dashboard'), 'icon' => 'fa-home'],
+        ['label' => 'Sales Commission'],
+    ],
+])
+
+<div class="sx-acc-card">
+    <div class="sx-acc-card-head"><i class="fa fa-folder"></i> Select Filters to Generate Report</div>
+    <div class="sx-acc-card-body">
+        <form method="get" action="{{ route('reports.sales.commission') }}" class="sx-acc-filter">
+            <input type="hidden" name="show" value="1">
+            <div class="row">
+                <div class="col-md-6"><div class="form-group"><label>From Date</label><input type="date" name="from" class="form-control" value="{{ $from }}" required></div></div>
+                <div class="col-md-6"><div class="form-group"><label>To Date</label><input type="date" name="to" class="form-control" value="{{ $to }}" required></div></div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <select name="product_id" class="form-control">
+                            <option value="">-Select-</option>
+                            @foreach($products as $product)
+                                <option value="{{ $product->id }}" @if((string) ($filters['product_id'] ?? '') === (string) $product->id) selected @endif>{{ $product->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Employee</label>
+                        <select name="user_id" class="form-control">
+                            <option value="">-Select-</option>
+                            @foreach($staff as $member)
+                                <option value="{{ $member->id }}" @if((string) ($filters['user_id'] ?? '') === (string) $member->id) selected @endif>{{ $member->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="sx-form-actions">
+                <button type="submit" class="btn btn-success">Show</button>
+                <a href="{{ route('dashboard') }}" class="btn btn-warning">Close</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="sx-acc-card">
+    <div class="sx-acc-result-head">
+        <span>Sales Commission Report</span>
+        @if($generated)
+            <div>
+                <button type="button" class="btn btn-warning btn-sm" id="sx-com-print"><i class="fa fa-file-pdf-o"></i> Export Pdf</button>
+                <button type="button" class="btn btn-info btn-sm" id="sx-com-excel">Excel</button>
+            </div>
+        @endif
+    </div>
+    <div class="sx-acc-card-body">
+        @if($generated)
+            <div class="table-responsive">
+                <table class="table table-bordered sx-gold-table" id="sx-com-table">
+                    <thead>
+                        <tr><th colspan="9" class="text-center">SALES COMMISSION REPORT</th></tr>
+                        <tr>
+                            <th>#</th><th>Branch</th><th>Invoice Number</th><th>Sales Date</th><th>Item Name</th>
+                            <th class="text-right">Qty Sold</th><th class="text-right">Sales Price</th>
+                            <th class="text-right">Discount</th><th class="text-right">Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($rows as $row)
+                            <tr>
+                                <td>{{ $row['index'] }}</td>
+                                <td>{{ $row['branch'] }}</td>
+                                <td>{{ $row['invoice'] }}</td>
+                                <td>{{ $row['sales_date'] }}</td>
+                                <td>{{ $row['item'] }}</td>
+                                <td class="text-right">{{ number_format($row['qty'], 2) }}</td>
+                                <td class="text-right">{{ number_format($row['price'], 2) }}</td>
+                                <td class="text-right">{{ number_format($row['discount'], 2) }}</td>
+                                <td class="text-right">{{ number_format($row['commission'], 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="9">No records found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+</div>
+@endsection
+
+@if($generated)
+@include('reports.summary.partials.export-scripts', ['tableId' => 'sx-com-table', 'printId' => 'sx-com-print', 'excelId' => 'sx-com-excel', 'title' => 'Sales Commission Report', 'filename' => 'sales-commission'])
+@endif
