@@ -4,6 +4,7 @@
             <i class="fa fa-bars"></i>
         </button>
 
+        @if(empty($hideWorkspaceChrome) && empty($ownerConsole))
         <div class="dropdown" style="display:inline-block;">
             <button type="button" class="sx-header-btn dropdown-toggle" data-toggle="dropdown">
                 +Links
@@ -18,6 +19,7 @@
                 <li><a href="#">Expense</a></li>
             </ul>
         </div>
+        @endif
     </div>
 
     <div class="fleet-topbar-right">
@@ -40,14 +42,16 @@
             @endif
         @endif
 
+        @if(empty($hideWorkspaceChrome) && empty($ownerConsole))
         <a href="{{ route('pos.index') }}" class="sx-header-btn" title="POS">
             <i class="fa fa-shopping-cart"></i> POS
         </a>
+        @endif
 
         @php
             $stockAlertCount = (int) ($notificationCount ?? 0);
             $stockAlertItems = $outOfStockNotifications ?? collect();
-            $canOpenStockAlert = auth()->check() && (
+            $canOpenStockAlert = empty($ownerConsole) && empty($hideWorkspaceChrome) && auth()->check() && (
                 auth()->user()->hasPermission('inventory.view')
                 || auth()->user()->hasPermission('products.view')
                 || auth()->user()->hasPermission('pos.view')
@@ -91,9 +95,15 @@
             </div>
         @endif
 
+        @if(!empty($ownerConsole))
+        <a href="{{ route('owner.dashboard') }}" class="sx-header-btn {{ ($activeMenu ?? '') === 'owner.dashboard' ? 'is-active' : '' }}">
+            Owner
+        </a>
+        @elseif(empty($hideWorkspaceChrome))
         <a href="{{ route('dashboard') }}" class="sx-header-btn {{ ($activeMenu ?? '') === 'dashboard' ? 'is-active' : '' }}">
             Dashboard
         </a>
+        @endif
         <form action="{{ route('logout') }}" method="post" style="display:inline;margin:0;">
             @csrf
             <button type="submit" class="sx-logout-btn">LOGOUT</button>

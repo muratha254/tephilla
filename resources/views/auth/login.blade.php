@@ -71,7 +71,10 @@
                     @enderror
                 </div>
 
-                <a href="#" class="login-forgot" onclick="return false;">Forgot Password?</a>
+                <div class="login-links">
+                    <a href="#" class="login-forgot" onclick="return false;">Forgot Password?</a>
+                    <a href="{{ route('register') }}" class="login-signup">Create account</a>
+                </div>
 
                 <button type="submit" class="login-submit">
                     Sign In

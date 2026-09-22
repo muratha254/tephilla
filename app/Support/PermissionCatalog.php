@@ -10,6 +10,8 @@ class PermissionCatalog
 
 {
 
+    public const SYSTEM_OWNER = 'system_owner';
+
     public const SUPER_ADMIN = 'super_admin';
 
     public const COMPANY_ADMIN = 'company_admin';

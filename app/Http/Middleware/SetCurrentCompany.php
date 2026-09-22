@@ -22,6 +22,15 @@ class SetCurrentCompany
             }
 
             $user->loadMissing(['role.permissions', 'company', 'branch']);
+
+            if ($user->isSystemOwner()) {
+                return $next($request);
+            }
+
+            if (! $user->company_id) {
+                return $next($request);
+            }
+
             app()->instance('currentCompanyId', (int) $user->company_id);
 
             $branchId = $request->session()->get('current_branch_id', $user->branch_id);

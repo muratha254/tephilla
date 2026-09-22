@@ -24,6 +24,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('subscription:sync-status')
+            ->dailyAt('00:15')
+            ->timezone('Africa/Nairobi')
+            ->withoutOverlapping();
+
         // Spatie backups: database-only, every 6 hours, keep retention via config.
         $spatieBackupRun = $schedule
             ->command('backup:run --only-db --disable-notifications')

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\SubscriptionLimitException;
 use App\Models\Branch;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\SubscriptionLimitGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -23,18 +25,27 @@ class UserManagementController extends Controller
             ->orderBy('name')
             ->get();
 
+        $usage = $this->subscriptionUsage();
+
         return view('users.index', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'users.index',
             'users' => $users,
             'canCreate' => auth()->user()->hasPermission('users.create'),
             'canUpdate' => auth()->user()->hasPermission('users.update'),
             'canDelete' => auth()->user()->hasPermission('users.delete'),
+            'subscriptionUsage' => $usage,
+            'atUserLimit' => $this->atUserLimit($usage),
         ]));
     }
 
     public function create()
     {
         $this->authorizePermission('users.create');
+
+        $usage = $this->subscriptionUsage();
+        if ($this->atUserLimit($usage)) {
+            return redirect()->route('users.index')->with('error', $this->userLimitMessage($usage));
+        }
 
         return view('users.form', array_merge(fleet_shared_view_data(), $this->formData(new User([
             'is_active' => true,
@@ -47,6 +58,15 @@ class UserManagementController extends Controller
     public function store(Request $request, AuditLogger $audit)
     {
         $this->authorizePermission('users.create');
+
+        $company = auth()->user()->company;
+        try {
+            if ($company) {
+                app(SubscriptionLimitGuard::class)->assertCanCreateUser($company);
+            }
+        } catch (SubscriptionLimitException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         $data = $this->validated($request);
         $user = User::query()->create([
@@ -178,8 +198,12 @@ class UserManagementController extends Controller
     {
         $companyId = auth()->user()->company_id;
 
+        $usage = $this->subscriptionUsage();
+
         return [
             'user' => $user,
+            'subscriptionUsage' => $usage,
+            'atUserLimit' => $this->atUserLimit($usage),
             'branches' => Branch::query()
                 ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
                 ->where('is_active', true)
@@ -196,5 +220,26 @@ class UserManagementController extends Controller
     {
         $companyId = auth()->user()->company_id;
         abort_if($companyId && (int) $user->company_id !== (int) $companyId, 404);
+    }
+
+    private function subscriptionUsage(): array
+    {
+        $company = auth()->user()->company;
+
+        return $company
+            ? app(SubscriptionLimitGuard::class)->usage($company)
+            : ['users' => 0, 'max_users' => null, 'branches' => 0, 'max_branches' => null];
+    }
+
+    private function atUserLimit(array $usage): bool
+    {
+        return ! empty($usage['max_users']) && (int) $usage['users'] >= (int) $usage['max_users'];
+    }
+
+    private function userLimitMessage(array $usage): string
+    {
+        $max = (int) ($usage['max_users'] ?? 0);
+
+        return 'Your current subscription allows a maximum of '.$max.' users. Please upgrade your subscription or contact the System Owner.';
     }
 }

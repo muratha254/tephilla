@@ -9,10 +9,13 @@ use App\Models\Permission;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\Role;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\AccountingCatalog;
 use App\Services\SettingsService;
 use App\Support\PermissionCatalog;
+use App\Support\SubscriptionCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -149,7 +152,39 @@ trait CreatesSellixWorld
 
         app(SettingsService::class)->set($this->company->id, 'loyalty_points_rate', '0.01', 'loyalty');
 
+        $this->seedTestSubscription();
+
         app()->instance('currentBranchId', $this->branch->id);
+    }
+
+    protected function seedTestSubscription(): void
+    {
+        $plan = SubscriptionPlan::query()->firstOrCreate(
+            ['slug' => 'enterprise'],
+            [
+                'name' => 'Enterprise',
+                'description' => 'Test plan',
+                'price' => 0,
+                'billing_period' => SubscriptionCatalog::PERIOD_ANNUALLY,
+                'max_users' => null,
+                'max_branches' => null,
+                'features' => SubscriptionCatalog::allFeatureKeys(),
+                'is_active' => true,
+                'sort_order' => 99,
+            ]
+        );
+
+        Subscription::query()->updateOrCreate(
+            ['company_id' => $this->company->id],
+            [
+                'subscription_plan_id' => $plan->id,
+                'status' => SubscriptionCatalog::STATUS_ACTIVE,
+                'starts_at' => now()->toDateString(),
+                'expires_at' => now()->addYear()->toDateString(),
+            ]
+        );
+
+        $this->company->unsetRelation('subscription');
     }
 
     protected function makeUser(string $name, string $email, string $username, string $roleName): User

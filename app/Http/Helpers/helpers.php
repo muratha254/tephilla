@@ -34,7 +34,11 @@ function fleet_document_profile(string $type): array
 function fleet_company_profile(): array
 {
     try {
-        $company = auth()->user()->company ?? \App\Models\Company::query()->orderBy('id')->first();
+        $user = auth()->user();
+        if ($user && method_exists($user, 'isSystemOwner') && $user->isSystemOwner()) {
+            throw new RuntimeException('System owner has no tenant profile');
+        }
+        $company = optional($user)->company ?? \App\Models\Company::query()->orderBy('id')->first();
         if (! $company) {
             throw new RuntimeException('No company');
         }
@@ -78,26 +82,30 @@ function fleet_shared_view_data(int $notificationCount = 0): array
     try {
         if (auth()->check()) {
             $user = auth()->user();
-            $branches = \App\Models\Branch::query()->where('is_active', true)->orderBy('name')->get();
+            if (method_exists($user, 'isSystemOwner') && $user->isSystemOwner()) {
+                $branches = collect();
+            } else {
+                $branches = \App\Models\Branch::query()->where('is_active', true)->orderBy('name')->get();
 
-            if (! $user->canSwitchBranches()) {
-                $branches = $branches->where('id', $user->branch_id)->values();
-            }
+                if (! $user->canSwitchBranches()) {
+                    $branches = $branches->where('id', $user->branch_id)->values();
+                }
 
-            $currentId = session('current_branch_id', $user->branch_id);
-            if (! $user->canSwitchBranches()) {
-                $currentId = $user->branch_id;
-            }
-            $branch = $branches->firstWhere('id', $currentId) ?: $branches->first();
+                $currentId = session('current_branch_id', $user->branch_id);
+                if (! $user->canSwitchBranches()) {
+                    $currentId = $user->branch_id;
+                }
+                $branch = $branches->firstWhere('id', $currentId) ?: $branches->first();
 
-            $canSeeStockAlerts = $user->hasPermission('inventory.view')
-                || $user->hasPermission('products.view')
-                || $user->hasPermission('pos.view');
+                $canSeeStockAlerts = $user->hasPermission('inventory.view')
+                    || $user->hasPermission('products.view')
+                    || $user->hasPermission('pos.view');
 
-            if ($canSeeStockAlerts && $branch) {
-                $alerts = app(\App\Services\StockAlertService::class);
-                $resolvedNotificationCount = $alerts->outOfStockCount((int) $branch->id);
-                $outOfStockNotifications = $alerts->outOfStock((int) $branch->id, 8);
+                if ($canSeeStockAlerts && $branch) {
+                    $alerts = app(\App\Services\StockAlertService::class);
+                    $resolvedNotificationCount = $alerts->outOfStockCount((int) $branch->id);
+                    $outOfStockNotifications = $alerts->outOfStock((int) $branch->id, 8);
+                }
             }
         }
     } catch (\Throwable $e) {
@@ -119,7 +127,36 @@ function fleet_shared_view_data(int $notificationCount = 0): array
         'fleetSetting' => null,
         'branches' => $branches,
         'branch' => $branch,
+        'subscriptionWarning' => (auth()->check() && ! auth()->user()->isSystemOwner())
+            ? app(\App\Services\FeatureAccess::class)->warningMessage()
+            : null,
     ];
+}
+
+function subscription_allows(string $feature): bool
+{
+    try {
+        return app(\App\Services\FeatureAccess::class)->allows($feature);
+    } catch (\Throwable $e) {
+        return false;
+    }
+}
+
+function subscription_status_class(string $status): string
+{
+    $map = [
+        'pending_approval' => 'sx-sub-soon',
+        'rejected' => 'sx-sub-expired',
+        'trial' => 'sx-sub-trial',
+        'active' => 'sx-sub-active',
+        'expiring_soon' => 'sx-sub-soon',
+        'expired' => 'sx-sub-expired',
+        'suspended' => 'sx-sub-suspended',
+        'cancelled' => 'sx-sub-cancelled',
+        'deactivated' => 'sx-sub-expired',
+    ];
+
+    return $map[$status] ?? 'sx-sub-expired';
 }
 
 function format_uang ($angka) {

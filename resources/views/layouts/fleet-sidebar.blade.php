@@ -42,7 +42,7 @@
     $usersOpen = in_array($active, ['users.index', 'users.create', 'users.logs', 'roles.index'], true)
         || strpos((string) $active, 'users') === 0
         || strpos((string) $active, 'roles') === 0;
-    $settingsOpen = strpos((string) $active, 'settings') === 0;
+    $settingsOpen = strpos((string) $active, 'settings') === 0 || $active === 'billing.index';
 
     $menu = [
         [
@@ -57,7 +57,7 @@
             'label' => 'Items/Products',
             'icon' => 'fa-cubes',
             'url' => '#',
-            'show' => $can('products.view'),
+            'show' => $can('products.view') || $can('inventory.view'),
             'open' => $productOpen,
             'children' => [
                 ['key' => 'products.create', 'label' => 'New Item', 'icon' => 'fa-plus', 'url' => route('products.create'), 'show' => $can('products.create')],
@@ -148,21 +148,21 @@
             'label' => 'Accounting',
             'icon' => 'fa-book',
             'url' => '#',
-            'show' => $can('accounting.view') || $can('accounting.manage') || $can('payments.view') || $can('reports.view'),
+            'show' => $can('accounting.view') || $can('accounting.manage') || $can('payments.view'),
             'open' => $accountingOpen,
             'children' => [
-                ['key' => 'accounting.types', 'label' => 'Accounts Type', 'icon' => 'fa-align-justify', 'url' => route('accounting.types'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.sub-types', 'label' => 'Sub-Accounts Type', 'icon' => 'fa-list', 'url' => route('accounting.sub-types'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.chart', 'label' => 'Chart of Accounts', 'icon' => 'fa-list-ul', 'url' => route('accounting.chart'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.balances', 'label' => 'Accounts Balances', 'icon' => 'fa-camera', 'url' => route('accounting.balances'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.money', 'label' => 'Money', 'icon' => 'fa-camera', 'url' => route('accounting.money'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.journal', 'label' => 'Journal Entry', 'icon' => 'fa-file-text', 'url' => route('accounting.journal'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.profit-loss', 'label' => 'Profit & Loss', 'icon' => 'fa-balance-scale', 'url' => route('accounting.profit-loss'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.balance-sheet', 'label' => 'Balance Sheet', 'icon' => 'fa-balance-scale', 'url' => route('accounting.balance-sheet'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.trial-balance', 'label' => 'Trial Balance', 'icon' => 'fa-balance-scale', 'url' => route('accounting.trial-balance'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.combined-gl', 'label' => 'Combined GL', 'icon' => 'fa-balance-scale', 'url' => route('accounting.combined-gl'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.customers', 'label' => 'Customers Balances', 'icon' => 'fa-balance-scale', 'url' => route('accounting.customers'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
-                ['key' => 'accounting.suppliers', 'label' => 'Suppliers Balances', 'icon' => 'fa-balance-scale', 'url' => route('accounting.suppliers'), 'show' => $can('accounting.view') || $can('payments.view') || $can('reports.view')],
+                ['key' => 'accounting.types', 'label' => 'Accounts Type', 'icon' => 'fa-align-justify', 'url' => route('accounting.types'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.sub-types', 'label' => 'Sub-Accounts Type', 'icon' => 'fa-list', 'url' => route('accounting.sub-types'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.chart', 'label' => 'Chart of Accounts', 'icon' => 'fa-list-ul', 'url' => route('accounting.chart'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.balances', 'label' => 'Accounts Balances', 'icon' => 'fa-camera', 'url' => route('accounting.balances'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.money', 'label' => 'Money', 'icon' => 'fa-camera', 'url' => route('accounting.money'), 'show' => $can('accounting.view') || $can('accounting.manage') || $can('payments.view')],
+                ['key' => 'accounting.journal', 'label' => 'Journal Entry', 'icon' => 'fa-file-text', 'url' => route('accounting.journal'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.profit-loss', 'label' => 'Profit & Loss', 'icon' => 'fa-balance-scale', 'url' => route('accounting.profit-loss'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.balance-sheet', 'label' => 'Balance Sheet', 'icon' => 'fa-balance-scale', 'url' => route('accounting.balance-sheet'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.trial-balance', 'label' => 'Trial Balance', 'icon' => 'fa-balance-scale', 'url' => route('accounting.trial-balance'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.combined-gl', 'label' => 'Combined GL', 'icon' => 'fa-balance-scale', 'url' => route('accounting.combined-gl'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.customers', 'label' => 'Customers Balances', 'icon' => 'fa-balance-scale', 'url' => route('accounting.customers'), 'show' => $can('accounting.view') || $can('accounting.manage')],
+                ['key' => 'accounting.suppliers', 'label' => 'Suppliers Balances', 'icon' => 'fa-balance-scale', 'url' => route('accounting.suppliers'), 'show' => $can('accounting.view') || $can('accounting.manage')],
             ],
         ],
         [
@@ -170,12 +170,12 @@
             'label' => 'Documents/Files',
             'icon' => 'fa-folder',
             'url' => '#',
-            'show' => $can('documents.view') || $can('documents.manage') || $can('settings.view') || $can('sales.view'),
+            'show' => $can('documents.view') || $can('documents.manage'),
             'open' => $documentsOpen,
             'children' => [
-                ['key' => 'documents.categories', 'label' => 'Files Category', 'icon' => 'fa-list', 'url' => route('documents.categories'), 'show' => $can('documents.view') || $can('settings.view') || $can('sales.view')],
-                ['key' => 'documents.create', 'label' => 'New File', 'icon' => 'fa-plus-square', 'url' => route('documents.create'), 'show' => $can('documents.manage') || $can('settings.company') || $can('sales.create')],
-                ['key' => 'documents.index', 'label' => 'Files List', 'icon' => 'fa-list', 'url' => route('documents.index'), 'show' => $can('documents.view') || $can('settings.view') || $can('sales.view')],
+                ['key' => 'documents.categories', 'label' => 'Files Category', 'icon' => 'fa-list', 'url' => route('documents.categories'), 'show' => $can('documents.view') || $can('documents.manage')],
+                ['key' => 'documents.create', 'label' => 'New File', 'icon' => 'fa-plus-square', 'url' => route('documents.create'), 'show' => $can('documents.manage')],
+                ['key' => 'documents.index', 'label' => 'Files List', 'icon' => 'fa-list', 'url' => route('documents.index'), 'show' => $can('documents.view') || $can('documents.manage')],
             ],
         ],
         [
@@ -183,14 +183,14 @@
             'label' => 'Manufacturing',
             'icon' => 'fa-industry',
             'url' => '#',
-            'show' => $can('products.view') || $can('inventory.view'),
+            'show' => ($can('products.view') || $can('inventory.view')) && subscription_allows('manufacturing'),
             'open' => $manufacturingOpen,
             'children' => [
-                ['key' => 'manufacturing.bom.create', 'label' => 'Create BOM', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.bom.create'), 'show' => $can('products.view')],
-                ['key' => 'manufacturing.bom', 'label' => 'BOM list', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.bom.index'), 'show' => $can('products.view')],
-                ['key' => 'manufacturing.production', 'label' => 'Production list', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.production.index'), 'show' => $can('inventory.adjust') || $can('products.view')],
-                ['key' => 'manufacturing.packaging.setups', 'label' => 'Packaging Setups', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.packaging.setups'), 'show' => $can('products.view')],
-                ['key' => 'manufacturing.packaging', 'label' => 'Packaging Module', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.packaging.index'), 'show' => $can('products.view')],
+                ['key' => 'manufacturing.bom.create', 'label' => 'Create BOM', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.bom.create'), 'show' => $can('products.view') && subscription_allows('manufacturing')],
+                ['key' => 'manufacturing.bom', 'label' => 'BOM list', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.bom.index'), 'show' => $can('products.view') && subscription_allows('manufacturing')],
+                ['key' => 'manufacturing.production', 'label' => 'Production list', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.production.index'), 'show' => ($can('inventory.adjust') || $can('products.view')) && subscription_allows('manufacturing')],
+                ['key' => 'manufacturing.packaging.setups', 'label' => 'Packaging Setups', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.packaging.setups'), 'show' => $can('products.view') && subscription_allows('manufacturing')],
+                ['key' => 'manufacturing.packaging', 'label' => 'Packaging Module', 'icon' => 'fa-hand-o-right', 'url' => route('manufacturing.packaging.index'), 'show' => $can('products.view') && subscription_allows('manufacturing')],
             ],
         ],
         [
@@ -198,7 +198,7 @@
             'label' => 'Human Resource',
             'icon' => 'fa-globe',
             'url' => '#',
-            'show' => $can('hr.view') || $can('users.view'),
+            'show' => $can('hr.view'),
             'open' => $hrOpen,
             'children' => [
                 ['key' => 'hr.dashboard', 'label' => 'Dashboard', 'icon' => 'fa-dashboard', 'url' => route('hr.dashboard'), 'show' => $can('users.view')],
@@ -440,6 +440,7 @@
             'open' => $settingsOpen,
             'children' => [
                 ['key' => 'settings.company', 'label' => 'Company Profile', 'icon' => 'fa-briefcase', 'url' => route('settings.company'), 'show' => $can('settings.view') || $can('settings.company')],
+                ['key' => 'billing.index', 'label' => 'Billing', 'icon' => 'fa-credit-card', 'url' => route('billing.index'), 'show' => $user->isCompanyAdmin() || $can('settings.view') || $can('settings.company')],
                 ['key' => 'settings.branches', 'label' => 'Manage Branch', 'icon' => 'fa-sitemap', 'url' => route('settings.branches'), 'show' => $can('settings.branches') || $can('branches.view') || $can('settings.view')],
                 ['key' => 'settings.general', 'label' => 'Site Settings', 'icon' => 'fa-shield', 'url' => route('settings.general'), 'show' => $can('settings.view') || $can('settings.company')],
                 ['key' => 'settings.tax', 'label' => 'Tax List', 'icon' => 'fa-percent', 'url' => route('settings.tax'), 'show' => $can('settings.view')],

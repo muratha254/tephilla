@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -60,16 +61,31 @@ class User extends Authenticatable
 
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class)->withoutGlobalScope('company');
+    }
+
+    public function isSystemOwner(): bool
+    {
+        $this->loadMissing('role');
+
+        return $this->role && $this->role->name === PermissionCatalog::SYSTEM_OWNER;
     }
 
     public function isSuperAdmin(): bool
     {
+        if ($this->isSystemOwner()) {
+            return false;
+        }
+
         return $this->role && $this->role->name === PermissionCatalog::SUPER_ADMIN;
     }
 
     public function isCompanyAdmin(): bool
     {
+        if ($this->isSystemOwner()) {
+            return false;
+        }
+
         return $this->role && in_array($this->role->name, [
             PermissionCatalog::SUPER_ADMIN,
             PermissionCatalog::COMPANY_ADMIN,
@@ -107,19 +123,26 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
-        if ($this->isSuperAdmin()) {
-            return true;
+        if ($this->isSystemOwner()) {
+            return Str::startsWith($permission, 'owner.');
         }
 
-        if (! $this->role) {
+        $granted = false;
+        if ($this->isSuperAdmin()) {
+            $granted = true;
+        } elseif ($this->role) {
+            if ($this->relationLoaded('role') && $this->role->relationLoaded('permissions')) {
+                $granted = $this->role->permissions->contains('name', $permission);
+            } else {
+                $granted = $this->role->permissions()->where('name', $permission)->exists();
+            }
+        }
+
+        if (! $granted) {
             return false;
         }
 
-        if ($this->relationLoaded('role') && $this->role->relationLoaded('permissions')) {
-            return $this->role->permissions->contains('name', $permission);
-        }
-
-        return $this->role->permissions()->where('name', $permission)->exists();
+        return app(\App\Services\FeatureAccess::class)->allowsPermission($permission, $this);
     }
 
     public function canAccessModule(string $module, string $action = 'view'): bool

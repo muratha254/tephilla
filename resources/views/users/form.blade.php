@@ -16,6 +16,13 @@
     ],
 ])
 
+@if(!$isEdit && !empty($subscriptionUsage['max_users']))
+    <div class="alert alert-info">
+        Your plan allows {{ (int) $subscriptionUsage['max_users'] }} users
+        ({{ (int) $subscriptionUsage['users'] }} in use).
+    </div>
+@endif
+
 <form class="sx-item-form" method="post" action="{{ $isEdit ? route('users.update', $user) : route('users.store') }}" enctype="multipart/form-data">
     @csrf
     @if($isEdit)

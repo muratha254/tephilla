@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Services\SubscriptionLimitGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -13,10 +14,14 @@ class BranchSettingsController extends Controller
     {
         abort_unless($this->canView(), 403);
 
+        $usage = $this->subscriptionUsage();
+
         return view('settings.branches.index', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'settings.branches',
             'branches' => Branch::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'canManage' => $this->canManage(),
+            'subscriptionUsage' => $usage,
+            'atBranchLimit' => $this->atBranchLimit($usage),
         ]));
     }
 
@@ -24,8 +29,15 @@ class BranchSettingsController extends Controller
     {
         abort_unless($this->canManage(), 403);
 
+        $usage = $this->subscriptionUsage();
+        if ($this->atBranchLimit($usage)) {
+            return redirect()->route('settings.branches')->with('error', $this->branchLimitMessage($usage));
+        }
+
         return view('settings.branches.form', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'settings.branches',
+            'subscriptionUsage' => $usage,
+            'atBranchLimit' => false,
             'branch' => new Branch([
                 'is_active' => true,
                 'list_on_login' => true,
@@ -39,6 +51,15 @@ class BranchSettingsController extends Controller
     public function store(Request $request)
     {
         abort_unless($this->canManage(), 403);
+
+        $company = auth()->user()->company;
+        try {
+            if ($company) {
+                app(\App\Services\SubscriptionLimitGuard::class)->assertCanCreateBranch($company);
+            }
+        } catch (\App\Exceptions\SubscriptionLimitException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         $data = $this->validated($request);
         $data['company_id'] = auth()->user()->company_id;
@@ -56,8 +77,12 @@ class BranchSettingsController extends Controller
     {
         abort_unless($this->canManage(), 403);
 
+        $usage = $this->subscriptionUsage();
+
         return view('settings.branches.form', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'settings.branches',
+            'subscriptionUsage' => $usage,
+            'atBranchLimit' => false,
             'branch' => $branch,
         ]));
     }
@@ -185,5 +210,26 @@ class BranchSettingsController extends Controller
             $user->hasPermission('settings.branches')
             || $user->hasPermission('branches.manage')
         );
+    }
+
+    private function subscriptionUsage(): array
+    {
+        $company = auth()->user()->company;
+
+        return $company
+            ? app(SubscriptionLimitGuard::class)->usage($company)
+            : ['users' => 0, 'max_users' => null, 'branches' => 0, 'max_branches' => null];
+    }
+
+    private function atBranchLimit(array $usage): bool
+    {
+        return ! empty($usage['max_branches']) && (int) $usage['branches'] >= (int) $usage['max_branches'];
+    }
+
+    private function branchLimitMessage(array $usage): string
+    {
+        $max = (int) ($usage['max_branches'] ?? 0);
+
+        return 'Your current subscription allows a maximum of '.$max.' shop'.($max === 1 ? '' : 's').'/branches. Please upgrade your subscription or contact the System Owner.';
     }
 }

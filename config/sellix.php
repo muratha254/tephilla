@@ -28,6 +28,27 @@ return [
 
     'number_padding' => 5,
 
+    'subscription_expiring_days' => 7,
+
+    'subscription_features' => [
+        'pos' => 'POS',
+        'products' => 'Products',
+        'inventory' => 'Inventory',
+        'sales' => 'Sales',
+        'invoices' => 'Invoices',
+        'purchases' => 'Purchases',
+        'suppliers' => 'Suppliers',
+        'customers' => 'Customers',
+        'payments' => 'Payments',
+        'quotations' => 'Quotations',
+        'expenses' => 'Expenses',
+        'accounting' => 'Accounting',
+        'documents' => 'Documents',
+        'hr' => 'Human resources',
+        'manufacturing' => 'Manufacturing',
+        'reports' => 'Reports',
+    ],
+
     'receipt_paper_sizes' => ['80mm', '58mm', 'a4'],
 
     'purchase_statuses' => [

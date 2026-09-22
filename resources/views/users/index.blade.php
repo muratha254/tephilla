@@ -20,10 +20,15 @@
 <div class="sx-box sx-items-card">
     <div class="sx-items-toolbar">
         <h3 class="sx-box-title" style="flex:none;margin:0;">Users List</h3>
-        @if($canCreate)
+        @if($canCreate && empty($atUserLimit))
             <a href="{{ route('users.create') }}" class="btn sx-btn-aqua"><i class="fa fa-plus"></i> New User</a>
         @endif
     </div>
+    @if(!empty($atUserLimit) && !empty($subscriptionUsage['max_users']))
+        <div class="alert alert-warning" style="margin:12px 16px 0;">
+            Your current subscription allows a maximum of {{ (int) $subscriptionUsage['max_users'] }} users. Please upgrade your subscription or contact the System Owner.
+        </div>
+    @endif
 
     <div class="sx-box-body sx-items-body">
         <div class="sx-dt-row">

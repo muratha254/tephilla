@@ -57,19 +57,75 @@ use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\SettingsBackupController;
 use App\Http\Controllers\SettingsAuditController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\Auth\RegisterBusinessController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\SubscriptionGateController;
+use App\Http\Controllers\Owner\OwnerDashboardController;
+use App\Http\Controllers\Owner\OwnerBusinessController;
+use App\Http\Controllers\Owner\OwnerPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
+    if (! auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    return auth()->user()->isSystemOwner()
+        ? redirect()->route('owner.dashboard')
+        : redirect()->route('dashboard');
 });
 
 Route::get('/login', function () {
     return view('auth.login');
 })->middleware('guest')->name('login');
 
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [RegisterBusinessController::class, 'businessForm'])->name('register');
+    Route::post('/register', [RegisterBusinessController::class, 'saveBusiness'])->name('register.business');
+    Route::get('/register/account', [RegisterBusinessController::class, 'accountForm'])->name('register.account');
+    Route::post('/register/account', [RegisterBusinessController::class, 'saveAccount'])->name('register.account.store');
+    Route::get('/register/plans', [RegisterBusinessController::class, 'plansForm'])->name('register.plans');
+    Route::post('/register/plans', [RegisterBusinessController::class, 'savePlan'])->name('register.plans.store');
+    Route::get('/register/review', [RegisterBusinessController::class, 'reviewForm'])->name('register.review');
+    Route::post('/register/submit', [RegisterBusinessController::class, 'submit'])->middleware('throttle:5,1')->name('register.submit');
+    Route::get('/register/submitted', [RegisterBusinessController::class, 'submitted'])->name('register.submitted');
+});
+
 Route::middleware('auth')->group(function () {
+    Route::get('/subscription/blocked', [SubscriptionGateController::class, 'blocked'])->name('subscription.blocked');
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('/billing/invoices/{invoice}', [BillingController::class, 'show'])->name('billing.invoices.show');
+
+    Route::middleware('owner')->prefix('owner')->name('owner.')->group(function () {
+        Route::get('/', [OwnerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/plans', [OwnerPlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create', [OwnerPlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans', [OwnerPlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit', [OwnerPlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}', [OwnerPlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [OwnerPlanController::class, 'destroy'])->name('plans.destroy');
+
+        Route::get('/businesses', [OwnerBusinessController::class, 'index'])->name('businesses.index');
+        Route::get('/businesses/create', [OwnerBusinessController::class, 'create'])->name('businesses.create');
+        Route::post('/businesses', [OwnerBusinessController::class, 'store'])->name('businesses.store');
+        Route::get('/businesses/{company}', [OwnerBusinessController::class, 'show'])->name('businesses.show');
+        Route::get('/businesses/{company}/edit', [OwnerBusinessController::class, 'edit'])->name('businesses.edit');
+        Route::put('/businesses/{company}', [OwnerBusinessController::class, 'update'])->name('businesses.update');
+        Route::post('/businesses/{company}/deactivate', [OwnerBusinessController::class, 'deactivate'])->name('businesses.deactivate');
+        Route::post('/businesses/{company}/activate-business', [OwnerBusinessController::class, 'activateBusiness'])->name('businesses.activate-business');
+        Route::post('/businesses/{company}/renew', [OwnerBusinessController::class, 'renew'])->name('businesses.renew');
+        Route::post('/businesses/{company}/extend', [OwnerBusinessController::class, 'extend'])->name('businesses.extend');
+        Route::post('/businesses/{company}/change-plan', [OwnerBusinessController::class, 'changePlan'])->name('businesses.change-plan');
+        Route::post('/businesses/{company}/suspend', [OwnerBusinessController::class, 'suspend'])->name('businesses.suspend');
+        Route::post('/businesses/{company}/activate', [OwnerBusinessController::class, 'activate'])->name('businesses.activate');
+        Route::post('/businesses/{company}/approve', [OwnerBusinessController::class, 'approve'])->name('businesses.approve');
+        Route::post('/businesses/{company}/reject', [OwnerBusinessController::class, 'reject'])->name('businesses.reject');
+        Route::post('/businesses/{company}/cancel', [OwnerBusinessController::class, 'cancel'])->name('businesses.cancel');
+        Route::post('/businesses/{company}/reset', [OwnerBusinessController::class, 'reset'])->name('businesses.reset');
+        Route::post('/businesses/{company}/payments', [OwnerBusinessController::class, 'payment'])->name('businesses.payment');
+        Route::post('/businesses/{company}/invoices', [OwnerBusinessController::class, 'invoice'])->name('businesses.invoice');
+    });
+
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware('permission:dashboard.view')
         ->name('dashboard');
@@ -530,7 +586,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/documents/{file}', [DocumentFileController::class, 'destroy'])
         ->middleware('permission:documents.manage')
         ->name('documents.destroy');
-    Route::middleware('permission:products.view')->group(function () {
+    Route::middleware(['permission:products.view', 'feature:manufacturing'])->group(function () {
         Route::get('/manufacturing/bom', [ManufacturingController::class, 'bomIndex'])->name('manufacturing.bom.index');
         Route::get('/manufacturing/bom/create', [ManufacturingController::class, 'bomCreate'])->name('manufacturing.bom.create');
         Route::post('/manufacturing/bom', [ManufacturingController::class, 'bomStore'])->name('manufacturing.bom.store');
@@ -546,7 +602,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/manufacturing/packaging', [ManufacturingController::class, 'packagingStore'])->name('manufacturing.packaging.store');
     });
 
-    Route::middleware('permission:inventory.adjust')->group(function () {
+    Route::middleware(['permission:inventory.adjust', 'feature:manufacturing'])->group(function () {
         Route::get('/manufacturing/production', [ManufacturingController::class, 'productionIndex'])->name('manufacturing.production.index');
         Route::get('/manufacturing/production/create', [ManufacturingController::class, 'productionCreate'])->name('manufacturing.production.create');
         Route::post('/manufacturing/production', [ManufacturingController::class, 'productionStore'])->name('manufacturing.production.store');

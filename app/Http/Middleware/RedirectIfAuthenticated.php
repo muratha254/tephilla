@@ -23,6 +23,11 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
+                $user = Auth::guard($guard)->user();
+                if ($user && method_exists($user, 'isSystemOwner') && $user->isSystemOwner()) {
+                    return redirect()->route('owner.dashboard');
+                }
+
                 return redirect(RouteServiceProvider::HOME);
             }
         }

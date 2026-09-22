@@ -23,6 +23,11 @@ trait BelongsToCompany
         });
 
         static::creating(function ($model) {
+            $attributes = $model->getAttributes();
+            if (array_key_exists('company_id', $attributes) && $attributes['company_id'] === null) {
+                return;
+            }
+
             if (! $model->company_id && app()->bound('currentCompanyId') && app('currentCompanyId')) {
                 $model->company_id = app('currentCompanyId');
             }

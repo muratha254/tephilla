@@ -20,10 +20,15 @@
 <div class="sx-box sx-items-card">
     <div class="sx-items-toolbar">
         <h3 class="sx-box-title" style="flex:none;margin:0;">Branch List</h3>
-        @if($canManage)
+        @if($canManage && empty($atBranchLimit))
             <a href="{{ route('settings.branches.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Add Branch</a>
         @endif
     </div>
+    @if(!empty($atBranchLimit) && !empty($subscriptionUsage['max_branches']))
+        <div class="alert alert-warning" style="margin:12px 16px 0;">
+            Your current subscription allows a maximum of {{ (int) $subscriptionUsage['max_branches'] }} shop{{ (int) $subscriptionUsage['max_branches'] === 1 ? '' : 's' }}/branches. Please upgrade your subscription or contact the System Owner.
+        </div>
+    @endif
 
     <div class="sx-box-body sx-items-body">
         <div class="sx-dt-row">

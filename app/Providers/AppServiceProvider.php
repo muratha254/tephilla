@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        view()->composer(['layouts.auth', 'auth.login'], function ($view) {
+        view()->composer(['layouts.auth', 'auth.login', 'auth.register', 'auth.register.*'], function ($view) {
             $view->with('setting', RuntimeSettings::forLogin());
             $view->with('companyName', fleet_system_name());
             $view->with('systemName', fleet_system_name());

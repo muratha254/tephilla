@@ -16,6 +16,13 @@
     ],
 ])
 
+@if(!$isEdit && !empty($subscriptionUsage['max_branches']))
+    <div class="alert alert-info">
+        Your plan allows {{ (int) $subscriptionUsage['max_branches'] }} shop{{ (int) $subscriptionUsage['max_branches'] === 1 ? '' : 's' }}/branches
+        ({{ (int) $subscriptionUsage['branches'] }} in use).
+    </div>
+@endif
+
 <form method="post" action="{{ $isEdit ? route('settings.branches.update', $branch) : route('settings.branches.store') }}" enctype="multipart/form-data" class="sx-item-form">
     @csrf
     @if($isEdit)

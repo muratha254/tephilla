@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
     <link rel="stylesheet" href="{{ asset('css/fleet-theme.css') }}?v=10">
-    <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=59">
+    <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=60">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     @if (! empty($fleetSetting))
     <style>
@@ -35,12 +35,17 @@
 </head>
 <body class="fleet-app sellix-app">
     <div class="fleet-wrapper">
-        @include('layouts.fleet-sidebar')
+        @include((!empty($ownerConsole)) ? 'layouts.owner-sidebar' : 'layouts.fleet-sidebar')
 
         <div class="fleet-main" id="fleet-main">
             @include('layouts.fleet-header')
 
             <main class="fleet-content">
+                @if(!empty($subscriptionWarning) && empty($hideWorkspaceChrome) && empty($ownerConsole))
+                <div class="alert alert-warning sx-sub-banner">
+                    <i class="fa fa-clock-o"></i> {{ $subscriptionWarning }}
+                </div>
+                @endif
                 @if(session('success'))
                 <div class="alert alert-success alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>

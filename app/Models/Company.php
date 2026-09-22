@@ -11,6 +11,7 @@ class Company extends Model
 
     protected $fillable = [
         'name',
+        'owner_name',
         'slug',
         'logo_path',
         'address',
@@ -61,5 +62,25 @@ class Company extends Model
     public function settings()
     {
         return $this->hasMany(Setting::class);
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    public function subscriptionHistory()
+    {
+        return $this->hasMany(SubscriptionHistory::class);
+    }
+
+    public function subscriptionInvoices()
+    {
+        return $this->hasMany(SubscriptionInvoice::class);
+    }
+
+    public function subscriptionPayments()
+    {
+        return $this->hasMany(SubscriptionPayment::class);
     }
 }

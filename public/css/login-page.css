@@ -55,6 +55,17 @@ body.login-prime-page {
     overflow: hidden;
 }
 
+.login-card-wide {
+    max-width: 440px;
+}
+
+.login-intro {
+    margin: -12px 0 20px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--prime-muted);
+}
+
 .login-card-body {
     padding: 42px 36px 22px;
 }
@@ -162,15 +173,41 @@ body.login-prime-page {
     color: var(--prime-error);
 }
 
-.login-forgot {
-    display: inline-block;
+.login-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin: 2px 0 12px;
+}
+
+.login-forgot,
+.login-signup {
+    display: inline-block;
     color: var(--prime-link);
     font-size: 13px;
     text-decoration: none;
 }
 
-.login-forgot:hover {
+.login-forgot:hover,
+.login-signup:hover {
+    text-decoration: underline;
+}
+
+.login-switch {
+    margin: 16px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--prime-muted);
+}
+
+.login-switch a {
+    color: var(--prime-link);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-switch a:hover {
     text-decoration: underline;
 }
 
@@ -235,6 +272,103 @@ body.login-prime-page {
     font-size: 12px;
     color: #1a1a1a;
     text-shadow: 0 0 8px rgba(255, 255, 255, .8);
+}
+
+.login-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+}
+
+.login-steps li {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #999;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 8px;
+}
+
+.login-steps li.is-current {
+    color: var(--prime-gold);
+    border-bottom-color: var(--prime-gold);
+}
+
+.login-plan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.login-plan-card {
+    display: block;
+    border: 1px solid var(--prime-border);
+    border-radius: 4px;
+    padding: 12px;
+    cursor: pointer;
+}
+
+.login-plan-card input {
+    margin: 0 6px 8px 0;
+}
+
+.login-plan-card strong {
+    display: block;
+    font-size: 15px;
+}
+
+.login-plan-price,
+.login-plan-desc,
+.login-plan-meta {
+    display: block;
+    font-size: 12px;
+    color: var(--prime-muted);
+    margin-top: 4px;
+}
+
+.login-plan-card.is-selected,
+.login-plan-card:has(input:checked) {
+    border-color: var(--prime-gold);
+    box-shadow: 0 0 0 1px var(--prime-gold);
+}
+
+.login-review h4 {
+    margin: 16px 0 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.login-review p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.login-submitted {
+    text-align: center;
+}
+
+.login-submitted h2 {
+    margin: 0 0 12px;
+}
+
+.login-submitted p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--prime-text);
+}
+
+@media (max-width: 640px) {
+    .login-plan-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 480px) {

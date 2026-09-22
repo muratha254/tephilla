@@ -3718,3 +3718,19 @@ body.sx-order-screen {
     color: #8a6d1d;
 }
 .sx-row-out-of-stock td { background: #fff5f5; }
+
+.sx-sub-banner { margin: 0 0 16px; }
+.sx-sub-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+.sx-sub-active { background: #dff0d8; color: #3c763d; }
+.sx-sub-trial { background: #d9edf7; color: #31708f; }
+.sx-sub-soon { background: #fcf8e3; color: #8a6d3b; }
+.sx-sub-expired, .sx-sub-cancelled { background: #f2dede; color: #a94442; }
+.sx-sub-suspended { background: #f5f5f5; color: #777; }
