@@ -24,6 +24,8 @@ class StockMovement extends Model
     public const DAMAGE = 'damage';
     public const ISSUE = 'issue';
     public const CONVERSION = 'conversion';
+    public const FOLDING = 'folding';
+    public const FOLDING_REVERSAL = 'folding_reversal';
 
     protected $fillable = [
         'company_id',
@@ -57,6 +59,11 @@ class StockMovement extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function user()

@@ -38,7 +38,7 @@ class DashboardController extends Controller
         ]);
 
         $branch = Branch::query()->findOrFail($data['branch_id']);
-        abort_unless((int) $branch->company_id === (int) auth()->user()->company_id, 403);
+        abort_unless(auth()->user()->canAccessBranch((int) $branch->id), 403);
 
         session(['current_branch_id' => $branch->id]);
         app()->instance('currentBranchId', (int) $branch->id);

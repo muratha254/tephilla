@@ -24,7 +24,7 @@ class SellixCoreSeeder extends Seeder
     public function run()
     {
         $company = Company::query()->create([
-            'name' => 'Sellix POS',
+            'name' => 'TEPHILLA SYSTEM',
             'slug' => 'sellix-pos',
             'address' => '',
             'city' => '',
@@ -112,7 +112,7 @@ class SellixCoreSeeder extends Seeder
             'tax_inclusive' => '1',
             'allow_pos_discount' => '1',
             'default_customer' => 'walk_in',
-            'powered_by' => 'Powered by Sellix POS',
+            'powered_by' => 'Powered by TEPHILLA SYSTEM',
             'powered_by_website' => '',
             'powered_by_email' => '',
         ];
@@ -154,6 +154,22 @@ class SellixCoreSeeder extends Seeder
             'is_active' => true,
         ]);
 
+        Unit::query()->create([
+            'company_id' => $company->id,
+            'name' => 'Kilogram',
+            'short_name' => 'KG',
+            'multiplier' => 1,
+            'is_active' => true,
+        ]);
+
+        foreach (['Black', 'Coffee Brown', 'Maroon Red', 'Black Red'] as $colourName) {
+            \App\Models\Colour::query()->create([
+                'company_id' => $company->id,
+                'name' => $colourName,
+                'is_active' => true,
+            ]);
+        }
+
         ProductCategory::query()->create([
             'company_id' => $company->id,
             'name' => 'General',
@@ -178,7 +194,7 @@ class SellixCoreSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Sellix POS seeded. Admin: admin@mail.com / 1234');
+        $this->command->info('TEPHILLA SYSTEM seeded. Admin: admin@mail.com / 1234');
         $this->command->info('Cashier: cashier@mail.com / 1234');
 
         return $admin;

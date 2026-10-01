@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\ExpenseCategory;
 use App\Models\NumberSequence;
 use App\Models\Permission;
+use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Role;
 use App\Models\Setting;
@@ -130,6 +131,15 @@ class CompanyProvisioner
         return $roles;
     }
 
+    public function syncCatalog(): void
+    {
+        $this->ensurePermissions();
+
+        Company::query()->orderBy('id')->pluck('id')->each(function ($companyId) {
+            $this->seedRoles((int) $companyId);
+        });
+    }
+
     protected function ensurePermissions(): void
     {
         foreach (PermissionCatalog::permissions() as $name => $meta) {
@@ -154,7 +164,7 @@ class CompanyProvisioner
             'tax_inclusive' => '1',
             'allow_pos_discount' => '1',
             'default_customer' => 'walk_in',
-            'powered_by' => 'Powered by Sellix POS',
+            'powered_by' => 'Powered by TEPHILLA SYSTEM',
             'powered_by_website' => '',
             'powered_by_email' => '',
         ];
@@ -206,6 +216,8 @@ class CompanyProvisioner
             ]
         );
 
+        $this->ensureRoofingCatalog($company);
+
         Customer::query()->firstOrCreate(
             ['company_id' => $company->id, 'is_walk_in' => true],
             [
@@ -215,11 +227,103 @@ class CompanyProvisioner
             ]
         );
 
+        Unit::query()->firstOrCreate(
+            ['company_id' => $company->id, 'short_name' => 'KG'],
+            [
+                'name' => 'Kilogram',
+                'multiplier' => 1,
+                'is_active' => true,
+            ]
+        );
+
         foreach (['Rent', 'Utilities', 'Transport', 'Salaries', 'Office', 'Other'] as $name) {
             ExpenseCategory::query()->firstOrCreate(
                 ['company_id' => $company->id, 'name' => $name],
                 ['is_active' => true]
             );
+        }
+    }
+
+    public function ensureRoofingCatalogs(): void
+    {
+        Company::query()->orderBy('id')->each(function (Company $company) {
+            $this->ensureRoofingCatalog($company);
+        });
+    }
+
+    /**
+     * Parent rows are categories. Child rows are product types.
+     * Existing folding items keep their names and are grouped only when they have no category yet.
+     */
+    public function ensureRoofingCatalog(Company $company): void
+    {
+        $groups = [
+            ['Roofing Sheets', 'Roofing Sheet', 10],
+            ['Roofing Tiles', 'Roofing Tile', 20],
+            ['Roofing Accessories', 'Roofing Accessory', 30],
+            ['Roofing Materials / Components', 'Roofing Component', 40],
+            ['Flat Sheets / Raw Materials', 'Flat Sheet', 50],
+        ];
+
+        $types = [];
+        foreach ($groups as [$groupName, $typeName, $sort]) {
+            $group = ProductCategory::query()->firstOrCreate(
+                ['company_id' => $company->id, 'name' => $groupName],
+                [
+                    'show_on_pos' => true,
+                    'sort_order' => $sort,
+                    'is_active' => true,
+                ]
+            );
+            $types[$typeName] = ProductCategory::query()->firstOrCreate(
+                ['company_id' => $company->id, 'name' => $typeName],
+                [
+                    'parent_id' => $group->id,
+                    'show_on_pos' => true,
+                    'sort_order' => $sort,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        $existing = [
+            'Ridges' => 'Roofing Accessory',
+            'Bardge Box' => 'Roofing Accessory',
+            'Valleys' => 'Roofing Accessory',
+            'Side Flash' => 'Roofing Accessory',
+        ];
+
+        foreach ($existing as $productName => $typeName) {
+            Product::query()
+                ->withoutGlobalScope('company')
+                ->where('company_id', $company->id)
+                ->whereNull('category_id')
+                ->where('name', $productName)
+                ->update(['category_id' => $types[$typeName]->id]);
+        }
+
+        $flatSheet = Product::query()
+            ->withoutGlobalScope('company')
+            ->where('company_id', $company->id)
+            ->where('name', 'Flat Sheet')
+            ->orderBy('id')
+            ->first();
+        $legacySheet = Product::query()
+            ->withoutGlobalScope('company')
+            ->where('company_id', $company->id)
+            ->where('name', 'Flatsheets')
+            ->orderBy('id')
+            ->first();
+
+        $sheet = $flatSheet ?: $legacySheet;
+        if ($sheet) {
+            if (! $flatSheet) {
+                $sheet->name = 'Flat Sheet';
+            }
+            $sheet->category_id = $types['Flat Sheet']->id;
+            $sheet->for_sale = false;
+            $sheet->manage_stock = true;
+            $sheet->save();
         }
     }
 }

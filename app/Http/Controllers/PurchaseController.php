@@ -22,19 +22,46 @@ use Illuminate\Validation\Rule;
 
 class PurchaseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizePermission('purchases.view');
+        $view = $request->query('view');
 
-        $purchases = PurchaseOrder::query()
-            ->with(['supplier', 'user', 'payments', 'items.product'])
-            ->orderByDesc('order_date')
-            ->orderByDesc('id')
-            ->get();
+        $query = PurchaseOrder::query()
+            ->with(['supplier', 'user', 'payments', 'items.product']);
+
+        if ($view === 'schedule') {
+            $query->where('status', '!=', PurchaseOrder::STATUS_CANCELLED)
+                ->whereColumn('paid_amount', '<', 'total')
+                ->orderBy('due_date')
+                ->orderByDesc('id');
+            $activeMenu = 'purchases.schedule';
+            $pageTitle = 'Payment Schedule';
+            $pageSubtitle = 'Purchases that still have a balance, by due date';
+        } elseif ($view === 'lpo') {
+            $query->whereIn('status', [
+                PurchaseOrder::STATUS_PENDING,
+                PurchaseOrder::STATUS_ORDERED,
+                PurchaseOrder::STATUS_PARTIAL,
+            ])->orderByDesc('order_date')->orderByDesc('id');
+            $activeMenu = 'purchases.lpo';
+            $pageTitle = 'LPO List';
+            $pageSubtitle = 'Orders that have not been fully received';
+        } else {
+            $query->orderByDesc('order_date')->orderByDesc('id');
+            $activeMenu = 'purchases.index';
+            $pageTitle = 'Purchase List';
+            $pageSubtitle = 'View/Search Purchase';
+            $view = 'list';
+        }
 
         return view('purchases.index', array_merge(fleet_shared_view_data(), [
-            'activeMenu' => 'purchases.index',
-            'purchases' => $purchases,
+            'activeMenu' => $activeMenu,
+            'purchases' => $query->get(),
+            'listView' => $view,
+            'pageTitle' => $pageTitle,
+            'pageSubtitle' => $pageSubtitle,
+            'canReceive' => auth()->user()->hasPermission('purchases.receive') || auth()->user()->hasPermission('purchases.update'),
             'canCreate' => auth()->user()->hasPermission('purchases.create'),
             'canUpdate' => auth()->user()->hasPermission('purchases.update'),
             'purchaseStatuses' => config('sellix.purchase_statuses', []),
@@ -42,11 +69,12 @@ class PurchaseController extends Controller
         ]));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorizePermission('purchases.create');
+        $type = $request->query('type') === 'lpo' ? 'lpo' : 'direct';
 
-        return view('purchases.create', array_merge(fleet_shared_view_data(), $this->purchaseFormData()));
+        return view('purchases.create', array_merge(fleet_shared_view_data(), $this->purchaseFormData(null, $type)));
     }
 
     public function edit(PurchaseOrder $purchase)
@@ -80,6 +108,7 @@ class PurchaseController extends Controller
             'round_off' => 'nullable|numeric',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|integer|min:0',
             'items.*.quantity' => 'required|numeric|min:0.0001',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0',
@@ -113,8 +142,10 @@ class PurchaseController extends Controller
             $taxTotal += $taxAmt;
             $discountTotal += $discountAmt;
             $product = Product::query()->findOrFail($line['product_id']);
+            $variantId = $product->resolveVariantId($line['product_variant_id'] ?? 0);
             $lines[] = [
                 'product' => $product,
+                'product_variant_id' => $variantId,
                 'quantity' => $qty,
                 'unit_cost' => $cost,
                 'selling_price' => (float) ($line['selling_price'] ?? $product->selling_price),
@@ -194,6 +225,7 @@ class PurchaseController extends Controller
                         'company_id' => $companyId,
                         'purchase_order_id' => $purchase->id,
                         'product_id' => $line['product']->id,
+                        'product_variant_id' => $line['product_variant_id'],
                         'description' => $line['product']->name,
                         'quantity' => $line['quantity'],
                         'quantity_received' => $receive ? $line['quantity'] : 0,
@@ -212,6 +244,7 @@ class PurchaseController extends Controller
                             'company_id' => $companyId,
                             'branch_id' => $branchId,
                             'product_id' => $line['product']->id,
+                            'product_variant_id' => $line['product_variant_id'],
                             'type' => \App\Models\StockMovement::PURCHASE_RECEIPT,
                             'quantity_in' => $line['quantity'],
                             'unit_cost' => $line['unit_cost'],
@@ -228,6 +261,7 @@ class PurchaseController extends Controller
                             'goods_receipt_id' => $receipt->id,
                             'purchase_order_item_id' => $item->id,
                             'product_id' => $line['product']->id,
+                            'product_variant_id' => $line['product_variant_id'],
                             'quantity_received' => $line['quantity'],
                             'unit_cost' => $line['unit_cost'],
                         ]);
@@ -252,6 +286,7 @@ class PurchaseController extends Controller
                             'goods_receipt_id' => $receipt->id,
                             'purchase_order_item_id' => $item->id,
                             'product_id' => $line['product']->id,
+                            'product_variant_id' => $line['product_variant_id'],
                             'quantity_received' => $line['quantity'],
                             'unit_cost' => $line['unit_cost'],
                         ]);
@@ -311,6 +346,12 @@ class PurchaseController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
+        if ($purchase->status !== PurchaseOrder::STATUS_RECEIVED) {
+            return redirect()
+                ->route('purchases.show', $purchase)
+                ->with('success', 'LPO ' . $purchase->number . ' saved. Use Receive goods when the items arrive.');
+        }
+
         return redirect()->route('purchases.index')->with('success', 'Purchase ' . $purchase->number . ' saved.');
     }
 
@@ -344,6 +385,7 @@ class PurchaseController extends Controller
             'round_off' => 'nullable|numeric',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|integer|min:0',
             'items.*.quantity' => 'required|numeric|min:0.0001',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0',
@@ -455,6 +497,33 @@ class PurchaseController extends Controller
             'canReceive' => auth()->user()->hasPermission('purchases.receive') || auth()->user()->hasPermission('purchases.update'),
             'canPay' => auth()->user()->hasPermission('purchases.update'),
         ]));
+    }
+
+    public function receive(PurchaseOrder $purchase, DocumentNumberService $numbers, InventoryService $inventory)
+    {
+        abort_unless(
+            auth()->user()->hasPermission('purchases.receive') || auth()->user()->hasPermission('purchases.update'),
+            403
+        );
+
+        if ($purchase->status === PurchaseOrder::STATUS_CANCELLED) {
+            return back()->with('error', 'A cancelled order cannot be received.');
+        }
+
+        if ($purchase->status === PurchaseOrder::STATUS_RECEIVED) {
+            return back()->with('error', 'This order is already received.');
+        }
+
+        try {
+            DB::transaction(function () use ($purchase, $numbers, $inventory) {
+                $this->receiveOutstanding($purchase, $numbers, $inventory);
+                $purchase->update(['status' => PurchaseOrder::STATUS_RECEIVED]);
+            });
+        } catch (NegativeStockException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', $purchase->number . ' received. Stock has been added.');
     }
 
     public function updateStatus(Request $request, PurchaseOrder $purchase, DocumentNumberService $numbers, InventoryService $inventory)
@@ -664,6 +733,7 @@ class PurchaseController extends Controller
                     'company_id' => $purchase->company_id,
                     'branch_id' => $purchase->branch_id,
                     'product_id' => $item->product_id,
+                    'product_variant_id' => (int) ($item->product_variant_id ?? 0),
                     'type' => \App\Models\StockMovement::PURCHASE_RECEIPT,
                     'quantity_in' => $qty,
                     'unit_cost' => $item->unit_cost,
@@ -680,6 +750,7 @@ class PurchaseController extends Controller
                     'goods_receipt_id' => $receipt->id,
                     'purchase_order_item_id' => $item->id,
                     'product_id' => $item->product_id,
+                    'product_variant_id' => (int) ($item->product_variant_id ?? 0),
                     'quantity_received' => $qty,
                     'unit_cost' => $item->unit_cost,
                 ]);
@@ -704,6 +775,7 @@ class PurchaseController extends Controller
                     'goods_receipt_id' => $receipt->id,
                     'purchase_order_item_id' => $item->id,
                     'product_id' => $item->product_id,
+                    'product_variant_id' => (int) ($item->product_variant_id ?? 0),
                     'quantity_received' => $qty,
                     'unit_cost' => $item->unit_cost,
                 ]);
@@ -720,7 +792,7 @@ class PurchaseController extends Controller
         ]);
     }
 
-    private function purchaseFormData(?PurchaseOrder $purchase = null): array
+    private function purchaseFormData(?PurchaseOrder $purchase = null, ?string $type = null): array
     {
         $statuses = collect(config('sellix.purchase_statuses', []))
             ->when($purchase, function ($collection) {
@@ -752,8 +824,12 @@ class PurchaseController extends Controller
             }
         }
 
+        $type = $purchase ? null : ($type === 'lpo' ? 'lpo' : 'direct');
+
         return [
-            'activeMenu' => $purchase ? 'purchases.index' : 'purchases.create',
+            'activeMenu' => $purchase ? 'purchases.index' : ($type === 'lpo' ? 'purchases.lpo.create' : 'purchases.direct'),
+            'purchaseType' => $type,
+            'defaultStatus' => $type === 'lpo' ? PurchaseOrder::STATUS_ORDERED : PurchaseOrder::STATUS_RECEIVED,
             'purchase' => $purchase,
             'isEdit' => (bool) $purchase,
             'suppliers' => Supplier::query()->where('is_active', true)->orderBy('name')->get(),
@@ -786,8 +862,10 @@ class PurchaseController extends Controller
             $taxTotal += $taxAmt;
             $discountTotal += $discountAmt;
             $product = Product::query()->findOrFail($line['product_id']);
+            $variantId = $product->resolveVariantId($line['product_variant_id'] ?? 0);
             $lines[] = [
                 'product' => $product,
+                'product_variant_id' => $variantId,
                 'quantity' => $qty,
                 'unit_cost' => $cost,
                 'selling_price' => (float) ($line['selling_price'] ?? $product->selling_price),

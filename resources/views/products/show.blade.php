@@ -60,6 +60,94 @@
 </div>
 
 <div class="sx-profile-section">
+    <div class="sx-ribbon">Used on folding</div>
+    <div class="table-responsive">
+        <table class="table table-bordered sx-cyan-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>No.</th>
+                    <th>Colour</th>
+                    <th class="text-right">Qty used</th>
+                    <th>Accessories produced</th>
+                    <th class="text-right">Qty</th>
+                    <th>Narration</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($usedOnFolding as $folding)
+                    @php $outputs = $folding->outputs; $rows = max($outputs->count(), 1); @endphp
+                    <tr>
+                        <td rowspan="{{ $rows }}">{{ optional($folding->folded_on)->format('d/m/Y') }}</td>
+                        <td rowspan="{{ $rows }}">{{ $folding->number() }}</td>
+                        <td rowspan="{{ $rows }}">{{ optional($folding->colour)->name ?: '—' }}</td>
+                        <td rowspan="{{ $rows }}" class="text-right">{{ rtrim(rtrim(number_format((float) $folding->quantity, 4, '.', ''), '0'), '.') }}</td>
+                        @if($outputs->isEmpty())
+                            <td>—</td>
+                            <td class="text-right">—</td>
+                        @else
+                            <td>{{ optional($outputs->first()->product)->name }}{{ optional($outputs->first()->colour)->name ? ' ' . $outputs->first()->colour->name : '' }}</td>
+                            <td class="text-right">{{ rtrim(rtrim(number_format((float) $outputs->first()->quantity, 4, '.', ''), '0'), '.') }}</td>
+                        @endif
+                        <td rowspan="{{ $rows }}">{{ $folding->notes ?: '—' }}</td>
+                        <td rowspan="{{ $rows }}">{{ ucfirst($folding->status ?: 'confirmed') }}</td>
+                    </tr>
+                    @foreach($outputs->slice(1) as $output)
+                        <tr>
+                            <td>{{ optional($output->product)->name }}{{ optional($output->colour)->name ? ' ' . $output->colour->name : '' }}</td>
+                            <td class="text-right">{{ rtrim(rtrim(number_format((float) $output->quantity, 4, '.', ''), '0'), '.') }}</td>
+                        </tr>
+                    @endforeach
+                @empty
+                    <tr>
+                        <td colspan="8" class="sx-none-found">No record found!!!</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if($producedOnFolding->isNotEmpty())
+<div class="sx-profile-section">
+    <div class="sx-ribbon">Produced on folding</div>
+    <div class="table-responsive">
+        <table class="table table-bordered sx-cyan-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>No.</th>
+                    <th>Raw material</th>
+                    <th>Colour</th>
+                    <th class="text-right">Qty used</th>
+                    <th>Accessory colour</th>
+                    <th class="text-right">Qty produced</th>
+                    <th>Narration</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($producedOnFolding as $row)
+                    <tr>
+                        <td>{{ $row['date'] }}</td>
+                        <td>{{ $row['number'] }}</td>
+                        <td>{{ $row['raw'] }}</td>
+                        <td>{{ $row['raw_colour'] }}</td>
+                        <td class="text-right">{{ $row['raw_qty'] === null ? '—' : rtrim(rtrim(number_format((float) $row['raw_qty'], 4, '.', ''), '0'), '.') }}</td>
+                        <td>{{ $row['colour'] }}</td>
+                        <td class="text-right">{{ rtrim(rtrim(number_format((float) $row['qty'], 4, '.', ''), '0'), '.') }}</td>
+                        <td>{{ $row['notes'] ?: '—' }}</td>
+                        <td>{{ ucfirst($row['status']) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+<div class="sx-profile-section">
     <div class="sx-ribbon">Batches</div>
     <div class="table-responsive">
         <table class="table table-bordered sx-cyan-table">

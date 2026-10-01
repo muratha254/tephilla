@@ -96,36 +96,58 @@ class AccountingLedger
     {
         $income = [];
         $expenses = [];
+        $salesGross = $this->salesTotal($from, $to);
+        $salesTax = $this->salesTaxTotal($from, $to);
+        $recordedExpenses = $this->expenseTotal($from, $to);
+        $expensesIncluded = false;
 
         foreach ($this->accountsWithType(['Income/Revenue']) as $account) {
             $period = $this->accountPeriod($account, $from, $to);
-            $amount = round($period['credit'] - $period['debit'], 2);
+            $journalNet = round($period['credit'] - $period['debit'], 2);
             if ($account->name === 'Sales Revenue') {
-                $amount += $this->salesTotal($from, $to);
-            }
-            if (abs($amount) < 0.0001) {
+                // The sales journal already credits the amount after VAT. Adding the
+                // sales-list total on top counted the same sale twice.
+                $manual = round($journalNet - ($salesGross - $salesTax), 2);
+                $amount = round($salesGross + $manual, 2);
+                if (abs($amount) >= 0.0001) {
+                    $income[] = ['name' => 'Sales Revenue', 'amount' => $amount];
+                }
+                if (abs($salesTax) >= 0.0001) {
+                    $income[] = ['name' => 'VAT on sales', 'amount' => round(-$salesTax, 2)];
+                }
                 continue;
             }
-            $income[] = ['name' => $account->name, 'amount' => $amount];
+            if (abs($journalNet) < 0.0001) {
+                continue;
+            }
+            $income[] = ['name' => $account->name, 'amount' => $journalNet];
         }
 
-        $sales = $this->salesTotal($from, $to);
-        if ($sales && ! collect($income)->contains(fn ($row) => $row['name'] === 'Sales Revenue')) {
-            $income[] = ['name' => 'Sales Revenue', 'amount' => $sales];
+        if ($salesGross && ! collect($income)->contains(fn ($row) => $row['name'] === 'Sales Revenue')) {
+            $income[] = ['name' => 'Sales Revenue', 'amount' => $salesGross];
+            if (abs($salesTax) >= 0.0001) {
+                $income[] = ['name' => 'VAT on sales', 'amount' => round(-$salesTax, 2)];
+            }
         }
 
         foreach ($this->accountsWithType(['EXPENSES']) as $account) {
             $period = $this->accountPeriod($account, $from, $to);
-            $amount = round($period['debit'] - $period['credit'], 2);
+            $journalNet = round($period['debit'] - $period['credit'], 2);
+            if ($account->name === 'Operating Expenses') {
+                $manual = round($journalNet - $recordedExpenses, 2);
+                $amount = round($recordedExpenses + $manual, 2);
+                $expensesIncluded = true;
+            } else {
+                $amount = $journalNet;
+            }
             if (abs($amount) < 0.0001) {
                 continue;
             }
             $expenses[] = ['name' => $account->name, 'amount' => $amount];
         }
 
-        $recorded = $this->expenseTotal($from, $to);
-        if ($recorded) {
-            $expenses[] = ['name' => 'Recorded Expenses', 'amount' => $recorded];
+        if ($recordedExpenses && ! $expensesIncluded) {
+            $expenses[] = ['name' => 'Recorded Expenses', 'amount' => $recordedExpenses];
         }
 
         $incomeTotal = round(collect($income)->sum('amount'), 2);
@@ -278,11 +300,20 @@ class AccountingLedger
 
     private function salesTotal(string $from, string $to): float
     {
-        return round((float) Sale::query()
+        return round((float) $this->completedSales($from, $to)->sum('total'), 2);
+    }
+
+    private function salesTaxTotal(string $from, string $to): float
+    {
+        return round((float) $this->completedSales($from, $to)->sum('tax_amount'), 2);
+    }
+
+    private function completedSales(string $from, string $to)
+    {
+        return Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
             ->whereDate('sale_date', '>=', $from)
-            ->whereDate('sale_date', '<=', $to)
-            ->sum('total'), 2);
+            ->whereDate('sale_date', '<=', $to);
     }
 
     private function expenseTotal(string $from, string $to): float

@@ -26,6 +26,8 @@ class PermissionCatalog
 
     public const ACCOUNTANT = 'accountant';
 
+    public const PRODUCTION_STAFF = 'production_staff';
+
     public const HR_OFFICER = 'hr_officer';
 
 
@@ -473,6 +475,26 @@ class PermissionCatalog
                     'reports.view', 'reports.sales', 'reports.purchases', 'reports.customers', 'reports.expenses', 'reports.tax', 'reports.export',
 
                     'products.view', 'products.view_cost',
+
+                ],
+
+            ],
+
+            self::PRODUCTION_STAFF => [
+
+                'label' => 'Production Staff',
+
+                'description' => 'Records folding and finished-goods stock. No sales or settings.',
+
+                'permissions' => [
+
+                    'dashboard.view',
+
+                    'products.view',
+
+                    'inventory.view', 'inventory.adjust',
+
+                    'reports.view', 'reports.stock',
 
                 ],
 

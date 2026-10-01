@@ -19,9 +19,9 @@
 
 <form method="get" action="{{ route('products.index') }}" class="sx-filter-card" id="items-filter-form">
     <select name="category_id" class="form-control" onchange="this.form.submit()">
-        <option value="">All Categories</option>
+        <option value="">All product types</option>
         @foreach($categories as $category)
-            <option value="{{ $category->id }}" @if(($filters['category_id'] ?? '') == $category->id) selected @endif>{{ $category->name }}</option>
+            <option value="{{ $category->id }}" @if(($filters['category_id'] ?? '') == $category->id) selected @endif>{{ $category->optionLabel() }}</option>
         @endforeach
     </select>
     <div class="form-control" style="display:flex;align-items:center;background:#f7f7f7;">
@@ -86,8 +86,8 @@
                         <th class="sx-no-export sx-check-col"><input type="checkbox" id="items-check-all"></th>
                         <th>Item Code</th>
                         <th>Item Name</th>
-                        <th>Brand</th>
-                        <th>Category</th>
+                        <th>Product type</th>
+                        <th>Colour</th>
                         <th>Unit</th>
                         <th>Stock</th>
                         <th>Reorder</th>
@@ -102,15 +102,22 @@
                         @php
                             $reorder = (float) $product->reorder_level;
                             $reorderDisplay = fmod($reorder, 1.0) === 0.0 ? (int) $reorder : $reorder;
-                            $stockQty = (float) ($stockByProduct[$product->id] ?? 0);
+                            $colourLines = $product->variants->where('is_active', true)->values();
+                            if ($colourLines->isEmpty()) {
+                                $colourLines = collect([(object) ['id' => 0, 'color' => '—']]);
+                            }
+                        @endphp
+                        @foreach($colourLines as $colourLine)
+                        @php
+                            $stockQty = (float) ($stockByVariant[$product->id . ':' . (int) $colourLine->id] ?? 0);
                             $stockDisplay = fmod($stockQty, 1.0) === 0.0 ? (int) $stockQty : $stockQty;
                         @endphp
                         <tr>
                             <td class="sx-check-col"><input type="checkbox" class="item-row-check" value="{{ $product->id }}"></td>
                             <td data-order="{{ $product->id }}">{{ $product->item_code }}</td>
                             <td>{{ $product->name }}</td>
-                            <td>{{ optional($product->brand)->name }}</td>
-                            <td>{{ optional($product->category)->name }}</td>
+                            <td>{{ optional($product->category)->optionLabel() }}</td>
+                            <td>{{ $colourLine->color ?: '—' }}</td>
                             <td>{{ optional($product->unit)->short_name }}</td>
                             <td data-order="{{ $stockQty }}">{{ $product->manage_stock ? $stockDisplay : '—' }}</td>
                             <td data-order="{{ $reorder }}">{{ $reorderDisplay }}</td>
@@ -163,6 +170,7 @@
                                 </div>
                             </td>
                         </tr>
+                        @endforeach
                     @endforeach
                 </tbody>
             </table>

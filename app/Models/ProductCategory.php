@@ -41,6 +41,27 @@ class ProductCategory extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    public function optionLabel(): string
+    {
+        if ($this->parent_id && $this->relationLoaded('parent') && $this->parent) {
+            return $this->parent->name . ' / ' . $this->name;
+        }
+
+        return $this->name;
+    }
+
+    /**
+     * A parent category filter includes its product types. A product type matches itself.
+     *
+     * @return array<int, int>
+     */
+    public static function idsIncludingChildren(int $categoryId): array
+    {
+        $childIds = static::query()->where('parent_id', $categoryId)->pluck('id')->all();
+
+        return array_values(array_unique(array_merge([$categoryId], array_map('intval', $childIds))));
+    }
+
     public function categoryCode(): string
     {
         if ($this->attributes['code'] ?? null) {

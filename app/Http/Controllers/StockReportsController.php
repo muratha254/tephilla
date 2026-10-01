@@ -168,9 +168,12 @@ class StockReportsController extends Controller
         [$from, $to, $generated] = $this->dates($request);
         $branchId = $this->currentBranchId();
         $productId = $request->filled('product_id') ? (int) $request->input('product_id') : null;
+        $variantId = $request->filled('product_variant_id') ? (int) $request->input('product_variant_id') : null;
+        $userId = $request->filled('user_id') ? (int) $request->input('user_id') : null;
+        $categoryId = $request->filled('category_id') ? (int) $request->input('category_id') : null;
 
         $rows = match ($view) {
-            'ledger' => $this->reports->ledgerRows($from, $to, $branchId, $productId),
+            'ledger' => $this->reports->ledgerRows($from, $to, $branchId, $productId, $variantId, $userId, $categoryId),
             'transfer' => $this->reports->transferRows($from, $to, $branchId, $productId),
             'adjust' => $this->reports->adjustmentRows($from, $to, $branchId, $productId),
             'damaged' => $this->reports->damagedRows($from, $to, $branchId, $productId),
@@ -187,7 +190,13 @@ class StockReportsController extends Controller
             'to' => $to,
             'generated' => $generated,
             'productId' => $productId,
+            'variantId' => $variantId,
+            'userId' => $userId,
+            'categoryId' => $categoryId,
+            'categories' => $this->reports->categoryOptions(),
             'products' => $this->reports->productOptions(),
+            'variants' => \App\Models\ProductVariant::query()->with('product')->where('is_active', true)->orderBy('color')->get(),
+            'users' => \App\Models\User::query()->orderBy('name')->get(['id', 'name']),
             'rows' => $generated ? $rows : collect(),
         ]));
     }

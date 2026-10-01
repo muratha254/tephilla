@@ -336,7 +336,7 @@ class CompanySettingsController extends Controller
             'grn_prefix' => 'GRN-',
             'expense_prefix' => 'EXP-',
             'receipt_paper_size' => '80mm',
-            'powered_by' => 'Powered by Sellix POS',
+            'powered_by' => 'Powered by TEPHILLA SYSTEM',
             'powered_by_website' => '',
             'powered_by_email' => '',
         ];

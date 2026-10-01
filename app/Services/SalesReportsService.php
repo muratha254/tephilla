@@ -30,7 +30,7 @@ class SalesReportsService
 
     public function categoryOptions(): Collection
     {
-        return ProductCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        return ProductCategory::query()->with('parent')->where('is_active', true)->orderBy('name')->get();
     }
 
     public function brandOptions(): Collection
@@ -139,7 +139,8 @@ class SalesReportsService
             })
             ->when(! empty($filters['product_id']), fn ($q) => $q->where('product_id', (int) $filters['product_id']))
             ->when(! empty($filters['category_id']), function ($q) use ($filters) {
-                $q->whereHas('product', fn ($p) => $p->where('category_id', (int) $filters['category_id']));
+                $ids = \App\Models\ProductCategory::idsIncludingChildren((int) $filters['category_id']);
+                $q->whereHas('product', fn ($p) => $p->whereIn('category_id', $ids));
             })
             ->when(! empty($filters['brand_id']), function ($q) use ($filters) {
                 $q->whereHas('product', fn ($p) => $p->where('brand_id', (int) $filters['brand_id']));
@@ -196,7 +197,8 @@ class SalesReportsService
                     });
             })
             ->when(! empty($filters['category_id']), function ($q) use ($filters) {
-                $q->whereHas('product', fn ($p) => $p->where('category_id', (int) $filters['category_id']));
+                $ids = \App\Models\ProductCategory::idsIncludingChildren((int) $filters['category_id']);
+                $q->whereHas('product', fn ($p) => $p->whereIn('category_id', $ids));
             })
             ->when(! empty($filters['brand_id']), function ($q) use ($filters) {
                 $q->whereHas('product', fn ($p) => $p->where('brand_id', (int) $filters['brand_id']));

@@ -26,11 +26,11 @@ class StockController extends Controller
         );
 
         $products = Product::query()
-            ->with(['category', 'brand', 'unit', 'tax'])
+            ->with(['category', 'brand', 'unit', 'tax', 'variants'])
             ->availableAtBranch($branchId)
             ->where('manage_stock', true)
             ->when($request->filled('category_id'), function ($query) use ($request) {
-                $query->where('category_id', $request->category_id);
+                $query->whereIn('category_id', \App\Models\ProductCategory::idsIncludingChildren((int) $request->category_id));
             })
             ->orderByDesc('id')
             ->get();
@@ -73,6 +73,7 @@ class StockController extends Controller
             'status' => 'required|in:' . implode(',', $statuses),
             'control_account' => 'required|in:' . implode(',', $accounts),
             'quantity' => 'required|numeric|min:0.0001',
+            'product_variant_id' => 'nullable|integer|min:0',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -92,6 +93,7 @@ class StockController extends Controller
             'company_id' => $product->company_id,
             'branch_id' => (int) $data['branch_id'],
             'product_id' => $product->id,
+            'product_variant_id' => $product->resolveVariantId($data['product_variant_id'] ?? 0),
             'type' => $type,
             'unit_cost' => $product->purchase_price,
             'user_id' => auth()->id(),

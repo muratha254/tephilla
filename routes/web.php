@@ -57,6 +57,9 @@ use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\SettingsBackupController;
 use App\Http\Controllers\SettingsAuditController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\ColourController;
+use App\Http\Controllers\FoldingController;
+use App\Http\Controllers\OpeningStockController;
 use App\Http\Controllers\Auth\RegisterBusinessController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\SubscriptionGateController;
@@ -206,6 +209,29 @@ Route::middleware('auth')->group(function () {
         Route::delete('/units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
     });
 
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('/colours', [ColourController::class, 'index'])->name('colours.index');
+    });
+    Route::middleware('permission:products.update')->group(function () {
+        Route::post('/colours', [ColourController::class, 'store'])->name('colours.store');
+        Route::put('/colours/{colour}', [ColourController::class, 'update'])->name('colours.update');
+    });
+
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('/folding', [FoldingController::class, 'index'])->name('folding.index');
+        Route::get('/folding/flat-sheet', [FoldingController::class, 'flatSheet'])->name('folding.flat-sheet');
+    });
+    Route::middleware('permission:inventory.adjust')->group(function () {
+        Route::get('/folding/create', [FoldingController::class, 'create'])->name('folding.create');
+        Route::post('/folding', [FoldingController::class, 'store'])->name('folding.store');
+        Route::post('/folding/{folding}/void', [FoldingController::class, 'void'])->name('folding.void');
+        Route::get('/stock/opening', [OpeningStockController::class, 'create'])->name('stock.opening');
+        Route::post('/stock/opening', [OpeningStockController::class, 'store'])->name('stock.opening.store');
+        Route::post('/stock/opening/register/preview', [OpeningStockController::class, 'previewRegister'])->name('stock.register.preview');
+        Route::post('/stock/opening/register/confirm', [OpeningStockController::class, 'confirmRegister'])->name('stock.register.confirm');
+        Route::post('/stock/opening/register', [OpeningStockController::class, 'storeRegister'])->name('stock.register.store');
+    });
+
     Route::get('/stock', [StockController::class, 'manager'])
         ->middleware('permission:inventory.view')
         ->name('stock.manager');
@@ -275,6 +301,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/purchases/{purchase}/status', [PurchaseController::class, 'updateStatus'])
         ->middleware('permission:purchases.update')
         ->name('purchases.status.update');
+    Route::post('/purchases/{purchase}/receive', [PurchaseController::class, 'receive'])
+        ->middleware('permission:purchases.update')
+        ->name('purchases.receive');
     Route::get('/purchases/{purchase}/payments', [PurchaseController::class, 'payments'])
         ->middleware('permission:purchases.view')
         ->name('purchases.payments');

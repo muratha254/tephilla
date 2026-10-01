@@ -134,12 +134,21 @@ body.fleet-app {
 }
 
 .fleet-submenu a {
-    display: block;
-    padding: 10px 18px 10px 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px 10px 36px;
     color: #b8c4d4;
     text-decoration: none;
     font-size: 13px;
     border-left: 3px solid transparent;
+}
+
+.fleet-submenu a .fa {
+    width: 12px;
+    font-size: 9px;
+    color: #3dce4a;
+    text-align: center;
 }
 
 .fleet-submenu li.active > a,

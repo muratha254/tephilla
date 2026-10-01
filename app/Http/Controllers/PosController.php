@@ -6,12 +6,12 @@ use App\Exceptions\NegativeStockException;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\ProductBranchStock;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
 use App\Services\DocumentNumberService;
+use App\Services\IdempotencyService;
 use App\Services\InventoryService;
 use App\Services\SettingsService;
 use App\Services\AccountingPoster;
@@ -69,12 +69,12 @@ class PosController extends Controller
             ->get(['id', 'name']);
 
         $query = Product::query()
-            ->with('tax')
+            ->with(['tax', 'variants.colour'])
             ->availableAtBranch($branchId)
             ->where('is_active', true)
             ->where('for_sale', true)
             ->when($categoryId, function ($builder) use ($categoryId) {
-                $builder->where('category_id', $categoryId);
+                $builder->whereIn('category_id', ProductCategory::idsIncludingChildren($categoryId));
             })
             ->orderBy('name');
 
@@ -102,7 +102,7 @@ class PosController extends Controller
 
         $branchId = $this->currentBranchId();
         $products = Product::query()
-            ->with('tax')
+            ->with(['tax', 'variants.colour'])
             ->availableAtBranch($branchId)
             ->where('is_active', true)
             ->where('for_sale', true)
@@ -199,6 +199,13 @@ class PosController extends Controller
                         'cost' => (float) $item->cost_price,
                     ];
                 $payload['qty_sold'] = (float) $item->quantity;
+                $payload['variant_id'] = (int) $item->product_variant_id;
+                if ($payload['variant_id'] > 0) {
+                    $chosen = collect($payload['variants'] ?? [])->firstWhere('id', $payload['variant_id']);
+                    if ($chosen) {
+                        $payload['name'] .= ' (' . $chosen['name'] . ')';
+                    }
+                }
 
                 return $payload;
             })->values(),
@@ -219,7 +226,7 @@ class PosController extends Controller
         ]);
     }
 
-    public function order(Request $request, DocumentNumberService $numbers, InventoryService $inventory, AccountingPoster $accounting, LoyaltyService $loyalty, AuditLogger $audit)
+    public function order(Request $request, DocumentNumberService $numbers, InventoryService $inventory, AccountingPoster $accounting, LoyaltyService $loyalty, AuditLogger $audit, IdempotencyService $idempotency)
     {
         $this->authorizePermission('pos.operate');
 
@@ -290,8 +297,25 @@ class PosController extends Controller
         ]);
         $data['notes'] = $noteParts ? implode(' | ', $noteParts) : null;
 
+        $token = $idempotency->key($request, 'sale', [
+            'customer_id' => $data['customer_id'] ?? null,
+            'sale_date' => $data['sale_date'] ?? null,
+            'document_type' => $data['document_type'] ?? null,
+            'discount_amount' => $data['discount_amount'] ?? 0,
+            'items' => $data['items'] ?? [],
+            'payment_amount' => $payAmount,
+            'payment_method' => $data['payment_method'] ?? null,
+            'payments' => $payments->all(),
+        ]);
+
         try {
-            $sale = DB::transaction(function () use ($data, $numbers, $inventory, $payAmount, $payments, $accounting, $loyalty, $audit) {
+            $result = $idempotency->remember(
+                (int) auth()->user()->company_id,
+                (int) auth()->id(),
+                'sale',
+                $token,
+                function () use ($data, $numbers, $inventory, $payAmount, $payments, $accounting, $loyalty, $audit) {
+                    return DB::transaction(function () use ($data, $numbers, $inventory, $payAmount, $payments, $accounting, $loyalty, $audit) {
                 $sale = $this->writeSale($data, $numbers, Sale::STATUS_COMPLETED, $payAmount, $inventory);
 
                 foreach ($payments as $row) {
@@ -325,7 +349,10 @@ class PosController extends Controller
                 ]);
 
                 return $sale;
-            });
+                    });
+                }
+            );
+            $sale = $result['subject'] ?: Sale::query()->findOrFail($result['subject_id']);
         } catch (NegativeStockException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -373,7 +400,9 @@ class PosController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|integer|min:0',
             'items.*.quantity' => 'required|numeric|min:0.0001',
+            'items.*.selling_price' => 'nullable|numeric|min:0',
         ]);
     }
 
@@ -391,17 +420,19 @@ class PosController extends Controller
         $lines = [];
         foreach ($data['items'] as $row) {
             $product = Product::query()->with('tax')->findOrFail($row['product_id']);
+            $variantId = $product->resolveVariantId($row['product_variant_id'] ?? 0);
             abort_unless(
                 $product->isAvailableAtBranch($branchId),
                 403,
                 'Item is not available at the active branch.'
             );
-            $payload = $this->productPayload($product, $branchId);
+            $payload = $this->linePayload($product, $branchId, $row, true);
             $qty = (float) $row['quantity'];
             $lineTax = round($payload['tax_amount'] * $qty, 2);
             $lineTotal = round($payload['price'] * $qty, 2);
             $lines[] = [
                 'product' => $product,
+                'product_variant_id' => $variantId,
                 'quantity' => $qty,
                 'unit_price' => $payload['selling_price'],
                 'display_price' => $payload['price'],
@@ -468,6 +499,7 @@ class PosController extends Controller
                 'company_id' => $companyId,
                 'sale_id' => $sale->id,
                 'product_id' => $line['product']->id,
+                'product_variant_id' => $line['product_variant_id'],
                 'name' => $line['product']->name,
                 'sku' => $line['product']->sku,
                 'quantity' => $line['quantity'],
@@ -483,6 +515,7 @@ class PosController extends Controller
                     'company_id' => $companyId,
                     'branch_id' => $branchId,
                     'product_id' => $line['product']->id,
+                    'product_variant_id' => $line['product_variant_id'],
                     'type' => StockMovement::POS_SALE,
                     'quantity_out' => $line['quantity'],
                     'unit_cost' => $line['cost_price'],
@@ -508,7 +541,7 @@ class PosController extends Controller
             if (! $product) {
                 continue;
             }
-            $payload = $this->productPayload($product, $branchId);
+            $payload = $this->linePayload($product, $branchId, $row);
             $subtotal += $payload['price'] * (float) $row['quantity'];
         }
         $discount = min($subtotal, (float) ($data['discount_amount'] ?? 0));
@@ -585,6 +618,22 @@ class PosController extends Controller
             $stock = $product->quantityAtBranch($branchId);
         }
 
+        $variantRows = $product->relationLoaded('variants')
+            ? $product->variants
+            : $product->variants()->with('colour')->get();
+
+        $variants = $variantRows->filter(function ($variant) {
+            return (bool) $variant->is_active;
+        })->map(function ($variant) use ($product, $branchId) {
+            $name = $variant->color ?: optional($variant->colour)->name ?: ($variant->sku ?: 'Colour');
+
+            return [
+                'id' => (int) $variant->id,
+                'name' => $name,
+                'qty' => $branchId ? $product->quantityAtBranch($branchId, (int) $variant->id) : 0,
+            ];
+        })->values()->all();
+
         return [
             'id' => $product->id,
             'name' => $product->name,
@@ -597,9 +646,44 @@ class PosController extends Controller
             'tax_amount' => $taxAmount,
             'tax_inclusive' => $inclusive,
             'qty' => $stock,
+            'variants' => $variants,
             'cost' => (float) $product->purchase_price,
             'image' => $product->image_path ? asset('storage/' . ltrim($product->image_path, '/')) : null,
         ];
+    }
+
+    private function linePayload(Product $product, ?int $branchId, array $row, bool $persist = false): array
+    {
+        $payload = $this->productPayload($product, $branchId);
+        if ((float) $payload['selling_price'] > 0) {
+            return $payload;
+        }
+
+        $selling = round((float) ($row['selling_price'] ?? 0), 2);
+        if ($selling <= 0) {
+            abort(response()->json([
+                'message' => 'Enter a selling price for ' . $product->name . '.',
+            ], 422));
+        }
+
+        if ($persist) {
+            $product->update(['selling_price' => $selling]);
+        }
+
+        return $this->applySellingPrice($payload, $selling);
+    }
+
+    private function applySellingPrice(array $payload, float $selling): array
+    {
+        $rate = (float) $payload['tax_rate'];
+        $inclusive = (bool) $payload['tax_inclusive'];
+        $payload['selling_price'] = $selling;
+        $payload['price'] = $inclusive ? $selling : round($selling * (1 + $rate / 100), 2);
+        $payload['tax_amount'] = $rate > 0
+            ? ($inclusive ? round($selling * $rate / (100 + $rate), 2) : round($selling * $rate / 100, 2))
+            : 0;
+
+        return $payload;
     }
 
     private function walkInCustomer(): Customer

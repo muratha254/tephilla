@@ -75,9 +75,11 @@ class InventoryService
 
             $product = Product::query()->withoutGlobalScope('company')->find($payload['product_id']);
 
-            $allowNegative = ! empty($payload['allow_negative']) || ($product && $product->allow_negative_stock);
+            $allowNegative = array_key_exists('allow_negative', $payload)
+                ? (bool) $payload['allow_negative']
+                : (bool) ($product && $product->allow_negative_stock);
             if ($after < 0 && $product && $product->manage_stock && ! $allowNegative) {
-                throw NegativeStockException::forProduct($product->name, $after);
+                throw NegativeStockException::forShortage($product->name, max(0, $before), $qtyOut);
             }
 
             if ($qtyIn > 0 && isset($payload['unit_cost']) && $payload['unit_cost'] !== null) {

@@ -1,6 +1,6 @@
 @extends('layouts.fleet')
 
-@section('title', !empty($isEdit) ? 'Edit Purchase' : 'Purchase')
+@section('title', !empty($isEdit) ? 'Edit Purchase' : (($purchaseType ?? '') === 'lpo' ? 'New LPO' : 'Direct Purchase'))
 
 @section('content')
 @php
@@ -8,13 +8,13 @@
     $purchase = $purchase ?? null;
 @endphp
 @include('layouts.partials.page-header', [
-    'title' => $isEdit ? 'Edit Purchase Order' : 'Purchase',
-    'subtitle' => $isEdit ? 'Update Purchase Order ' . $purchase->number : 'Add/Update Purchase',
+    'title' => $isEdit ? 'Edit Purchase Order' : (($purchaseType ?? '') === 'lpo' ? 'New LPO' : 'Direct Purchase'),
+    'subtitle' => $isEdit ? 'Update Purchase Order ' . $purchase->number : (($purchaseType ?? '') === 'lpo' ? 'Order from a supplier. Stock is added when the order is received.' : 'Receive stock from a supplier now.'),
     'backUrl' => route('purchases.index'),
     'breadcrumbs' => [
         ['label' => 'Home', 'url' => route('dashboard'), 'icon' => 'fa-home'],
         ['label' => 'Purchase List', 'url' => route('purchases.index')],
-        ['label' => $isEdit ? 'Edit Purchase' : 'New Purchase'],
+        ['label' => $isEdit ? 'Edit Purchase' : (($purchaseType ?? '') === 'lpo' ? 'New LPO' : 'Direct Purchase')],
     ],
 ])
 
@@ -70,7 +70,7 @@
                     <select name="status" class="form-control" required>
                         <option value="">-Select-</option>
                         @foreach($statuses as $value => $label)
-                            <option value="{{ $value }}" @if(old('status', optional($purchase)->status) === $value) selected @endif>{{ $label }}</option>
+                            <option value="{{ $value }}"{{ (old('status', optional($purchase)->status ?: ($defaultStatus ?? '')) === $value) ? ' selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -337,6 +337,7 @@
         var row = $(
             '<tr>' +
                 '<td><input type="hidden" name="items[' + i + '][product_id]" value="' + item.id + '">' +
+                    '<input type="hidden" name="items[' + i + '][product_variant_id]" value="' + (item.variant_id || 0) + '">' +
                     '<input type="text" class="form-control" value="' + escapeHtml(item.name) + '" readonly></td>' +
                 '<td><input type="number" step="0.01" min="0.01" name="items[' + i + '][quantity]" class="form-control sx-po-qty" value="' + qty + '" required></td>' +
                 '<td><input type="number" step="0.01" min="0" name="items[' + i + '][unit_cost]" class="form-control sx-po-cost" value="' + money(item.purchase_price) + '" required></td>' +
@@ -392,12 +393,46 @@
         }, 250);
     });
 
+    function chooseColour(item, done) {
+        if (!item.variants || !item.variants.length || item.variant_id) {
+            done(item);
+            return;
+        }
+        var options = {};
+        item.variants.forEach(function (variant) {
+            options[String(variant.id)] = variant.name + ' — ' + variant.qty + (item.unit ? ' ' + item.unit : '');
+        });
+        if (!window.Swal) {
+            alert('Select a colour for ' + item.name + '.');
+            return;
+        }
+        Swal.fire({
+            title: 'Select colour',
+            input: 'select',
+            inputOptions: options,
+            inputPlaceholder: 'Choose a colour',
+            showCancelButton: true
+        }).then(function (result) {
+            if (!result.value) return;
+            var variant = null;
+            item.variants.forEach(function (row) {
+                if (String(row.id) === String(result.value)) variant = row;
+            });
+            if (!variant) return;
+            item.variant_id = variant.id;
+            item.name = item.name + ' (' + variant.name + ')';
+            item.stock = variant.qty;
+            done(item);
+        });
+    }
+
     $(document).on('click', '#sx-po-results .sx-label-result', function () {
-        addItem(JSON.parse($(this).attr('data-item').replace(/&#39;/g, "'")));
+        var item = JSON.parse($(this).attr('data-item').replace(/&#39;/g, "'"));
+        chooseColour(item, addItem);
     });
 
     $('#sx-po-search-plus').on('click', function () {
-        if (lastItem) addItem(lastItem);
+        if (lastItem) chooseColour(lastItem, addItem);
     });
 
     $('#sx-po-rows').on('input', '.sx-po-qty, .sx-po-cost, .sx-po-tax, .sx-po-disc', recalc);

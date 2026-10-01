@@ -24,6 +24,7 @@
 
 <form method="post" action="{{ route('stock.transfers.store') }}" id="sx-transfer-form" class="sx-item-form">
     @csrf
+    <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) \Illuminate\Support\Str::uuid()) }}">
     <div class="sx-box">
         <div class="sx-box-body" style="min-height:auto;">
             <div class="row">

@@ -17,8 +17,8 @@
 <div class="login-shell">
     <div class="login-card {{ $wide ? 'login-card-wide' : '' }}">
         <div class="login-card-body">
-            <div class="login-logo" aria-label="Sellix POS">
-                <span class="login-logo-prime">Sellix</span><span class="login-logo-pos">POS</span>
+            <div class="login-logo" aria-label="{{ fleet_system_name() }}">
+                <span class="login-logo-prime">{{ fleet_system_name() }}</span>
             </div>
 
             @if($step !== 'submitted')
@@ -41,12 +41,12 @@
         </div>
 
         <div class="login-card-footer">
-            <p>{{ optional($setting)->poweredByText() ?? 'Powered by Sellix POS' }}</p>
+            <p>Powered by {{ fleet_system_name() }}</p>
         </div>
     </div>
 
     <p class="login-copyright">
-        &copy; {{ date('Y') }}. {{ optional($setting)->poweredByText() ?? 'Powered by Sellix POS' }}
+        &copy; {{ date('Y') }}. Powered by {{ fleet_system_name() }}
     </p>
 </div>
 @endsection

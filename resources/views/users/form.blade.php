@@ -42,13 +42,25 @@
                         <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ old('email', $user->email) }}" required>
                     </div>
                     <div class="form-group">
-                        <label>Branch <span class="sx-req">*</span></label>
+                        <label>Default branch <span class="sx-req">*</span></label>
                         <select name="branch_id" class="form-control" required>
                             <option value="">-Select-</option>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" @if((string) old('branch_id', $user->branch_id) === (string) $branch->id) selected @endif>{{ $branch->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Also works at</label>
+                        @php
+                            $selectedBranches = collect(old('branch_ids', $user->exists ? $user->branches()->pluck('branches.id')->all() : []))->map(fn ($id) => (int) $id);
+                        @endphp
+                        <select name="branch_ids[]" class="form-control" multiple size="4">
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}" @if($selectedBranches->contains((int) $branch->id)) selected @endif>{{ $branch->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="help-block">Hold Ctrl to assign this user to more than one branch. The default branch is always included.</p>
                     </div>
                     <div class="form-group">
                         <label>Role <span class="sx-req">*</span></label>

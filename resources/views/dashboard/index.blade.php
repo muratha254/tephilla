@@ -385,6 +385,62 @@
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="sx-box">
+            <h3 class="sx-box-title">Today's folding</h3>
+            <div class="sx-box-body">
+                <p><strong>{{ rtrim(rtrim(number_format((float) ($todayProduction ?? 0), 4, '.', ''), '0'), '.') }}</strong> finished units</p>
+                @if(($flatSheetStock ?? collect())->isNotEmpty())
+                    <p><strong>Flat sheet</strong></p>
+                    @foreach($flatSheetStock as $balance)
+                        <p>{{ optional($balance->variant)->color ?: 'Uncoloured' }}: {{ rtrim(rtrim(number_format((float) $balance->quantity, 4, '.', ''), '0'), '.') }}</p>
+                    @endforeach
+                    <p>Total: {{ rtrim(rtrim(number_format((float) $flatSheetStock->sum('quantity'), 4, '.', ''), '0'), '.') }}</p>
+                @endif
+                <p>Inventory value: {{ $currencySymbol }} {{ number_format((float) ($inventoryValue ?? 0), 2) }}</p>
+                <p>Out of stock rows: {{ (int) ($outOfStockCount ?? 0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="sx-box">
+            <h3 class="sx-box-title">Recent stock movements</h3>
+            <div class="sx-box-body">
+                <table class="table table-condensed">
+                    @forelse(($recentMovements ?? []) as $movement)
+                        <tr>
+                            <td>{{ optional($movement->occurred_at)->format('d/m/Y') }}</td>
+                            <td>{{ optional($movement->product)->name }} {{ optional($movement->variant)->color }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $movement->type)) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td>No stock movements yet.</td></tr>
+                    @endforelse
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="sx-box">
+            <h3 class="sx-box-title">Recent activity</h3>
+            <div class="sx-box-body">
+                <table class="table table-condensed">
+                    @forelse(($recentActivities ?? []) as $activity)
+                        <tr>
+                            <td>{{ optional($activity->created_at)->format('d/m/Y H:i') }}</td>
+                            <td>{{ optional($activity->user)->name }}</td>
+                            <td>{{ $activity->action }} {{ $activity->module }}</td>
+                        </tr>
+                    @empty
+                        <tr><td>No activity yet.</td></tr>
+                    @endforelse
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')

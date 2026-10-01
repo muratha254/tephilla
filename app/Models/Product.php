@@ -154,23 +154,49 @@ class Product extends Model
             ->exists();
     }
 
-    public function quantityAtBranch(?int $branchId): float
+    public function quantityAtBranch(?int $branchId, ?int $variantId = null): float
     {
         if (! $branchId) {
             return 0.0;
         }
 
-        $row = $this->branchStock()
+        $query = $this->branchStock()
             ->withoutGlobalScope('branch')
-            ->where('branch_id', $branchId)
-            ->first();
+            ->where('branch_id', $branchId);
 
-        return $row ? (float) $row->quantity : 0.0;
+        if ($variantId !== null) {
+            $query->where('product_variant_id', $variantId);
+        }
+
+        return round((float) $query->sum('quantity'), 4);
     }
 
     public function getItemCodeAttribute(): string
     {
         return str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Products with active variants must name one. Products without variants stay on variant 0.
+     */
+    public function resolveVariantId($variantId): int
+    {
+        $variantId = (int) ($variantId ?? 0);
+        $hasVariants = $this->variants()->where('is_active', true)->exists();
+
+        if ($hasVariants && $variantId <= 0) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'product_variant_id' => "Select a colour for {$this->name}.",
+            ]);
+        }
+
+        if ($variantId > 0 && ! $this->variants()->whereKey($variantId)->where('is_active', true)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'product_variant_id' => "That colour is not available for {$this->name}.",
+            ]);
+        }
+
+        return $variantId;
     }
 
     public function taxLabel(): string

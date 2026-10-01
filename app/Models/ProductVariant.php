@@ -14,6 +14,7 @@ class ProductVariant extends Model
     protected $fillable = [
         'company_id',
         'product_id',
+        'colour_id',
         'sku',
         'barcode',
         'size',
@@ -32,6 +33,11 @@ class ProductVariant extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function colour()
+    {
+        return $this->belongsTo(Colour::class);
     }
 
     public function displayName(): string

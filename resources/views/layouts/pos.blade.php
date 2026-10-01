@@ -29,7 +29,7 @@
                 Hold List
                 <span class="pos-hold-badge" id="sx-pos-hold-count">{{ (int) $heldCount }}</span>
             </button>
-            <a href="{{ route('dashboard', [], false) }}" class="pos-top-link" id="sx-pos-dashboard" onclick="window.location.href=this.getAttribute('href'); return false;"><i class="fa fa-dashboard"></i> Dashboard</a>
+            <a href="{{ route('dashboard') }}" class="pos-top-link" id="sx-pos-dashboard"><i class="fa fa-dashboard"></i> Dashboard</a>
             <form action="{{ route('logout') }}" method="post" class="pos-logout-form">
                 @csrf
                 <button type="submit" class="pos-logout">LOGOUT</button>

@@ -59,6 +59,34 @@ class User extends Authenticatable
         return $this->belongsTo(Branch::class);
     }
 
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class)->withTimestamps();
+    }
+
+    public function accessibleBranchIds(): array
+    {
+        if ($this->isCompanyAdmin()) {
+            return Branch::query()
+                ->where('company_id', $this->company_id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        $ids = $this->branches()->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        if ($this->branch_id) {
+            $ids[] = (int) $this->branch_id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    public function canAccessBranch(int $branchId): bool
+    {
+        return in_array($branchId, $this->accessibleBranchIds(), true);
+    }
+
     public function role()
     {
         return $this->belongsTo(Role::class)->withoutGlobalScope('company');
@@ -98,7 +126,11 @@ class User extends Authenticatable
      */
     public function canSwitchBranches(): bool
     {
-        return $this->isCompanyAdmin();
+        if ($this->isCompanyAdmin()) {
+            return true;
+        }
+
+        return count($this->accessibleBranchIds()) > 1;
     }
 
     public function hasRole(string $role): bool

@@ -9,6 +9,7 @@ use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
 use App\Services\AuditLogger;
 use App\Services\DocumentNumberService;
+use App\Services\IdempotencyService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,16 +54,30 @@ class StockTransferController extends Controller
         ]));
     }
 
-    public function store(Request $request, DocumentNumberService $numbers, InventoryService $inventory, AuditLogger $audit)
+    public function store(Request $request, DocumentNumberService $numbers, InventoryService $inventory, AuditLogger $audit, IdempotencyService $idempotency)
     {
         $this->authorizePermission('inventory.transfer');
 
         $companyId = (int) auth()->user()->company_id;
         $data = $this->validateTransfer($request, $companyId);
         $completeNow = ($data['action'] ?? 'draft') === 'complete';
+        $token = $idempotency->key($request, 'stock_transfer', [
+            'from_branch_id' => (int) $data['from_branch_id'],
+            'to_branch_id' => (int) $data['to_branch_id'],
+            'transfer_date' => $data['transfer_date'],
+            'action' => $data['action'] ?? 'draft',
+            'notes' => $data['notes'] ?? null,
+            'items' => $data['items'],
+        ]);
 
         try {
-            $transfer = DB::transaction(function () use ($data, $numbers, $inventory, $audit, $companyId, $completeNow, $request) {
+            $result = $idempotency->remember(
+                $companyId,
+                (int) auth()->id(),
+                'stock_transfer',
+                $token,
+                function () use ($data, $numbers, $inventory, $audit, $companyId, $completeNow, $request) {
+                    return DB::transaction(function () use ($data, $numbers, $inventory, $audit, $companyId, $completeNow, $request) {
                 $transfer = StockTransfer::query()->create([
                     'company_id' => $companyId,
                     'from_branch_id' => (int) $data['from_branch_id'],
@@ -98,16 +113,23 @@ class StockTransferController extends Controller
                 }
 
                 return $transfer->fresh(['items', 'fromBranch', 'toBranch']);
-            });
+                    });
+                }
+            );
+            $transfer = $result['subject'] ?: StockTransfer::query()->findOrFail($result['subject_id']);
         } catch (NegativeStockException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
+        $message = $result['replay']
+            ? 'This transfer was already recorded.'
+            : ($completeNow ? 'Stock transfer completed.' : 'Stock transfer saved as draft.');
+
         return redirect()
             ->route('stock.transfers.show', $transfer)
-            ->with('success', $completeNow ? 'Stock transfer completed.' : 'Stock transfer saved as draft.');
+            ->with('success', $message);
     }
 
     public function show(StockTransfer $transfer)
@@ -190,7 +212,6 @@ class StockTransferController extends Controller
             throw new \RuntimeException('Add at least one item before completing.');
         }
 
-        $allowNegative = auth()->user() && auth()->user()->hasPermission('inventory.allow_negative');
         $companyId = (int) $transfer->company_id;
 
         foreach ($transfer->items as $item) {
@@ -201,7 +222,7 @@ class StockTransferController extends Controller
                 (int) ($item->product_variant_id ?? 0)
             );
             $qty = (float) $item->quantity;
-            if ($qty - $onHand > 0.0001 && ! $allowNegative) {
+            if ($qty - $onHand > 0.0001) {
                 $name = optional($item->product)->name ?: ('Product #' . $item->product_id);
                 throw new \RuntimeException("Insufficient stock for {$name} at source branch (available: {$onHand}).");
             }
@@ -220,7 +241,7 @@ class StockTransferController extends Controller
                 'reference_id' => $transfer->id,
                 'reference_number' => $transfer->number,
                 'occurred_at' => $transfer->transfer_date,
-                'allow_negative' => $allowNegative,
+                'allow_negative' => false,
             ]);
 
             $inventory->apply([
@@ -280,6 +301,8 @@ class StockTransferController extends Controller
             if ($qty <= 0) {
                 continue;
             }
+            $product = Product::query()->findOrFail($line['product_id']);
+            $line['product_variant_id'] = $product->resolveVariantId($line['product_variant_id'] ?? 0);
             $lines[] = $line;
         }
 

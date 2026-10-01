@@ -22,7 +22,7 @@
     $method = $methods[$payment->method] ?? ucfirst((string) $payment->method);
     $customer = $sale->customerDisplayName() === 'WALK-IN' ? 'WALK IN' : $sale->customerDisplayName();
 @endphp
-    <div class="center"><h2>{{ $profile['companyName'] ?? $companyName ?? 'Sellix POS' }}</h2></div>
+    <div class="center"><h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2></div>
     <div class="center"><h3>PAYMENT RECEIPT</h3></div>
     @if($mode === 'pos')
         <div class="rule"></div>

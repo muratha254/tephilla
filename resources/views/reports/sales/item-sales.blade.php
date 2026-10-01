@@ -33,7 +33,7 @@
                         <select name="category_id" class="form-control">
                             <option value="">-Select-</option>
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}" @if((string) ($filters['category_id'] ?? '') === (string) $category->id) selected @endif>{{ $category->name }}</option>
+                                <option value="{{ $category->id }}" @if((string) ($filters['category_id'] ?? '') === (string) $category->id) selected @endif>{{ $category->optionLabel() }}</option>
                             @endforeach
                         </select>
                     </div>

@@ -33,7 +33,7 @@
                 @if(!empty($logo_pdf_path) && file_exists($logo_pdf_path))
                     <img src="{{ $logo_pdf_path }}" alt=""><br>
                 @endif
-                <h2>{{ $profile['companyName'] ?? $companyName ?? 'Sellix POS' }}</h2>
+                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
                 @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
                     <div class="muted">{{ $profile['companyAddress'] }}</div>
                 @endif

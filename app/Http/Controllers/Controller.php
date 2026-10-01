@@ -50,13 +50,13 @@ class Controller extends BaseController
     {
         $branches = Branch::query()->where('is_active', true)->orderBy('name')->get();
         $user = auth()->user();
-        if ($user && ! $user->canSwitchBranches()) {
-            $branches = $branches->where('id', $user->branch_id)->values();
+        if ($user && ! $user->isCompanyAdmin()) {
+            $branches = $branches->whereIn('id', $user->accessibleBranchIds())->values();
         }
 
         return [
             'branches' => $branches,
-            'categories' => ProductCategory::query()->where('is_active', true)->orderBy('name')->get(),
+            'categories' => ProductCategory::query()->with('parent')->where('is_active', true)->orderBy('name')->get(),
             'brands' => Brand::query()->where('is_active', true)->orderBy('name')->get(),
             'units' => Unit::query()->where('is_active', true)->orderBy('name')->get(),
             'taxes' => Tax::query()->where('is_active', true)->orderBy('name')->get(),

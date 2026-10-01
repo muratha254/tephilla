@@ -143,6 +143,6 @@ class SubscriptionAccessTest extends TestCase
         $this->actingAsAdmin()
             ->get(route('products.index'))
             ->assertOk()
-            ->assertSee('Items/Products');
+            ->assertSee('Products');
     }
 }

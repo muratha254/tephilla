@@ -279,6 +279,8 @@
     var holdsUrl = @json(route('pos.holds'));
     var token = $('meta[name="csrf-token"]').attr('content');
     var cart = [];
+    var checkoutKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+    var saleBusy = false;
     var discount = 0;
     var holdId = null;
     var categoryId = null;
@@ -351,16 +353,101 @@
         $('#sx-pos-grand').text(money(t.grand));
     }
 
+    function priceMissing(item) {
+        return !((parseFloat(item.selling_price) || 0) > 0) && !((parseFloat(item.price) || 0) > 0);
+    }
+
+    function withSellingPrice(item, selling) {
+        selling = Math.round(parseFloat(selling) * 100) / 100;
+        var rate = parseFloat(item.tax_rate) || 0;
+        var tax = 0;
+        var price = selling;
+        if (rate > 0) {
+            if (item.tax_inclusive) {
+                tax = Math.round(selling * rate / (100 + rate) * 100) / 100;
+            } else {
+                tax = Math.round(selling * rate / 100 * 100) / 100;
+                price = Math.round(selling * (1 + rate / 100) * 100) / 100;
+            }
+        }
+        var line = $.extend({}, item);
+        line.selling_price = selling;
+        line.price = price;
+        line.tax_amount = tax;
+        return line;
+    }
+
     function addProduct(item, qty) {
         qty = qty || 1;
-        var existing = cart.filter(function (row) { return row.id === item.id; })[0];
+        if (item.variants && item.variants.length && !item.variant_id) {
+            var options = {};
+            item.variants.forEach(function (variant) {
+                options[String(variant.id)] = variant.name + ' — ' + variant.qty;
+            });
+            Swal.fire({
+                title: 'Select colour',
+                text: item.name,
+                input: 'select',
+                inputOptions: options,
+                inputPlaceholder: 'Choose a colour',
+                showCancelButton: true
+            }).then(function (result) {
+                var chosen = result && (result.value || (result.isConfirmed ? result.value : null));
+                if (!chosen) {
+                    return;
+                }
+                var variant = null;
+                item.variants.forEach(function (row) {
+                    if (String(row.id) === String(chosen)) {
+                        variant = row;
+                    }
+                });
+                if (!variant) {
+                    return;
+                }
+                var line = $.extend({}, item);
+                line.variant_id = variant.id;
+                line.name = item.name + ' (' + variant.name + ')';
+                line.qty = variant.qty;
+                addProduct(line, qty);
+            });
+            return;
+        }
+        var key = String(item.id) + ':' + String(item.variant_id || 0);
+        var existing = cart.filter(function (row) { return row.key === key; })[0];
+        if (priceMissing(item) && !(existing && !priceMissing(existing))) {
+            Swal.fire({
+                title: 'Selling price',
+                text: item.name,
+                input: 'number',
+                inputAttributes: { min: 0.01, step: 0.01 },
+                inputPlaceholder: 'Enter selling price',
+                showCancelButton: true,
+                confirmButtonText: 'Add',
+                inputValidator: function (value) {
+                    if (!(parseFloat(value) > 0)) {
+                        return 'Enter a selling price';
+                    }
+                }
+            }).then(function (result) {
+                var amount = result && parseFloat(result.value);
+                if (!(amount > 0)) {
+                    return;
+                }
+                addProduct(withSellingPrice(item, amount), qty);
+            });
+            return;
+        }
         if (existing) {
             existing.quantity += qty;
         } else {
             cart.push({
+                key: key,
                 id: item.id,
+                variant_id: item.variant_id || 0,
                 name: item.name,
                 price: item.price,
+                selling_price: item.selling_price || item.price,
                 wholesale_price: item.wholesale_price || 0,
                 tax_inclusive: !!item.tax_inclusive,
                 tax_rate: item.tax_rate || 0,
@@ -382,8 +469,14 @@
             due_date: $('#sx-pos-due').val(),
             document_type: $('#sx-pos-doctype').val(),
             discount_amount: discount,
+            idempotency_key: checkoutKey,
             items: cart.map(function (row) {
-                return { product_id: row.id, quantity: row.quantity };
+                return {
+                    product_id: row.id,
+                    product_variant_id: row.variant_id || 0,
+                    quantity: row.quantity,
+                    selling_price: row.selling_price || 0
+                };
             })
         };
     }
@@ -392,6 +485,7 @@
         cart = [];
         discount = 0;
         holdId = null;
+        checkoutKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
         renderCart();
     }
 
@@ -573,11 +667,6 @@
         renderCart();
     });
 
-    $(document).on('click', '#sx-pos-dashboard', function (e) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        window.location.href = this.getAttribute('href') || @json(route('dashboard', [], false));
-    });
     $('#sx-pos-new').on('click', resetCart);
     $('#sx-pos-disc-btn').on('click', function (e) {
         e.preventDefault();
@@ -619,6 +708,11 @@
     function requireCart() {
         if (!cart.length) {
             Swal.fire({ icon: 'warning', title: 'Add an item' });
+            return false;
+        }
+        var missing = cart.filter(function (row) { return !(linePrice(row) > 0); })[0];
+        if (missing) {
+            Swal.fire({ icon: 'warning', title: 'Selling price', text: 'Enter a selling price for ' + missing.name + '.' });
             return false;
         }
         return true;
@@ -788,6 +882,10 @@
             return;
         }
 
+        if (saleBusy) {
+            return;
+        }
+        saleBusy = true;
         var payload = cartPayload();
         payload.notes = $('#sx-pay-note').val();
         payload.service_type = $('#sx-pay-service').val();
@@ -827,6 +925,8 @@
             Swal.fire({ icon: 'success', title: 'Sale saved', text: msg, timer: 1800, showConfirmButton: false });
         }).fail(function (xhr) {
             Swal.fire({ icon: 'error', title: 'Order failed', text: (xhr.responseJSON && xhr.responseJSON.message) || 'Could not complete order.' });
+        }).always(function () {
+            saleBusy = false;
         });
     }
 
@@ -886,9 +986,12 @@
             if (data.due_date) $('#sx-pos-due').val(data.due_date);
             cart = (data.items || []).map(function (item) {
                 return {
+                    key: String(item.id) + ':' + String(item.variant_id || 0),
                     id: item.id,
+                    variant_id: item.variant_id || 0,
                     name: item.name,
                     price: item.price,
+                    selling_price: item.selling_price || item.price,
                     wholesale_price: item.wholesale_price || 0,
                     tax_inclusive: !!item.tax_inclusive,
                     tax_rate: item.tax_rate || 0,

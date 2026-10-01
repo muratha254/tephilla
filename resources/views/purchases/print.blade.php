@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'Sellix POS' }} | {{ $purchase->number }}</title>
+    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | {{ $purchase->number }}</title>
     <style>
         body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 24px; background: #fff; }
         h1, h2, h3 { margin: 0 0 6px; }
@@ -38,7 +38,7 @@
             @if(!empty($companyLogoUrl))
                 <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}">
             @endif
-            <h2>{{ $companyName ?? 'Sellix POS' }}</h2>
+            <h2>{{ $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
             <div class="muted">{{ $companyProfile['companyAddress'] ?? '' }}</div>
             <div class="muted">{{ $companyProfile['companyPhone'] ?? '' }} @if(!empty($companyProfile['companyEmail'])) | {{ $companyProfile['companyEmail'] }} @endif</div>
         </div>
@@ -105,7 +105,7 @@
         <p class="muted">Note: {{ $purchase->notes }}</p>
     @endif
 
-    <p class="muted">{{ $systemName ?? 'Sellix POS' }}</p>
+    <p class="muted">{{ $systemName ?? 'TEPHILLA SYSTEM' }}</p>
     <script>window.addEventListener('load', function () { window.print(); });</script>
 </body>
 </html>

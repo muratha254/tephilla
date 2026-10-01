@@ -30,6 +30,10 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="form-group" id="sx-adjust-colour-wrap" style="display:none;">
+                        <label class="sx-req">Colour *</label>
+                        <select name="product_variant_id" id="sx-adjust-variant" class="form-control" disabled></select>
+                    </div>
                     <div class="form-group">
                         <label class="sx-req">Adjust Qty *</label>
                         <input type="number" step="0.0001" min="0.0001" name="quantity" class="form-control" placeholder="Qty to Adjust(Type number, e.g 20,30...)" required>

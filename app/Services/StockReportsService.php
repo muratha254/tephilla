@@ -15,7 +15,7 @@ class StockReportsService
 {
     public function categoryOptions(): Collection
     {
-        return ProductCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        return ProductCategory::query()->with('parent')->where('is_active', true)->orderBy('name')->get();
     }
 
     public function brandOptions(): Collection
@@ -72,26 +72,62 @@ class StockReportsService
 
     public function stockRows(?int $branchId = null, array $filters = []): Collection
     {
-        return $this->productQuery($filters)
-            ->with(['category', 'brand'])
+        $rows = collect();
+
+        $this->productQuery($filters)
+            ->with(['category.parent', 'brand', 'unit', 'variants', 'branchStock'])
             ->orderBy('name')
             ->get()
-            ->map(function (Product $product, int $i) use ($branchId) {
-                $stock = $this->productStock($product, $branchId);
+            ->each(function (Product $product) use ($branchId, $rows) {
+                $stocks = $product->branchStock;
+                if ($branchId) {
+                    $stocks = $stocks->where('branch_id', $branchId);
+                }
 
-                return [
-                    'index' => $i + 1,
-                    'item_code' => $product->item_code,
-                    'item' => $product->name,
-                    'category' => optional($product->category)->name ?: '-',
-                    'brand' => optional($product->brand)->name ?: '-',
-                    'purchase_price' => round((float) $product->purchase_price, 2),
-                    'selling_price' => round((float) $product->selling_price, 2),
-                    'stock' => round($stock, 2),
-                    'reorder' => round((float) $product->reorder_level, 2),
-                    'value' => round($stock * (float) $product->purchase_price, 2),
-                ];
-            })->values();
+                $variants = $product->variants->where('is_active', true)->values();
+                if ($variants->isEmpty()) {
+                    $rows->push($this->stockLine($product, '-', (float) $stocks->sum('quantity')));
+
+                    return;
+                }
+
+                foreach ($variants as $variant) {
+                    $qty = (float) $stocks->where('product_variant_id', $variant->id)->sum('quantity');
+                    $rows->push($this->stockLine($product, $variant->color ?: '-', $qty));
+                }
+
+                $plain = (float) $stocks->where('product_variant_id', 0)->sum('quantity');
+                if (abs($plain) > 0.0001) {
+                    $rows->push($this->stockLine($product, '-', $plain));
+                }
+            });
+
+        return $rows->values()->map(function (array $row, int $i) {
+            $row['index'] = $i + 1;
+
+            return $row;
+        });
+    }
+
+    private function stockLine(Product $product, string $colour, float $stock): array
+    {
+        $category = $product->category;
+        $group = $category && $category->parent_id ? optional($category->parent)->name : optional($category)->name;
+
+        return [
+            'item_code' => $product->item_code,
+            'item' => $product->name,
+            'category' => $group ?: '-',
+            'product_type' => $category && $category->parent_id ? $category->name : '-',
+            'colour' => $colour,
+            'unit' => optional($product->unit)->short_name ?: (optional($product->unit)->name ?: '-'),
+            'brand' => optional($product->brand)->name ?: '-',
+            'purchase_price' => round((float) $product->purchase_price, 2),
+            'selling_price' => round((float) $product->selling_price, 2),
+            'stock' => round($stock, 2),
+            'reorder' => round((float) $product->reorder_level, 2),
+            'value' => round($stock * (float) $product->purchase_price, 2),
+        ];
     }
 
     public function stockAsAtRows(string $date, ?int $branchId = null, array $filters = [], bool $detailed = false): Collection
@@ -159,9 +195,9 @@ class StockReportsService
             })->values();
     }
 
-    public function ledgerRows(string $from, string $to, ?int $branchId = null, ?int $productId = null): Collection
+    public function ledgerRows(string $from, string $to, ?int $branchId = null, ?int $productId = null, ?int $variantId = null, ?int $userId = null, ?int $categoryId = null): Collection
     {
-        return $this->movementQuery($from, $to, $branchId, $productId)
+        return $this->movementQuery($from, $to, $branchId, $productId, $variantId, $userId, $categoryId)
             ->orderBy('occurred_at')
             ->orderBy('id')
             ->get()
@@ -171,13 +207,15 @@ class StockReportsService
                 return [
                     'index' => $i + 1,
                     'branch' => optional($movement->branch)->name ?: '-',
-                    'item' => optional($product)->name ?: '-',
+                    'item' => trim((optional($product)->name ?: '-') . ' ' . (optional($movement->variant)->color ?: '')),
                     'trans_date' => optional($movement->occurred_at)->format('d-m-Y'),
                     'action' => ucfirst(str_replace('_', ' ', (string) $movement->type)),
                     'description' => $movement->notes ?: '-',
                     'purchase_price' => round((float) $movement->unit_cost, 2),
                     'sales_price' => round((float) optional($product)->selling_price, 2),
                     'reference' => $movement->reference_number ?: '-',
+                    'user' => optional($movement->user)->name ?: '-',
+                    'opening' => round((float) $movement->quantity_before, 2),
                     'stock_in' => round((float) $movement->quantity_in, 2),
                     'stock_out' => round((float) $movement->quantity_out, 2),
                     'balance' => round((float) $movement->quantity_after, 2),
@@ -404,20 +442,28 @@ class StockReportsService
             })->values();
     }
 
-    private function movementQuery(string $from, string $to, ?int $branchId = null, ?int $productId = null)
+    private function movementQuery(string $from, string $to, ?int $branchId = null, ?int $productId = null, ?int $variantId = null, ?int $userId = null, ?int $categoryId = null)
     {
         return StockMovement::query()
-            ->with(['product', 'branch', 'user'])
+            ->with(['product', 'variant', 'branch', 'user'])
             ->whereBetween('occurred_at', [$this->start($from), $this->end($to)])
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
-            ->when($productId, fn ($q) => $q->where('product_id', $productId));
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
+            ->when($variantId, fn ($q) => $q->where('product_variant_id', $variantId))
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->when($categoryId, function ($q) use ($categoryId) {
+                $ids = ProductCategory::idsIncludingChildren($categoryId);
+                $q->whereHas('product', fn ($product) => $product->whereIn('category_id', $ids));
+            });
     }
 
     private function productQuery(array $filters)
     {
         return Product::query()
             ->where('is_active', true)
-            ->when(! empty($filters['category_id']), fn ($q) => $q->where('category_id', (int) $filters['category_id']))
+            ->when(! empty($filters['category_id']), function ($q) use ($filters) {
+                $q->whereIn('category_id', ProductCategory::idsIncludingChildren((int) $filters['category_id']));
+            })
             ->when(! empty($filters['brand_id']), fn ($q) => $q->where('brand_id', (int) $filters['brand_id']))
             ->when(! empty($filters['product_id']), fn ($q) => $q->where('id', (int) $filters['product_id']));
     }

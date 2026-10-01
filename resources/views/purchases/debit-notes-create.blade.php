@@ -156,6 +156,7 @@
                     '<tr>' +
                         '<td>' + $('<div>').text(item.name).html() +
                             '<input type="hidden" name="items[' + i + '][product_id]" value="' + item.product_id + '">' +
+                            '<input type="hidden" name="items[' + i + '][product_variant_id]" value="' + (item.product_variant_id || 0) + '">' +
                         '</td>' +
                         '<td>' + item.received + '</td>' +
                         '<td>' + item.returned + '</td>' +

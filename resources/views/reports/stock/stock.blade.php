@@ -25,7 +25,7 @@
                             <option value="">All Categories</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" @if((string) ($filters['category_id'] ?? '') === (string) $category->id) selected @endif>
-                                    {{ $category->name }}
+                                    {{ $category->optionLabel() }}
                                 </option>
                             @endforeach
                         </select>
@@ -92,6 +92,9 @@
                         <th>Item Code</th>
                         <th>Item Name</th>
                         <th>Category</th>
+                        <th>Product type</th>
+                        <th>Colour</th>
+                        <th>Unit</th>
                         <th>Brand</th>
                         <th class="text-right">Purchase Price</th>
                         <th class="text-right">Sales Price</th>
@@ -107,6 +110,9 @@
                             <td>{{ $row['item_code'] }}</td>
                             <td>{{ $row['item'] }}</td>
                             <td>{{ $row['category'] }}</td>
+                            <td>{{ $row['product_type'] ?? '-' }}</td>
+                            <td>{{ $row['colour'] ?? '-' }}</td>
+                            <td>{{ $row['unit'] ?? '-' }}</td>
                             <td>{{ $row['brand'] }}</td>
                             <td class="text-right">{{ number_format($row['purchase_price'], 2) }}</td>
                             <td class="text-right">{{ number_format($row['selling_price'], 2) }}</td>
@@ -115,7 +121,7 @@
                             <td class="text-right">{{ number_format($row['value'], 2) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="10">No records found.</td></tr>
+                        <tr><td colspan="13">No records found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

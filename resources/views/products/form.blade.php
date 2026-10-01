@@ -49,45 +49,59 @@
                         <input type="text" name="name" class="form-control" placeholder="Product Name" value="{{ old('name', $product->name) }}" required>
                     </div>
                 </div>
+                @php
+                    $selectedTypeId = (string) old('category_id', $product->category_id);
+                    $types = $categories->filter(function ($category) use ($categories, $selectedTypeId) {
+                        $isType = $category->parent_id || ! $categories->contains('parent_id', $category->id);
+
+                        return $isType || (string) $category->id === (string) $selectedTypeId;
+                    })->values();
+                @endphp
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>Brand</label>
-                        <div class="input-group">
-                            <select name="brand_id" id="brand_id" class="form-control">
-                                <option value="">-Select-</option>
-                                @foreach($brands as $brand)
-                                    <option value="{{ $brand->id }}" @if(old('brand_id', $product->brand_id) == $brand->id) selected @endif>{{ $brand->name }}</option>
-                                @endforeach
-                            </select>
-                            @if(auth()->user()->hasPermission('brands.manage'))
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-info sx-plus-btn" data-quick="brand" title="Add brand"><i class="fa fa-plus"></i></button>
-                                </span>
-                            @endif
-                        </div>
+                        <label class="sx-req">Product type *</label>
+                        <select name="category_id" id="category_id" class="form-control" required>
+                            <option value="">-Select-</option>
+                            @foreach($types as $type)
+                                <option value="{{ $type->id }}" @if($selectedTypeId === (string) $type->id) selected @endif>{{ $type->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label class="sx-req">Category *</label>
-                        <div class="input-group">
-                            <select name="category_id" id="category_id" class="form-control" required>
-                                <option value="">-Select-</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" @if(old('category_id', $product->category_id) == $category->id) selected @endif>{{ $category->name }}</option>
+                        <label>Colour</label>
+                        @if($isEdit)
+                            <select name="colour_ids[]" id="colour_id" class="form-control" multiple>
+                                @foreach($colours as $colour)
+                                    <option value="{{ $colour->id }}" @if(in_array((string) $colour->id, $selectedColourIds ?? [], true)) selected @endif>{{ $colour->name }}</option>
                                 @endforeach
                             </select>
-                            @if(auth()->user()->hasPermission('categories.manage'))
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-info sx-plus-btn" data-quick="category" title="Add category"><i class="fa fa-plus"></i></button>
-                                </span>
-                            @endif
-                        </div>
+                        @else
+                            <select name="colour_id" id="colour_id" class="form-control">
+                                <option value="">-Select-</option>
+                                @foreach($colours as $colour)
+                                    <option value="{{ $colour->id }}" @if((string) ($selectedColourId ?? '') === (string) $colour->id) selected @endif>{{ $colour->name }}</option>
+                                @endforeach
+                            </select>
+                            @foreach($selectedColourIds ?? [] as $colourId)
+                                <input type="hidden" name="colour_ids[]" value="{{ $colourId }}">
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             </div>
 
             <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="is_active" class="form-control">
+                            <option value="1" @if(old('is_active', $product->is_active ? '1' : '0') == '1') selected @endif>Active</option>
+                            <option value="0" @if(old('is_active', $product->is_active ? '1' : '0') == '0') selected @endif>Inactive</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label class="sx-req">Unit Of Measure*</label>
@@ -116,15 +130,6 @@
                     <div class="form-group">
                         <label>Serial Key Unit (SKU)</label>
                         <input type="text" name="sku" class="form-control" placeholder="Serial Key Unit(For Scanning)" value="{{ old('sku', $product->sku) }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label class="sx-req">Expire Date <span class="sx-format">Format(dd-mm-yyyy)</span></label>
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                            <input type="date" name="expiry_date" class="form-control" placeholder="Expiry Date DD-MM-YYYY" value="{{ old('expiry_date', optional($product->expiry_date)->format('Y-m-d')) }}">
-                        </div>
                     </div>
                 </div>
             </div>
@@ -233,11 +238,20 @@
                 </div>
             </div>
 
+            @php
+                $openingValue = old('opening_stock');
+                if ($openingValue === null && $isEdit && isset($openingStock)) {
+                    $openingValue = rtrim(rtrim(number_format((float) $openingStock, 4, '.', ''), '0'), '.');
+                    if ($openingValue === '' || $openingValue === '-') {
+                        $openingValue = '0';
+                    }
+                }
+            @endphp
             <div class="row">
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>New Opening Stock</label>
-                        <input type="number" step="0.01" name="opening_stock" class="form-control" placeholder="-/+" value="{{ old('opening_stock') }}">
+                        <label>Opening Stock</label>
+                        <input type="number" step="0.01" name="opening_stock" id="opening_stock" class="form-control" placeholder="-/+" value="{{ $openingValue }}">
                     </div>
                 </div>
                 <div class="col-md-9">
@@ -322,8 +336,6 @@
     }
 
     var endpoints = {
-        brand: { url: @json(route('brands.store')), select: 'brand_id', title: 'Add Brand' },
-        category: { url: @json(route('categories.store')), select: 'category_id', title: 'Add Category' },
         unit: { url: @json(route('units.store')), select: 'unit_id', title: 'Add Unit' }
     };
     var currentType = null;
@@ -340,6 +352,20 @@
             setTimeout(function () { document.getElementById('sx-quick-name').focus(); }, 300);
         });
     });
+
+    @if($isEdit && !empty($colourStock))
+    var colourStock = @json($colourStock);
+    var colourSelect = document.getElementById('colour_id');
+    var openingInput = document.getElementById('opening_stock');
+    if (colourSelect && openingInput) {
+        colourSelect.addEventListener('change', function () {
+            var key = colourSelect.value || '';
+            if (Object.prototype.hasOwnProperty.call(colourStock, key)) {
+                openingInput.value = colourStock[key];
+            }
+        });
+    }
+    @endif
 
     document.getElementById('sx-quick-save').addEventListener('click', function () {
         if (!currentType) return;

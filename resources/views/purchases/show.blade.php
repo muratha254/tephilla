@@ -66,6 +66,12 @@
                 @if(!empty($canUpdate))
                     <a href="#" class="sx-invoice-link" id="sx-change-status">Change</a>
                 @endif
+                @if(!empty($canReceive) && ! in_array($purchase->status, ['received', 'cancelled'], true))
+                    <form method="post" action="{{ route('purchases.receive', $purchase) }}" style="display:inline-block;margin-left:8px;">
+                        @csrf
+                        <button type="submit" class="btn btn-success btn-sm">Receive goods</button>
+                    </form>
+                @endif
             </div>
             <div>Purchase Ref.: {{ $purchase->reference_no }}</div>
             <div>CU NO.: {{ $purchase->cu_number }}</div>

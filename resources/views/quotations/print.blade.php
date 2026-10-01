@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'Sellix POS' }} | {{ $quotation->number }}</title>
+    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | {{ $quotation->number }}</title>
     <style>
         body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 24px; background: #fff; }
         h1, h2, h3 { margin: 0 0 6px; }
@@ -31,7 +31,7 @@
             @if(!empty($companyLogoUrl))
                 <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}">
             @endif
-            <h2>{{ $companyName ?? 'Sellix POS' }}</h2>
+            <h2>{{ $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
             <div class="muted">{{ $companyProfile['companyAddress'] ?? '' }}</div>
             <div class="muted">{{ $companyProfile['companyPhone'] ?? '' }} @if(!empty($companyProfile['companyEmail'])) | {{ $companyProfile['companyEmail'] }} @endif</div>
         </div>

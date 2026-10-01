@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\NegativeStockException;
 use App\Models\AuditLog;
+use App\Models\Colour;
+use App\Models\Folding;
+use App\Models\FoldingOutput;
 use App\Models\Product;
 use App\Models\ProductBatch;
 use App\Models\ProductBranchStock;
+use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\AuditLogger;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
@@ -23,10 +29,10 @@ class ProductController extends Controller
         $branchId = $this->currentBranchId();
 
         $products = Product::query()
-            ->with(['category', 'brand', 'unit', 'tax'])
+            ->with(['category.parent', 'unit', 'tax', 'variants'])
             ->availableAtBranch($branchId)
             ->when($request->filled('category_id'), function ($query) use ($request) {
-                $query->where('category_id', $request->category_id);
+                $query->whereIn('category_id', ProductCategory::idsIncludingChildren((int) $request->category_id));
             })
             ->when($request->filled('status'), function ($query) use ($request) {
                 if ($request->status === 'active') {
@@ -38,21 +44,25 @@ class ProductController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        $stockByProduct = collect();
+        $stockByVariant = collect();
         if ($branchId) {
-            $stockByProduct = ProductBranchStock::query()
+            $stockByVariant = ProductBranchStock::query()
                 ->withoutGlobalScope('branch')
                 ->where('branch_id', $branchId)
                 ->whereIn('product_id', $products->pluck('id'))
-                ->selectRaw('product_id, SUM(quantity) as quantity')
-                ->groupBy('product_id')
-                ->pluck('quantity', 'product_id');
+                ->get()
+                ->groupBy(function ($row) {
+                    return $row->product_id . ':' . (int) $row->product_variant_id;
+                })
+                ->map(function ($rows) {
+                    return (float) $rows->sum('quantity');
+                });
         }
 
         return view('products.index', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
             'activeMenu' => 'products.index',
             'products' => $products,
-            'stockByProduct' => $stockByProduct,
+            'stockByVariant' => $stockByVariant,
             'selectedBranchId' => $branchId,
             'filters' => $request->only(['category_id', 'status']),
             'canCreate' => auth()->user()->hasPermission('products.create'),
@@ -68,7 +78,7 @@ class ProductController extends Controller
     {
         $this->authorizePermission('products.create');
 
-        return view('products.form', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
+        return view('products.form', array_merge(fleet_shared_view_data(), $this->catalogLookups(), $this->colourLookups(), [
             'activeMenu' => 'products.create',
             'selectedBranchId' => $this->currentBranchId(),
             'product' => new Product([
@@ -100,7 +110,9 @@ class ProductController extends Controller
         }
 
         $opening = (float) $request->input('opening_stock', 0);
-        unset($data['opening_stock'], $data['branch_id']);
+        $colourIds = $data['colour_ids'] ?? [];
+        unset($data['opening_stock'], $data['branch_id'], $data['colour_ids']);
+        $this->rejectOpeningAcrossColours($colourIds, $opening);
 
         if (empty($data['barcode']) && ! empty($data['sku'])) {
             $data['barcode'] = $data['sku'];
@@ -110,10 +122,11 @@ class ProductController extends Controller
         $branchId = $this->currentBranchId();
         abort_unless($branchId, 422, 'Select an active branch before creating items.');
         $this->assertBranchAccess($branchId);
+        $variantId = $this->syncColours($product, $colourIds);
 
         try {
-            $this->ensureBranchStock($product, $branchId);
-            $this->applyOpeningStock($inventory, $product, $branchId, $opening, StockMovement::OPENING, 'Opening stock');
+            $this->ensureColourStock($product, $branchId, $colourIds);
+            $this->applyOpeningStock($inventory, $product, $branchId, $opening, StockMovement::OPENING, 'Opening stock', $variantId);
             $this->recordBatch($product, $branchId, $opening);
         } catch (NegativeStockException $e) {
             return redirect()->route('products.edit', $product)->with('error', $e->getMessage());
@@ -150,6 +163,8 @@ class ProductController extends Controller
             ->whereIn('product_id', $children->pluck('id'))
             ->pluck('quantity', 'product_id');
 
+        $foldingHistory = $this->foldingHistory($product);
+
         return view('products.show', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
             'activeMenu' => 'products.index',
             'product' => $product,
@@ -157,11 +172,94 @@ class ProductController extends Controller
             'batches' => $batches,
             'children' => $children,
             'childStock' => $childStock,
+            'usedOnFolding' => $foldingHistory['used'],
+            'producedOnFolding' => $foldingHistory['produced'],
             'currencyCode' => optional(auth()->user()->company)->currency_code ?? 'KES',
             'canUpdate' => auth()->user()->hasPermission('products.update'),
             'canCreate' => auth()->user()->hasPermission('products.create'),
             'canViewCost' => auth()->user()->hasPermission('products.view_cost'),
         ]));
+    }
+
+    /**
+     * Folding rows where this item was consumed, plus rows where it was produced.
+     */
+    private function foldingHistory(Product $product): array
+    {
+        $foldings = Folding::query()
+            ->with(['colour', 'outputs.product', 'outputs.colour'])
+            ->where('product_id', $product->id)
+            ->orderByDesc('folded_on')
+            ->orderByDesc('id')
+            ->get();
+
+        $movements = StockMovement::query()
+            ->where('reference_type', Folding::class)
+            ->where('type', StockMovement::FOLDING)
+            ->where('product_id', $product->id)
+            ->whereIn('reference_id', $foldings->pluck('id'))
+            ->get()
+            ->groupBy('reference_id');
+
+        $used = $foldings->filter(function (Folding $folding) use ($movements) {
+            $rows = $movements->get($folding->id, collect());
+
+            return $folding->outputs->isNotEmpty()
+                || $rows->contains(fn (StockMovement $row) => (float) $row->quantity_out > 0);
+        })->values();
+
+        $produced = FoldingOutput::query()
+            ->with(['colour', 'folding.product', 'folding.colour'])
+            ->where('product_id', $product->id)
+            ->get()
+            ->map(function (FoldingOutput $output) {
+                $folding = $output->folding;
+                if (! $folding) {
+                    return null;
+                }
+
+                return [
+                    'sort' => optional($folding->folded_on)->format('Y-m-d') . '-' . str_pad((string) $folding->id, 8, '0', STR_PAD_LEFT),
+                    'date' => optional($folding->folded_on)->format('d/m/Y'),
+                    'number' => $folding->number(),
+                    'raw' => optional($folding->product)->name ?: '—',
+                    'raw_colour' => optional($folding->colour)->name ?: '—',
+                    'raw_qty' => (float) $folding->quantity,
+                    'colour' => optional($output->colour)->name ?: '—',
+                    'qty' => (float) $output->quantity,
+                    'notes' => $folding->notes,
+                    'status' => $folding->status ?: 'confirmed',
+                ];
+            })
+            ->filter();
+
+        $historical = $foldings->filter(function (Folding $folding) use ($movements) {
+            if ($folding->outputs->isNotEmpty()) {
+                return false;
+            }
+            $rows = $movements->get($folding->id, collect());
+
+            return $rows->contains(fn (StockMovement $row) => (float) $row->quantity_in > 0)
+                && ! $rows->contains(fn (StockMovement $row) => (float) $row->quantity_out > 0);
+        })->map(function (Folding $folding) {
+            return [
+                'sort' => optional($folding->folded_on)->format('Y-m-d') . '-' . str_pad((string) $folding->id, 8, '0', STR_PAD_LEFT),
+                'date' => optional($folding->folded_on)->format('d/m/Y'),
+                'number' => $folding->number(),
+                'raw' => '—',
+                'raw_colour' => '—',
+                'raw_qty' => null,
+                'colour' => optional($folding->colour)->name ?: '—',
+                'qty' => (float) $folding->quantity,
+                'notes' => $folding->notes,
+                'status' => $folding->status ?: 'confirmed',
+            ];
+        });
+
+        return [
+            'used' => $used,
+            'produced' => $produced->concat($historical)->sortByDesc('sort')->values(),
+        ];
     }
 
     public function updateImage(Request $request, Product $product)
@@ -339,11 +437,36 @@ class ProductController extends Controller
         $this->authorizePermission('products.update');
         $this->authorizeProductBranch($product);
 
-        return view('products.form', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
+        $branchId = $this->currentBranchId();
+        $lookups = $this->colourLookups($product);
+        $colourStock = [];
+        foreach ($product->variants()->where('is_active', true)->get() as $variant) {
+            $colourStock[(string) $variant->colour_id] = round($product->quantityAtBranch($branchId, (int) $variant->id), 4);
+        }
+        $selectedColour = (string) ($lookups['selectedColourId'] ?? '');
+        if ($selectedColour !== '') {
+            $openingStock = $colourStock[$selectedColour] ?? 0;
+        } elseif ($colourStock === []) {
+            $openingStock = round($product->quantityAtBranch($branchId, 0), 4);
+        } else {
+            $openingStock = null;
+        }
+
+        $viewData = array_merge(fleet_shared_view_data(), $this->catalogLookups(), $lookups, [
             'activeMenu' => 'products.index',
-            'selectedBranchId' => $this->currentBranchId(),
+            'selectedBranchId' => $branchId,
             'product' => $product,
-        ]));
+            'openingStock' => $openingStock,
+            'colourStock' => $colourStock,
+        ]);
+        if ($product->category_id && ! $viewData['categories']->contains(fn ($category) => (int) $category->id === (int) $product->category_id)) {
+            $assigned = ProductCategory::withTrashed()->with('parent')->find($product->category_id);
+            if ($assigned) {
+                $viewData['categories']->push($assigned);
+            }
+        }
+
+        return view('products.form', $viewData);
     }
 
     public function update(Request $request, Product $product, AuditLogger $audit, InventoryService $inventory)
@@ -372,18 +495,27 @@ class ProductController extends Controller
             $data['image_path'] = $request->file('image')->store('products', 'public');
         }
 
-        $opening = (float) $request->input('opening_stock', 0);
-        unset($data['opening_stock'], $data['branch_id']);
+        $openingProvided = $request->filled('opening_stock');
+        $opening = $openingProvided ? round((float) $request->input('opening_stock'), 4) : 0.0;
+        $colourIds = $data['colour_ids'] ?? [];
+        unset($data['opening_stock'], $data['branch_id'], $data['colour_ids']);
+        $this->rejectOpeningAcrossColours($colourIds, $openingProvided ? $opening : 0.0);
         $product->update($data);
 
         $branchId = $this->currentBranchId();
         abort_unless($branchId, 422, 'Select an active branch before updating stock.');
         $this->assertBranchAccess($branchId);
+        $variantId = $this->syncColours($product, $colourIds);
+        $delta = 0.0;
+        if ($openingProvided && count($colourIds) <= 1) {
+            $current = round($product->quantityAtBranch($branchId, $variantId), 4);
+            $delta = round($opening - $current, 4);
+        }
 
         try {
-            $this->ensureBranchStock($product, $branchId);
-            $this->applyOpeningStock($inventory, $product, $branchId, $opening, StockMovement::ADJUSTMENT, 'New opening stock');
-            $this->recordBatch($product, $branchId, $opening);
+            $this->ensureColourStock($product, $branchId, $colourIds);
+            $this->applyOpeningStock($inventory, $product, $branchId, $delta, StockMovement::ADJUSTMENT, 'New opening stock', $variantId);
+            $this->recordBatch($product, $branchId, $delta);
         } catch (NegativeStockException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -420,7 +552,7 @@ class ProductController extends Controller
 
         $branchId = $this->currentBranchId();
         $products = Product::query()
-            ->with('tax')
+            ->with(['tax', 'unit', 'variants'])
             ->availableAtBranch($branchId)
             ->where('is_active', true)
             ->where(function ($query) use ($q) {
@@ -441,8 +573,16 @@ class ProductController extends Controller
                 'purchase_price' => (float) $product->purchase_price,
                 'selling_price' => (float) $product->selling_price,
                 'tax_rate' => (float) optional($product->tax)->rate,
+                'unit' => optional($product->unit)->short_name ?: optional($product->unit)->name,
                 'stock' => $product->quantityAtBranch($branchId),
                 'expiry' => optional($product->expiry_date)->format('Y-m-d'),
+                'variants' => $product->variants->where('is_active', true)->map(function (ProductVariant $variant) use ($product, $branchId) {
+                    return [
+                        'id' => $variant->id,
+                        'name' => $variant->color,
+                        'qty' => $product->quantityAtBranch($branchId, $variant->id),
+                    ];
+                })->values(),
             ];
         }));
     }
@@ -545,6 +685,7 @@ class ProductController extends Controller
             'sku' => $request->filled('sku') ? $request->input('sku') : null,
             'barcode' => $request->filled('barcode') ? $request->input('barcode') : null,
             'brand_id' => $request->filled('brand_id') ? $request->input('brand_id') : null,
+            'colour_id' => $request->filled('colour_id') ? $request->input('colour_id') : null,
             'expiry_date' => $request->filled('expiry_date') ? $request->input('expiry_date') : null,
         ]);
 
@@ -602,13 +743,33 @@ class ProductController extends Controller
             'tax_inclusive' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'opening_stock' => 'nullable|numeric',
+            'colour_id' => ['nullable', 'integer', Rule::exists('colours', 'id')->where(function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })],
+            'colour_ids' => 'nullable|array',
+            'colour_ids.*' => ['integer', Rule::exists('colours', 'id')->where(function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })],
         ]);
+
+        $chosen = ProductCategory::query()->find($data['category_id']);
+        if ($chosen && ProductCategory::query()->where('parent_id', $chosen->id)->exists()) {
+            throw ValidationException::withMessages([
+                'category_id' => 'Choose a product type under this category.',
+            ]);
+        }
 
         $data['manage_stock'] = $request->boolean('manage_stock');
         $data['allow_negative_stock'] = $request->boolean('allow_negative_stock');
         $data['for_sale'] = $request->boolean('for_sale');
         $data['tax_inclusive'] = $request->boolean('tax_inclusive');
-        $data['is_active'] = true;
+        $data['is_active'] = $request->exists('is_active') ? $request->boolean('is_active') : true;
+        $data['colour_ids'] = array_values(array_unique(array_filter(array_map('intval', $data['colour_ids'] ?? []))));
+        if (! empty($data['colour_id'])) {
+            $data['colour_ids'][] = (int) $data['colour_id'];
+            $data['colour_ids'] = array_values(array_unique($data['colour_ids']));
+        }
+        unset($data['colour_id']);
         $data['purchase_price'] = $data['purchase_price'] ?? 0;
         $data['wholesale_price'] = $data['wholesale_price'] ?? 0;
         $data['promo_price'] = $data['promo_price'] ?? 0;
@@ -629,7 +790,7 @@ class ProductController extends Controller
         );
     }
 
-    private function ensureBranchStock(Product $product, int $branchId): void
+    private function ensureBranchStock(Product $product, int $branchId, int $variantId = 0): void
     {
         if (! $product->manage_stock || ! $branchId) {
             return;
@@ -643,7 +804,7 @@ class ProductController extends Controller
                     'company_id' => $product->company_id,
                     'branch_id' => $branchId,
                     'product_id' => $product->id,
-                    'product_variant_id' => 0,
+                    'product_variant_id' => $variantId,
                 ],
                 [
                     'quantity' => 0,
@@ -652,13 +813,129 @@ class ProductController extends Controller
             );
     }
 
+    /**
+     * @param  array<int, int>  $colourIds
+     */
+    private function ensureColourStock(Product $product, int $branchId, array $colourIds): void
+    {
+        if ($colourIds === []) {
+            $this->ensureBranchStock($product, $branchId, 0);
+
+            return;
+        }
+
+        $variantIds = ProductVariant::query()
+            ->where('product_id', $product->id)
+            ->whereIn('colour_id', $colourIds)
+            ->where('is_active', true)
+            ->pluck('id');
+
+        foreach ($variantIds as $variantId) {
+            $this->ensureBranchStock($product, $branchId, (int) $variantId);
+        }
+    }
+
+    /**
+     * @param  array<int, int>  $colourIds
+     */
+    private function rejectOpeningAcrossColours(array $colourIds, float $opening): void
+    {
+        if (count($colourIds) > 1 && abs($opening) > 0.0001) {
+            throw ValidationException::withMessages([
+                'opening_stock' => 'Enter opening stock for one colour at a time.',
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<int, int>  $colourIds
+     */
+    private function syncColours(Product $product, array $colourIds): int
+    {
+        if ($colourIds === []) {
+            return 0;
+        }
+
+        $primary = 0;
+        foreach ($colourIds as $colourId) {
+            $colour = Colour::query()->find($colourId);
+            if (! $colour) {
+                continue;
+            }
+
+            $variant = ProductVariant::query()
+                ->where('product_id', $product->id)
+                ->where('colour_id', $colour->id)
+                ->first();
+
+            if (! $variant) {
+                $variant = ProductVariant::query()->create([
+                    'company_id' => $product->company_id,
+                    'product_id' => $product->id,
+                    'colour_id' => $colour->id,
+                    'color' => $colour->name,
+                    'is_active' => true,
+                ]);
+            } else {
+                $variant->update([
+                    'color' => $colour->name,
+                    'is_active' => true,
+                ]);
+            }
+
+            if ($primary === 0) {
+                $primary = (int) $variant->id;
+            }
+        }
+
+        $product->update(['has_variants' => true]);
+
+        ProductVariant::query()
+            ->where('product_id', $product->id)
+            ->whereNotIn('colour_id', $colourIds)
+            ->where('is_active', true)
+            ->get()
+            ->each(function (ProductVariant $variant) use ($product) {
+                $onHand = ProductBranchStock::query()
+                    ->withoutGlobalScope('branch')
+                    ->where('product_id', $product->id)
+                    ->where('product_variant_id', $variant->id)
+                    ->sum('quantity');
+                if (abs((float) $onHand) < 0.0001) {
+                    $variant->update(['is_active' => false]);
+                }
+            });
+
+        return count($colourIds) === 1 ? $primary : 0;
+    }
+
+    private function colourLookups(?Product $product = null): array
+    {
+        $selected = old('colour_ids');
+        if ($selected === null && $product && $product->exists) {
+            $selected = $product->variants()->where('is_active', true)->pluck('colour_id')->all();
+        }
+        $selected = collect($selected ?: [])->map(fn ($id) => (string) $id)->filter()->values();
+        $selectedColourId = old('colour_id');
+        if ($selectedColourId === null && $selected->count() === 1) {
+            $selectedColourId = $selected->first();
+        }
+
+        return [
+            'colours' => Colour::query()->where('is_active', true)->orderBy('name')->get(),
+            'selectedColourId' => (string) ($selectedColourId ?? ''),
+            'selectedColourIds' => $selected->all(),
+        ];
+    }
+
     private function applyOpeningStock(
         InventoryService $inventory,
         Product $product,
         int $branchId,
         float $opening,
         string $type,
-        string $notes
+        string $notes,
+        int $variantId = 0
     ): void {
         if ($opening == 0.0 || ! $product->manage_stock || ! $branchId) {
             return;
@@ -668,6 +945,7 @@ class ProductController extends Controller
             'company_id' => $product->company_id,
             'branch_id' => $branchId,
             'product_id' => $product->id,
+            'product_variant_id' => $variantId,
             'type' => $type,
             'unit_cost' => $product->purchase_price,
             'user_id' => auth()->id(),

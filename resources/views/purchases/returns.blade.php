@@ -331,7 +331,7 @@
             var html = '';
             data.items.forEach(function (row, i) {
                 html += '<tr>';
-                html += '<td>' + $('<div>').text(row.name).html() + '<input type="hidden" name="items[' + i + '][product_id]" value="' + row.product_id + '"></td>';
+                html += '<td>' + $('<div>').text(row.name).html() + '<input type="hidden" name="items[' + i + '][product_id]" value="' + row.product_id + '"><input type="hidden" name="items[' + i + '][product_variant_id]" value="' + (row.product_variant_id || 0) + '"></td>';
                 html += '<td>' + row.received + '</td>';
                 html += '<td>' + row.returned + '</td>';
                 html += '<td>' + row.available + '</td>';

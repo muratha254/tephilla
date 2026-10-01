@@ -22,24 +22,36 @@ class PurchaseReturnService
 
     public function returnablePayload(PurchaseOrder $purchase): array
     {
-        $purchase->load(['items.product', 'supplier']);
+        $purchase->load(['items.product', 'items.variant.colour', 'supplier']);
 
-        $returned = PurchaseReturnItem::query()
-            ->selectRaw('product_id, SUM(quantity) as qty')
+        $returnedRows = PurchaseReturnItem::query()
+            ->selectRaw('product_id, product_variant_id, SUM(quantity) as qty')
             ->whereHas('purchaseReturn', function ($query) use ($purchase) {
                 $query->where('purchase_order_id', $purchase->id);
             })
-            ->groupBy('product_id')
-            ->pluck('qty', 'product_id');
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+
+        $returned = [];
+        foreach ($returnedRows as $row) {
+            $returned[$row->product_id . ':' . (int) $row->product_variant_id] = (float) $row->qty;
+        }
 
         $items = $purchase->items->map(function (PurchaseOrderItem $item) use ($returned) {
+            $variantId = (int) ($item->product_variant_id ?? 0);
             $received = (float) $item->quantity_received;
-            $already = (float) ($returned[$item->product_id] ?? 0);
+            $already = (float) ($returned[$item->product_id . ':' . $variantId] ?? 0);
             $available = round(max(0, $received - $already), 4);
+            $name = optional($item->product)->name ?: $item->description;
+            $colour = optional($item->variant)->color ?: optional(optional($item->variant)->colour)->name;
+            if ($colour) {
+                $name .= ' (' . $colour . ')';
+            }
 
             return [
                 'product_id' => $item->product_id,
-                'name' => optional($item->product)->name ?: $item->description,
+                'product_variant_id' => $variantId,
+                'name' => $name,
                 'received' => $received,
                 'returned' => $already,
                 'available' => $available,
@@ -64,7 +76,9 @@ class PurchaseReturnService
     public function createFromPurchase(PurchaseOrder $purchase, array $data): PurchaseReturn
     {
         $payload = $this->returnablePayload($purchase);
-        $available = collect($payload['items'])->keyBy('product_id');
+        $available = collect($payload['items'])->keyBy(function ($item) {
+            return $item['product_id'] . ':' . (int) ($item['product_variant_id'] ?? 0);
+        });
         $lines = [];
 
         foreach ($data['items'] as $row) {
@@ -72,12 +86,21 @@ class PurchaseReturnService
             if ($qty <= 0) {
                 continue;
             }
-            $item = $available->get((int) $row['product_id']);
+            $productId = (int) $row['product_id'];
+            if (array_key_exists('product_variant_id', $row) && $row['product_variant_id'] !== null && $row['product_variant_id'] !== '') {
+                $item = $available->get($productId . ':' . (int) $row['product_variant_id']);
+            } else {
+                $matches = $available->filter(function ($candidate) use ($productId) {
+                    return (int) $candidate['product_id'] === $productId;
+                });
+                $item = $matches->count() === 1 ? $matches->first() : null;
+            }
             if (! $item || $qty - $item['available'] > 0.0001) {
                 throw new \InvalidArgumentException('Return quantity exceeds what can be returned.');
             }
             $lines[] = [
-                'product_id' => (int) $row['product_id'],
+                'product_id' => $productId,
+                'product_variant_id' => (int) $item['product_variant_id'],
                 'quantity' => $qty,
                 'unit_cost' => (float) $item['unit_cost'],
                 'line_total' => round($qty * (float) $item['unit_cost'], 2),
@@ -113,6 +136,7 @@ class PurchaseReturnService
                     'company_id' => $purchase->company_id,
                     'branch_id' => $purchase->branch_id,
                     'product_id' => $line['product_id'],
+                    'product_variant_id' => (int) ($line['product_variant_id'] ?? 0),
                     'type' => StockMovement::PURCHASE_RETURN,
                     'quantity_out' => $line['quantity'],
                     'unit_cost' => $line['unit_cost'],

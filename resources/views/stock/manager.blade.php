@@ -29,7 +29,7 @@
     <select name="category_id" class="form-control" onchange="this.form.submit()">
         <option value="">All</option>
         @foreach($categories as $category)
-            <option value="{{ $category->id }}" @if(($filters['category_id'] ?? '') == $category->id) selected @endif>{{ $category->name }}</option>
+            <option value="{{ $category->id }}" @if(($filters['category_id'] ?? '') == $category->id) selected @endif>{{ $category->optionLabel() }}</option>
         @endforeach
     </select>
     <select name="branch_id" class="form-control" onchange="this.form.submit()">
@@ -136,7 +136,7 @@
                                     <ul class="dropdown-menu dropdown-menu-right sx-action-menu">
                                         @if(!empty($canAdjust))
                                             <li>
-                                                <a href="#" class="sx-open-adjust" data-url="{{ route('stock.adjust', $product) }}">
+                                                <a href="#" class="sx-open-adjust" data-url="{{ route('stock.adjust', $product) }}" data-variants="{{ $product->variants->where('is_active', true)->map(fn ($variant) => ['id' => $variant->id, 'name' => $variant->color ?: optional($variant->colour)->name ?: $variant->displayName()])->values()->toJson() }}">
                                                     <i class="fa fa-balance-scale"></i> Adjust Stock
                                                 </a>
                                             </li>
@@ -312,9 +312,32 @@
 
     $(document).on('click', '.sx-open-adjust', function (e) {
         e.preventDefault();
-        $('#sx-adjust-form').attr('action', $(this).data('url'));
+        var btn = $(this);
+        $('#sx-adjust-form').attr('action', btn.attr('data-url'));
         $('#sx-adjust-date').val('{{ now()->format('Y-m-d') }}');
         $('#sx-adjust-status').val('');
+        var variants = [];
+        try {
+            variants = JSON.parse(btn.attr('data-variants') || '[]');
+        } catch (err) {
+            variants = [];
+        }
+        if (!Array.isArray(variants)) {
+            variants = [];
+        }
+        var select = $('#sx-adjust-variant');
+        select.empty();
+        if (variants.length) {
+            select.append('<option value="">Select colour</option>');
+            variants.forEach(function (variant) {
+                select.append($('<option>', { value: variant.id, text: variant.name }));
+            });
+            select.prop('required', true).prop('disabled', false);
+            $('#sx-adjust-colour-wrap').show();
+        } else {
+            select.prop('required', false).prop('disabled', true);
+            $('#sx-adjust-colour-wrap').hide();
+        }
         $('#sx-adjust-modal').modal('show');
     });
 

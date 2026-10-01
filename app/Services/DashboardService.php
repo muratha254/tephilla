@@ -2,14 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Expense;
+use App\Models\Folding;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -100,6 +103,31 @@ class DashboardService
         $topMovers = $this->topMovers($resolvedBranchId, $monthStart, $monthEnd);
         $symbol = optional($company)->currency_symbol ?? 'Ksh';
 
+        $foldingQuery = Folding::query()->when($resolvedBranchId, fn ($query) => $query->where('branch_id', $resolvedBranchId));
+        $todayProduction = (clone $foldingQuery)->whereDate('folded_on', $now->toDateString())->sum('quantity');
+        $recentFoldings = (clone $foldingQuery)->with(['product', 'colour'])->orderByDesc('folded_on')->orderByDesc('id')->limit(6)->get();
+        $recentMovements = StockMovement::query()
+            ->with(['product', 'variant', 'user'])
+            ->when($resolvedBranchId, fn ($query) => $query->where('branch_id', $resolvedBranchId))
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->limit(6)
+            ->get();
+        $recentActivities = AuditLog::query()
+            ->with('user')
+            ->when($resolvedBranchId, fn ($query) => $query->where('branch_id', $resolvedBranchId))
+            ->orderByDesc('created_at')
+            ->limit(6)
+            ->get();
+        $outOfStockCount = ProductBranchStock::query()
+            ->when($resolvedBranchId, fn ($query) => $query->where('branch_id', $resolvedBranchId))
+            ->where('quantity', '<=', 0)
+            ->count();
+        $inventoryValue = (float) ProductBranchStock::query()
+            ->when($resolvedBranchId, fn ($query) => $query->where('branch_id', $resolvedBranchId))
+            ->selectRaw('COALESCE(SUM(quantity * average_cost), 0) as value')
+            ->value('value');
+
         return [
             'company' => $company,
             'branches' => $branches,
@@ -123,6 +151,13 @@ class DashboardService
             'invoiceCount' => $invoiceCount,
             'lowStock' => $lowStock,
             'lowStockCount' => $lowStock->count(),
+            'todayProduction' => (float) $todayProduction,
+            'flatSheetStock' => $this->flatSheetStock($resolvedBranchId),
+            'recentFoldings' => $recentFoldings,
+            'recentMovements' => $recentMovements,
+            'recentActivities' => $recentActivities,
+            'outOfStockCount' => $outOfStockCount,
+            'inventoryValue' => $inventoryValue,
             'topMovers' => $topMovers,
             'categorySales' => $this->categorySales($resolvedBranchId, $monthStart, $monthEnd),
             'pendingSales' => $this->pendingSales($resolvedBranchId),
@@ -216,6 +251,22 @@ class DashboardService
                 'percent' => $total > 0 ? round(($amount / $total) * 100, 1) : 0,
             ];
         });
+    }
+
+    private function flatSheetStock(?int $branchId): Collection
+    {
+        $product = Product::query()->whereIn('name', ['Flat Sheet', 'Flatsheets'])->orderBy('name')->first();
+        if (! $product) {
+            return collect();
+        }
+
+        return ProductBranchStock::query()
+            ->with('variant')
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->where('product_id', $product->id)
+            ->where('product_variant_id', '>', 0)
+            ->orderBy('product_variant_id')
+            ->get();
     }
 
     private function pendingSales(?int $branchId): Collection

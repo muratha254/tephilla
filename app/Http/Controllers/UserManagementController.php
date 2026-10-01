@@ -81,6 +81,7 @@ class UserManagementController extends Controller
             'password' => Hash::make($data['password']),
             'is_active' => true,
         ]);
+        $user->branches()->sync($data['branch_ids']);
 
         if ($request->hasFile('photo')) {
             $user->update([
@@ -127,6 +128,7 @@ class UserManagementController extends Controller
         }
 
         $user->update($payload);
+        $user->branches()->sync($data['branch_ids']);
 
         if ($request->hasFile('photo')) {
             if ($user->profile_photo_path) {
@@ -161,7 +163,7 @@ class UserManagementController extends Controller
     {
         $companyId = auth()->user()->company_id;
 
-        return $request->validate([
+        $data = $request->validate([
             'username' => [
                 'required', 'string', 'max:100',
                 Rule::unique('users', 'username')->ignore($ignoreId)->whereNull('deleted_at'),
@@ -172,6 +174,14 @@ class UserManagementController extends Controller
             ],
             'branch_id' => [
                 'required',
+                Rule::exists('branches', 'id')->where(function ($q) use ($companyId) {
+                    if ($companyId) {
+                        $q->where('company_id', $companyId);
+                    }
+                }),
+            ],
+            'branch_ids' => ['nullable', 'array'],
+            'branch_ids.*' => [
                 Rule::exists('branches', 'id')->where(function ($q) use ($companyId) {
                     if ($companyId) {
                         $q->where('company_id', $companyId);
@@ -192,6 +202,21 @@ class UserManagementController extends Controller
             'photo' => ['nullable', 'image', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $branchIds = collect($data['branch_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->push((int) $data['branch_id'])
+            ->unique()
+            ->values()
+            ->all();
+
+        if (! in_array((int) $data['branch_id'], $branchIds, true)) {
+            $branchIds[] = (int) $data['branch_id'];
+        }
+
+        $data['branch_ids'] = $branchIds;
+
+        return $data;
     }
 
     private function formData(User $user): array

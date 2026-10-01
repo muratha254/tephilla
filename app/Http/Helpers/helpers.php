@@ -2,12 +2,12 @@
 
 function fleet_system_name(): string
 {
-    return (string) config('fleet.system_name', 'Sellix POS');
+    return (string) config('fleet.system_name', 'TEPHILLA SYSTEM');
 }
 
 function fleet_system_short_name(): string
 {
-    return (string) config('fleet.system_short_name', 'Sellix POS');
+    return (string) config('fleet.system_short_name', 'TEPHILLA SYSTEM');
 }
 
 function fleet_document_profile(string $type): array
@@ -87,12 +87,15 @@ function fleet_shared_view_data(int $notificationCount = 0): array
             } else {
                 $branches = \App\Models\Branch::query()->where('is_active', true)->orderBy('name')->get();
 
-                if (! $user->canSwitchBranches()) {
-                    $branches = $branches->where('id', $user->branch_id)->values();
+                if (! $user->isCompanyAdmin()) {
+                    $allowed = $user->accessibleBranchIds();
+                    $branches = $branches->whereIn('id', $allowed)->values();
                 }
 
                 $currentId = session('current_branch_id', $user->branch_id);
                 if (! $user->canSwitchBranches()) {
+                    $currentId = $user->branch_id;
+                } elseif (! $user->isCompanyAdmin() && ! in_array((int) $currentId, $user->accessibleBranchIds(), true)) {
                     $currentId = $user->branch_id;
                 }
                 $branch = $branches->firstWhere('id', $currentId) ?: $branches->first();

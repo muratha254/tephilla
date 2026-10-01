@@ -1,6 +1,6 @@
 @extends('layouts.fleet')
 
-@section('title', 'Purchase List')
+@section('title', $pageTitle ?? 'Purchase List')
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/datatables.net-bs/css/dataTables.bootstrap.css') }}">
@@ -8,21 +8,25 @@
 
 @section('content')
 @include('layouts.partials.page-header', [
-    'title' => 'Purchase List',
-    'subtitle' => 'View/Search Purchase',
+    'title' => $pageTitle ?? 'Purchase List',
+    'subtitle' => $pageSubtitle ?? 'View/Search Purchase',
     'backUrl' => route('dashboard'),
     'breadcrumbs' => [
         ['label' => 'Home', 'url' => route('dashboard'), 'icon' => 'fa-home'],
-        ['label' => 'Purchase List'],
+        ['label' => $pageTitle ?? 'Purchase List'],
     ],
 ])
 
 <div class="sx-box sx-items-card">
     <div class="sx-items-toolbar">
-        <h3 class="sx-box-title" style="flex:none;margin:0;">Purchase List</h3>
+        <h3 class="sx-box-title" style="flex:none;margin:0;">{{ $pageTitle ?? 'Purchase List' }}</h3>
         <div class="sx-toolbar-actions">
             @if($canCreate)
-                <a href="{{ route('purchases.create') }}" class="btn sx-btn-aqua"><i class="fa fa-plus"></i> New Purchase</a>
+                @if(($listView ?? 'list') === 'lpo')
+                    <a href="{{ route('purchases.create', ['type' => 'lpo']) }}" class="btn sx-btn-aqua"><i class="fa fa-plus"></i> New LPO</a>
+                @else
+                    <a href="{{ route('purchases.create', ['type' => 'direct']) }}" class="btn sx-btn-aqua"><i class="fa fa-plus"></i> New Purchase</a>
+                @endif
             @endif
         </div>
     </div>
@@ -111,6 +115,12 @@
                             <td><span class="sx-pay-badge {{ $statusClass }}">{{ $purchase->paymentStatusLabel() }}</span></td>
                             <td>{{ optional($purchase->user)->name ?: '-' }}</td>
                             <td>
+                                @if(!empty($canReceive) && ! in_array($purchase->status, ['received', 'cancelled'], true))
+                                    <form method="post" action="{{ route('purchases.receive', $purchase) }}" style="display:inline-block;margin-right:4px;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-xs">Receive</button>
+                                    </form>
+                                @endif
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
                                         Action <span class="caret"></span>
@@ -123,6 +133,13 @@
                                             <li>
                                                 <a href="{{ route('purchases.edit', $purchase) }}">
                                                     <i class="fa fa-pencil"></i> Edit Purchase Order
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if(!empty($canReceive) && ! in_array($purchase->status, ['received', 'cancelled'], true))
+                                            <li>
+                                                <a href="#" class="sx-receive-order" data-url="{{ route('purchases.receive', $purchase) }}">
+                                                    <i class="fa fa-truck"></i> Receive goods
                                                 </a>
                                             </li>
                                         @endif
@@ -531,6 +548,33 @@
         });
     });
 
+    $(document).on('click', '.sx-receive-order', function (e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        var send = function () {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            var token = document.querySelector('meta[name="csrf-token"]');
+            form.innerHTML = '<input type="hidden" name="_token" value="' + (token ? token.getAttribute('content') : '') + '">';
+            document.body.appendChild(form);
+            form.submit();
+        };
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Receive this order?',
+                text: 'The outstanding quantities will be added to stock.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Receive goods'
+            }).then(function (result) {
+                if (result.isConfirmed) send();
+            });
+            return;
+        }
+        if (window.confirm('Receive this order and add the goods to stock?')) send();
+    });
+
     $(document).on('click', '.sx-open-status', function (e) {
         e.preventDefault();
         var received = $(this).data('received') === 1 || $(this).data('received') === '1';
@@ -586,7 +630,7 @@
             var html = '';
             data.items.forEach(function (row, i) {
                 html += '<tr>';
-                html += '<td>' + $('<div>').text(row.name).html() + '<input type="hidden" name="items[' + i + '][product_id]" value="' + row.product_id + '"></td>';
+                html += '<td>' + $('<div>').text(row.name).html() + '<input type="hidden" name="items[' + i + '][product_id]" value="' + row.product_id + '"><input type="hidden" name="items[' + i + '][product_variant_id]" value="' + (row.product_variant_id || 0) + '"></td>';
                 html += '<td>' + row.received + '</td>';
                 html += '<td>' + row.returned + '</td>';
                 html += '<td>' + row.available + '</td>';

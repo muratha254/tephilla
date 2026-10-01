@@ -39,10 +39,9 @@ class SetCurrentCompany
                 $branchId = $user->branch_id;
                 $request->session()->put('current_branch_id', $branchId);
             } elseif ($branchId) {
-                $belongs = Branch::query()
-                    ->whereKey($branchId)
-                    ->where('company_id', $user->company_id)
-                    ->exists();
+                $belongs = $user->isCompanyAdmin()
+                    ? Branch::query()->whereKey($branchId)->where('company_id', $user->company_id)->exists()
+                    : $user->canAccessBranch((int) $branchId);
 
                 if (! $belongs) {
                     $branchId = $user->branch_id;

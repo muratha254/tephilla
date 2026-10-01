@@ -60,6 +60,7 @@ class PurchaseReturnController extends Controller
             'notes' => 'nullable|string|max:2000',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|integer|min:0',
             'items.*.quantity' => 'nullable|numeric|min:0',
         ]);
 
