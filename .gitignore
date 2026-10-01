@@ -1,5 +1,6 @@
 .env
 .env.*
+01 LOGIN DETAILS & PROJECT INFO.txt
 !.env.example
 production.env
 setup-live.php
