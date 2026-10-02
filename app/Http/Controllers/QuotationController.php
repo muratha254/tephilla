@@ -18,6 +18,7 @@ use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use PDF;
 
 class QuotationController extends Controller
 {
@@ -59,11 +60,14 @@ class QuotationController extends Controller
     {
         $this->authorizePermission('quotations.create');
 
+        $companyTerms = trim((string) optional(auth()->user()->company)->quotation_terms);
+
         return view('quotations.create', array_merge(fleet_shared_view_data(), $this->formData(new Quotation([
             'quote_date' => now()->toDateString(),
             'valid_until' => now()->addDays(30)->toDateString(),
             'status' => Quotation::STATUS_DRAFT,
             'discount_amount' => 0,
+            'terms' => $companyTerms !== '' ? $companyTerms : Quotation::DEFAULT_TERMS,
         ])), [
             'activeMenu' => 'quotations.create',
         ]));
@@ -326,7 +330,7 @@ class QuotationController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('sales.show', $sale)
+        return redirect()->route('sales.invoices')
             ->with('success', 'Quotation converted to invoice ' . ($sale->invoice_number ?: $sale->number) . '.');
     }
 
@@ -340,6 +344,24 @@ class QuotationController extends Controller
             'quotation' => $quotation,
             'statuses' => $this->statusLabels(),
         ]));
+    }
+
+    public function pdf(Quotation $quotation)
+    {
+        $this->authorizePermission('quotations.view');
+
+        $quotation->load(['customer', 'user', 'items.product', 'company', 'branch']);
+        $profile = fleet_company_profile();
+        $filename = 'quotation-' . preg_replace('/[^A-Za-z0-9\-]+/', '-', $quotation->number) . '.pdf';
+
+        $pdf = PDF::loadView('quotations.pdf', array_merge(fleet_shared_view_data(), [
+            'quotation' => $quotation,
+            'statuses' => $this->statusLabels(),
+            'profile' => $profile,
+            'logo_pdf_path' => $profile['logo_pdf_path'] ?? null,
+        ]))->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
     }
 
     private function canConvert(Quotation $quotation): bool
@@ -370,9 +392,7 @@ class QuotationController extends Controller
             'notes' => 'nullable|string|max:2000',
             'terms' => 'nullable|string|max:5000',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where(function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })],
+            'items.*.product_key' => ['required', 'regex:/^\d+:\d+$/'],
             'items.*.quantity' => 'required|numeric|min:0.0001',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0',
@@ -383,8 +403,16 @@ class QuotationController extends Controller
         $subtotal = 0.0;
         $taxTotal = 0.0;
 
-        foreach ($data['items'] as $row) {
-            $product = Product::query()->with('tax')->findOrFail($row['product_id']);
+        foreach ($data['items'] as $index => $row) {
+            [$productId, $variantId] = array_map('intval', explode(':', $row['product_key'], 2));
+            $product = Product::query()->with('tax')->find($productId);
+            if (! $product || (int) $product->company_id !== $companyId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "items.$index.product_key" => 'Select a product.',
+                ]);
+            }
+            $variantId = $product->resolveVariantId($variantId);
+            $variant = $variantId > 0 ? $product->variants()->whereKey($variantId)->first() : null;
             $qty = (float) $row['quantity'];
             $unitPrice = (float) $row['unit_price'];
             $taxRate = array_key_exists('tax_rate', $row) && $row['tax_rate'] !== null && $row['tax_rate'] !== ''
@@ -401,6 +429,8 @@ class QuotationController extends Controller
 
             $lines[] = [
                 'product' => $product,
+                'variant' => $variant,
+                'variant_id' => $variantId,
                 'quantity' => $qty,
                 'unit_price' => $unitPrice,
                 'discount_amount' => $lineDiscount,
@@ -433,14 +463,15 @@ class QuotationController extends Controller
         foreach ($lines as $line) {
             /** @var Product $product */
             $product = $line['product'];
+            $variant = $line['variant'];
             QuotationItem::query()->create([
                 'company_id' => $companyId,
                 'quotation_id' => $quotation->id,
                 'product_id' => $product->id,
-                'product_variant_id' => 0,
+                'product_variant_id' => $line['variant_id'],
                 'description' => $product->name,
-                'size' => $product->size,
-                'color' => $product->color,
+                'size' => $variant->size ?? $product->size,
+                'color' => $variant->color ?? $product->color,
                 'quantity' => $line['quantity'],
                 'unit_price' => $line['unit_price'],
                 'discount_amount' => $line['discount_amount'],
@@ -453,14 +484,6 @@ class QuotationController extends Controller
 
     private function formData(Quotation $quotation): array
     {
-        $products = Product::query()
-            ->with('tax')
-            ->availableAtBranch($this->currentBranchId())
-            ->where('is_active', true)
-            ->where('for_sale', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'selling_price', 'tax_id', 'size', 'color']);
-
         return [
             'quotation' => $quotation,
             'customers' => Customer::query()
@@ -468,16 +491,7 @@ class QuotationController extends Controller
                 ->orderByDesc('is_walk_in')
                 ->orderBy('name')
                 ->get(),
-            'products' => $products,
-            'productOptions' => $products->map(function (Product $product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'sku' => $product->sku,
-                    'selling_price' => (float) $product->selling_price,
-                    'tax_rate' => (float) (optional($product->tax)->rate ?? 0),
-                ];
-            })->values(),
+            'productOptions' => Product::pickerOptions($this->currentBranchId()),
             'statuses' => $this->statusLabels(),
         ];
     }

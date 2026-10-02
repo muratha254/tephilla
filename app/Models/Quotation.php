@@ -20,6 +20,8 @@ class Quotation extends Model
     public const STATUS_EXPIRED = 'expired';
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const DEFAULT_TERMS = "TERMS AND CONDITIONS.\n1. The above quotation is based on the roof estimates as per drawings provided.\n2. The quotation herein is valid for 30 (Thirty) days from the date of issue.\n3. Terms of sale; 100 % payment before delivery.\n4. Prices may change without prior notice unless paid for, wholly or partially.\n5. Labour and Supply contracts are to be treated as separate items\n6. This quotation is subjected to 5 - 10 % wastage depending on the roof design";
+
     protected $fillable = [
         'company_id', 'branch_id', 'customer_id', 'user_id', 'number',
         'quote_date', 'valid_until', 'status', 'converted_sale_id',

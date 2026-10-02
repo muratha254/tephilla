@@ -370,6 +370,12 @@ Route::middleware('auth')->group(function () {
         ->name('sales.returns');
     Route::get('/sales/voids', [SaleController::class, 'voids'])->name('sales.voids'); // OR: controller auth
     Route::get('/sales/orders', [OrderScreenController::class, 'index'])->name('sales.orders'); // OR: controller auth
+    Route::get('/sales/invoices/create', [SaleController::class, 'createInvoice'])->name('sales.invoices.create');
+    Route::post('/sales/invoices/customers', [SaleController::class, 'storeInvoiceCustomer'])->name('sales.invoices.customers.store');
+    Route::post('/sales/invoices', [SaleController::class, 'storeInvoice'])->name('sales.invoices.store');
+    Route::get('/sales/invoices', [SaleController::class, 'invoices'])
+        ->middleware('permission:sales.view')
+        ->name('sales.invoices');
 
     Route::get('/sales/credit-notes', [CreditNoteController::class, 'index'])
         ->middleware('permission:sales.view')
@@ -462,6 +468,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotations/{quotation}/print', [QuotationController::class, 'print'])
         ->middleware('permission:quotations.view')
         ->name('quotations.print');
+    Route::get('/quotations/{quotation}/pdf', [QuotationController::class, 'pdf'])
+        ->middleware('permission:quotations.view')
+        ->name('quotations.pdf');
     Route::put('/quotations/{quotation}', [QuotationController::class, 'update'])
         ->middleware('permission:quotations.update')
         ->name('quotations.update');

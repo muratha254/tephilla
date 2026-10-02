@@ -93,8 +93,9 @@
                             <textarea name="bank_details" class="form-control" rows="3">{{ old('bank_details', $company->bank_details) }}</textarea>
                         </div>
                         <div class="form-group">
-                            <label>Quotation Terms</label>
-                            <textarea name="quotation_terms" class="form-control" rows="3" placeholder="Type here...">{{ old('quotation_terms', $company->quotation_terms) }}</textarea>
+                            <label>Quotation Terms and Conditions</label>
+                            <textarea name="quotation_terms" class="form-control" rows="8" placeholder="{{ \App\Models\Quotation::DEFAULT_TERMS }}">{{ old('quotation_terms', $company->quotation_terms) }}</textarea>
+                            <small class="text-muted">Used on new quotations. You can still change the wording on each quotation.</small>
                         </div>
                         <div class="form-group">
                             <label>Country</label>

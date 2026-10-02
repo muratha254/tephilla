@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\NegativeStockException;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
 use App\Models\SalePaymentPlan;
 use App\Models\SalePaymentPlanItem;
@@ -65,6 +68,250 @@ class SaleController extends Controller
         ]));
     }
 
+    public function invoices()
+    {
+        $this->authorizePermission('sales.view');
+        $user = auth()->user();
+
+        $invoices = Sale::query()
+            ->with(['customer', 'cashier'])
+            ->where('document_type', Sale::TYPE_INVOICE)
+            ->whereNotIn('status', [Sale::STATUS_HELD, Sale::STATUS_DRAFT])
+            ->orderByDesc('sale_date')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('sales.invoices', array_merge(fleet_shared_view_data(), [
+            'activeMenu' => 'sales.invoices',
+            'invoices' => $invoices,
+            'canCreate' => $user->hasPermission('pos.view') || $user->hasPermission('sales.create'),
+            'canVoid' => $user->hasPermission('sales.void') || $user->hasPermission('pos.void'),
+            'canReturn' => $user->hasPermission('sales.return'),
+            'canPrint' => $user->hasPermission('sales.print_invoice')
+                || $user->hasPermission('sales.print_receipt')
+                || $user->hasPermission('sales.view'),
+            'canPay' => $user->hasPermission('payments.create'),
+            'paymentMethods' => config('sellix.payment_methods', []),
+        ]));
+    }
+
+    public function createInvoice()
+    {
+        $this->authorizeInvoiceCreate();
+
+        return view('sales.invoice-create', array_merge(fleet_shared_view_data(), [
+            'activeMenu' => 'sales.invoices',
+            'customers' => Customer::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_walk_in')
+                ->orderBy('name')
+                ->get(),
+            'productOptions' => Product::pickerOptions($this->currentBranchId()),
+            'invoiceDate' => now()->toDateString(),
+            'dueDate' => now()->addDays(30)->toDateString(),
+            'canAddCustomer' => auth()->user()->hasPermission('customers.create'),
+        ]));
+    }
+
+    public function storeInvoiceCustomer(Request $request)
+    {
+        $this->authorizePermission('customers.create');
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:64',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        $customer = Customer::query()->create([
+            'company_id' => auth()->user()->company_id,
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
+            'type' => Customer::TYPE_REGULAR,
+            'is_walk_in' => false,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'phone' => $customer->phone,
+        ]);
+    }
+
+    public function storeInvoice(
+        Request $request,
+        DocumentNumberService $numbers,
+        InventoryService $inventory,
+        AccountingPoster $accounting,
+        LoyaltyService $loyalty,
+        AuditLogger $audit
+    ) {
+        $this->authorizeInvoiceCreate();
+
+        $companyId = (int) auth()->user()->company_id;
+        $branchId = $this->currentBranchId();
+        abort_unless($branchId, 422, 'Select a branch first.');
+
+        $data = $request->validate([
+            'customer_id' => ['required', Rule::exists('customers', 'id')->where(function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })],
+            'invoice_date' => 'required|date',
+            'due_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:2000',
+            'discount_type' => 'nullable|in:amount,percent',
+            'discount_value' => 'nullable|numeric|min:0',
+            'items' => 'required|array|min:1',
+            'items.*.product_key' => ['required', 'regex:/^\d+:\d+$/'],
+            'items.*.quantity' => 'required|numeric|min:0.0001',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.tax_rate' => 'nullable|numeric|min:0',
+            'items.*.discount_type' => 'nullable|in:amount,percent',
+            'items.*.discount_value' => 'nullable|numeric|min:0',
+        ]);
+
+        $lines = [];
+        $subtotal = 0.0;
+        $taxTotal = 0.0;
+
+        foreach ($data['items'] as $index => $row) {
+            [$productId, $variantId] = array_map('intval', explode(':', $row['product_key'], 2));
+            $product = Product::query()->with('tax')->find($productId);
+            if (! $product || (int) $product->company_id !== $companyId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "items.$index.product_key" => 'Select a product.',
+                ]);
+            }
+            $variantId = $product->resolveVariantId($variantId);
+            $variant = $variantId > 0 ? $product->variants()->whereKey($variantId)->first() : null;
+            abort_unless($product->isAvailableAtBranch($branchId), 403, 'Item is not available at the active branch.');
+
+            $qty = (float) $row['quantity'];
+            $unitPrice = (float) $row['unit_price'];
+            $taxRate = array_key_exists('tax_rate', $row) && $row['tax_rate'] !== null && $row['tax_rate'] !== ''
+                ? (float) $row['tax_rate']
+                : (float) (optional($product->tax)->rate ?? 0);
+            $base = round($qty * $unitPrice, 2);
+            $discountValue = (float) ($row['discount_value'] ?? 0);
+            $lineDiscount = ($row['discount_type'] ?? 'amount') === 'percent'
+                ? round($base * ($discountValue / 100), 2)
+                : round($discountValue, 2);
+            $lineDiscount = min($lineDiscount, $base);
+            $taxable = round(max(0, $base - $lineDiscount), 2);
+            $taxAmt = round($taxable * ($taxRate / 100), 2);
+            $lineTotal = round($taxable + $taxAmt, 2);
+            $subtotal += $taxable;
+            $taxTotal += $taxAmt;
+            $cost = $variant && (float) $variant->purchase_price > 0
+                ? (float) $variant->purchase_price
+                : (float) ($product->purchase_price ?? 0);
+
+            $lines[] = [
+                'product' => $product,
+                'variant' => $variant,
+                'variant_id' => $variantId,
+                'quantity' => $qty,
+                'unit_price' => $unitPrice,
+                'cost_price' => $cost,
+                'discount_amount' => $lineDiscount,
+                'tax_rate' => $taxRate,
+                'tax_amount' => $taxAmt,
+                'line_total' => $lineTotal,
+            ];
+        }
+
+        $subtotal = round($subtotal, 2);
+        $headerValue = (float) ($data['discount_value'] ?? 0);
+        $headerDiscount = ($data['discount_type'] ?? 'amount') === 'percent'
+            ? round($subtotal * ($headerValue / 100), 2)
+            : round($headerValue, 2);
+        $headerDiscount = min($headerDiscount, $subtotal);
+        $taxTotal = round($taxTotal, 2);
+        $total = round(max(0, $subtotal - $headerDiscount + $taxTotal), 2);
+
+        try {
+            $sale = DB::transaction(function () use ($data, $lines, $numbers, $inventory, $accounting, $loyalty, $audit, $companyId, $branchId, $subtotal, $headerDiscount, $taxTotal, $total) {
+                $sale = Sale::query()->create([
+                    'company_id' => $companyId,
+                    'branch_id' => $branchId,
+                    'customer_id' => $data['customer_id'],
+                    'user_id' => auth()->id(),
+                    'document_type' => Sale::TYPE_INVOICE,
+                    'number' => $numbers->next($companyId, 'sale'),
+                    'invoice_number' => $numbers->next($companyId, 'invoice'),
+                    'sale_date' => $data['invoice_date'],
+                    'due_date' => $data['due_date'] ?? null,
+                    'status' => Sale::STATUS_COMPLETED,
+                    'payment_status' => Sale::PAYMENT_UNPAID,
+                    'subtotal' => $subtotal,
+                    'discount_percent' => 0,
+                    'discount_amount' => $headerDiscount,
+                    'tax_amount' => $taxTotal,
+                    'total' => $total,
+                    'paid_amount' => 0,
+                    'balance' => $total,
+                    'notes' => $data['notes'] ?? null,
+                ]);
+
+                foreach ($lines as $line) {
+                    $product = $line['product'];
+                    $variant = $line['variant'];
+                    SaleItem::query()->create([
+                        'company_id' => $companyId,
+                        'sale_id' => $sale->id,
+                        'product_id' => $product->id,
+                        'product_variant_id' => $line['variant_id'],
+                        'name' => $product->name,
+                        'sku' => $variant->sku ?? $product->sku,
+                        'size' => $variant->size ?? $product->size,
+                        'color' => $variant->color ?? $product->color,
+                        'quantity' => $line['quantity'],
+                        'unit_price' => $line['unit_price'],
+                        'cost_price' => $line['cost_price'],
+                        'discount_amount' => $line['discount_amount'],
+                        'tax_rate' => $line['tax_rate'],
+                        'tax_amount' => $line['tax_amount'],
+                        'line_total' => $line['line_total'],
+                    ]);
+
+                    if ($product->manage_stock) {
+                        $inventory->apply([
+                            'company_id' => $companyId,
+                            'branch_id' => $branchId,
+                            'product_id' => $product->id,
+                            'product_variant_id' => $line['variant_id'],
+                            'type' => StockMovement::SALE,
+                            'quantity_out' => $line['quantity'],
+                            'unit_cost' => $line['cost_price'],
+                            'user_id' => auth()->id(),
+                            'notes' => 'Invoice ' . $sale->invoice_number,
+                            'reference_type' => Sale::class,
+                            'reference_id' => $sale->id,
+                            'reference_number' => $sale->invoice_number,
+                            'occurred_at' => $sale->sale_date,
+                        ]);
+                    }
+                }
+
+                $sale = $sale->fresh(['items', 'customer']);
+                $accounting->postSale($sale);
+                $loyalty->earnForSale($sale);
+                $audit->record('create', 'sales', $sale, null, $sale->only([
+                    'invoice_number', 'customer_id', 'total', 'document_type',
+                ]));
+
+                return $sale;
+            });
+        } catch (NegativeStockException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('sales.invoices')
+            ->with('success', 'Invoice ' . ($sale->invoice_number ?: $sale->number) . ' saved.');
+    }
+
     public function show(Sale $sale)
     {
         $this->authorizePermission('sales.view');
@@ -74,7 +321,7 @@ class SaleController extends Controller
         $user = auth()->user();
 
         return view('sales.show', array_merge(fleet_shared_view_data(), [
-            'activeMenu' => 'sales.index',
+            'activeMenu' => $sale->document_type === Sale::TYPE_INVOICE ? 'sales.invoices' : 'sales.index',
             'sale' => $sale,
             'customers' => Customer::query()->where('is_active', true)->orderByDesc('is_walk_in')->orderBy('name')->get(),
             'salesPeople' => User::query()
@@ -327,7 +574,11 @@ class SaleController extends Controller
 
         $this->syncPaymentState($sale->fresh());
 
-        return redirect()->route('sales.show', $sale)->with('success', 'Payment saved.');
+        $redirect = $request->input('redirect') === 'invoices'
+            ? redirect()->route('sales.invoices')
+            : redirect()->route('sales.show', $sale);
+
+        return $redirect->with('success', 'Payment saved.');
     }
 
     public function storePlanPayment(Request $request, Sale $sale, SalePaymentPlanItem $item, DocumentNumberService $numbers)
@@ -726,6 +977,15 @@ class SaleController extends Controller
         return redirect()
             ->route('sales.voids')
             ->with('success', 'Sale ' . $sale->documentNumber() . ' was cancelled.');
+    }
+
+    private function authorizeInvoiceCreate(): void
+    {
+        $user = auth()->user();
+        abort_unless(
+            $user->hasPermission('sales.create') || $user->hasPermission('pos.view') || $user->hasPermission('pos.operate'),
+            403
+        );
     }
 
     /**

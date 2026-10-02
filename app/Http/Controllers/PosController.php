@@ -23,9 +23,10 @@ use Illuminate\Validation\Rule;
 
 class PosController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizePermission('pos.view');
+        $documentType = $request->query('document') === Sale::TYPE_INVOICE ? Sale::TYPE_INVOICE : Sale::TYPE_POS;
 
         $walkIn = $this->walkInCustomer();
         $customers = Customer::query()
@@ -43,7 +44,8 @@ class PosController extends Controller
             ->count();
 
         return view('pos.index', array_merge(fleet_shared_view_data(), [
-            'activeMenu' => 'sales.pos',
+            'activeMenu' => $documentType === Sale::TYPE_INVOICE ? 'sales.invoices' : 'sales.pos',
+            'documentType' => $documentType,
             'customers' => $customers,
             'walkInId' => $walkIn ? $walkIn->id : null,
             'heldCount' => $heldCount,

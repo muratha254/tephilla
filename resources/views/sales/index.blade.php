@@ -38,7 +38,7 @@
         <h3 class="sx-box-title" style="flex:none;margin:0;"><i class="fa fa-list-alt"></i> Merged List</h3>
         <div class="sx-toolbar-actions">
             @if($canCreate)
-                <a href="{{ route('pos.index') }}" class="btn sx-btn-gold"><i class="fa fa-plus"></i> New Sale</a>
+                <a href="{{ route('sales.invoices.create') }}" class="btn sx-btn-gold"><i class="fa fa-plus"></i> New Invoice</a>
             @endif
         </div>
     </div>

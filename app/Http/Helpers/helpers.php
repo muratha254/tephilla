@@ -31,6 +31,67 @@ function fleet_document_profile(string $type): array
     ]);
 }
 
+function document_letterhead(string $kind): array
+{
+    $empty = [
+        'header_url' => null,
+        'header_pdf' => null,
+        'footer_url' => null,
+        'footer_pdf' => null,
+    ];
+
+    if (! in_array($kind, ['invoice', 'quotation'], true)) {
+        return $empty;
+    }
+
+    try {
+        $companyId = (int) optional(auth()->user())->company_id;
+        if ($companyId < 1) {
+            return $empty;
+        }
+
+        $settings = app(\App\Services\SettingsService::class);
+        $resolve = function ($path) {
+            $path = ltrim((string) $path, '/');
+            if ($path === '') {
+                return [null, null];
+            }
+            $diskPath = storage_path('app/public/' . $path);
+            if (! is_file($diskPath)) {
+                return [null, null];
+            }
+
+            return [asset('storage/' . $path), $diskPath];
+        };
+
+        [$headerUrl, $headerPdf] = $resolve($settings->get($companyId, $kind . '_header_path', ''));
+        [$footerUrl, $footerPdf] = $resolve($settings->get($companyId, $kind . '_footer_path', ''));
+
+        return [
+            'header_url' => $headerUrl,
+            'header_pdf' => $headerPdf,
+            'footer_url' => $footerUrl,
+            'footer_pdf' => $footerPdf,
+        ];
+    } catch (\Throwable $e) {
+        return $empty;
+    }
+}
+
+function document_banner_height_pt(?string $path, float $widthPt = 595): float
+{
+    if (! $path || ! is_file($path)) {
+        return 0.0;
+    }
+
+    $info = @getimagesize($path);
+    if (! is_array($info) || empty($info[0]) || empty($info[1])) {
+        return 0.0;
+    }
+
+    return round(($info[1] / $info[0]) * $widthPt, 1);
+}
+
 function fleet_company_profile(): array
 {
     try {

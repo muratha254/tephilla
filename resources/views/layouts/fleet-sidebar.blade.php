@@ -112,6 +112,17 @@
         $reportLink('reports.audit', 'Audit Trail Report', 'reports.audit', $can('reports.audit')),
     ];
     $reportsOpen = collect($reportChildren)->contains(fn ($child) => ! empty($child['active']) || ! empty($child['open']));
+    $salesChildren = [
+        ['key' => 'sales.pos', 'label' => 'POS', 'icon' => 'fa-shopping-cart', 'url' => route('pos.index'), 'show' => $can('pos.view'), 'active' => $active === 'sales.pos'],
+        ['key' => 'sales.index', 'label' => 'Sales List', 'icon' => 'fa-list', 'url' => route('sales.index'), 'show' => $can('sales.view'), 'active' => $active === 'sales.index'],
+        ['key' => 'sales.returns', 'label' => 'Sales Return', 'icon' => 'fa-refresh', 'url' => route('sales.returns'), 'show' => $can('sales.return'), 'active' => $childActive('sales.returns')],
+        ['key' => 'sales.voids', 'label' => 'Cancelled Sales (Voids)', 'icon' => 'fa-times-circle', 'url' => route('sales.voids'), 'show' => $can('sales.void') || $can('pos.void'), 'active' => $active === 'sales.voids'],
+        ['key' => 'sales.credit-notes', 'label' => 'Credit Notes', 'icon' => 'fa-file-text-o', 'url' => route('sales.credit-notes'), 'show' => $can('sales.view'), 'active' => $childActive('sales.credit-notes')],
+        ['key' => 'quotations', 'label' => 'Quotations', 'icon' => 'fa-file-text-o', 'url' => route('quotations.index'), 'show' => $can('quotations.view'), 'active' => $childActive('quotations')],
+        ['key' => 'sales.invoices', 'label' => 'Invoices', 'icon' => 'fa-file-text-o', 'url' => route('sales.invoices'), 'show' => $can('sales.view'), 'active' => $active === 'sales.invoices'],
+        ['key' => 'sales.orders', 'label' => 'Order Screen', 'icon' => 'fa-desktop', 'url' => route('sales.orders'), 'show' => $can('pos.view') || $can('pos.operate') || $can('sales.create'), 'active' => $active === 'sales.orders'],
+    ];
+    $salesOpen = collect($salesChildren)->contains(fn ($child) => ! empty($child['active']));
 
     $menu = [
         $item('dashboard', 'Dashboard', 'fa-dashboard', route('dashboard'), true),
@@ -153,7 +164,15 @@
             ],
         ],
         $item('stock.transfers', 'Transfers', 'fa-exchange', route('stock.transfers.index'), $can('inventory.transfer') || $can('inventory.view')),
-        $item('sales', 'Sales', 'fa-shopping-cart', route('sales.index'), $can('sales.view')),
+        [
+            'key' => 'sales',
+            'label' => 'Sales',
+            'icon' => 'fa-shopping-cart',
+            'show' => collect($salesChildren)->contains(fn ($child) => ! empty($child['show'])),
+            'open' => $salesOpen,
+            'active' => $salesOpen,
+            'children' => $salesChildren,
+        ],
         $item('customers', 'Customers', 'fa-users', route('customers.index'), $can('customers.view')),
         $item('suppliers', 'Suppliers', 'fa-truck', route('suppliers.index'), $can('suppliers.view')),
         [
@@ -312,7 +331,7 @@
                                     @else
                                         <li class="{{ !empty($child['active']) ? 'active' : '' }}">
                                             <a href="{{ $child['url'] }}">
-                                                <i class="fa fa-circle"></i>
+                                                <i class="fa {{ $child['icon'] ?? 'fa-circle' }}"></i>
                                                 <span>{{ $child['label'] }}</span>
                                             </a>
                                         </li>

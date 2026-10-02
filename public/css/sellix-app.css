@@ -664,6 +664,11 @@ body.sellix-app {
     opacity: .85;
 }
 
+.sellix-app .fleet-submenu a .fa:not(.fa-circle) {
+    font-size: 13px;
+    color: #c5d0dc;
+}
+
 .sellix-app .fleet-submenu li.active > a {
     color: #fff;
     background: rgba(255, 255, 255, .08);
@@ -1182,6 +1187,19 @@ table.dataTable thead .sorting_desc {
 .sx-action-menu {
     min-width: 190px;
     padding: 6px 0;
+    z-index: 1060;
+}
+
+#inv-table tbody tr:has(.open),
+#qt-table tbody tr:has(.open) {
+    position: relative;
+    z-index: 40;
+}
+
+#inv-table .btn-group.open,
+#qt-table .btn-group.open {
+    position: relative;
+    z-index: 30;
 }
 
 .sx-action-menu > li > a {
@@ -1836,6 +1854,41 @@ table.dataTable thead .sorting_desc {
 .sx-po-total-row .form-control {
     width: 110px;
     text-align: right;
+}
+
+.sx-inv-customer-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sx-inv-customer-row select {
+    flex: 1;
+}
+
+.sx-inv-customer-row .btn {
+    flex: none;
+    white-space: nowrap;
+}
+
+.sx-inv-stock {
+    display: block;
+    margin-top: 4px;
+    color: #777;
+    font-size: 12px;
+}
+
+.sx-inv-discount {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.sx-inv-discount select {
+    width: 64px;
+    flex: none;
+    padding-left: 4px;
+    padding-right: 2px;
 }
 
 .sx-po-pay {

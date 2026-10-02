@@ -42,14 +42,24 @@
     function bindRow($row) {
         $row.find('.sx-qt-product').on('change', function () {
             var $opt = $(this).find('option:selected');
-            var price = $opt.data('price');
-            var tax = $opt.data('tax');
-            if (price !== undefined && price !== '') {
+            var price = parseFloat($opt.data('price'));
+            var qty = $opt.attr('data-qty');
+            if (price > 0) {
                 $row.find('.sx-qt-price').val(price);
+            } else if ($opt.val()) {
+                $row.find('.sx-qt-price').val('');
             }
-            if (tax !== undefined && tax !== '') {
-                $row.find('.sx-qt-tax').val(tax);
+            if ($opt.data('tax') !== undefined && $opt.data('tax') !== '') {
+                $row.find('.sx-qt-tax').val($opt.data('tax'));
             }
+            var hint = '';
+            if ($opt.val() && qty !== undefined && qty !== '') {
+                hint = 'Available ' + qty;
+            }
+            if ($opt.val() && price > 0) {
+                hint += (hint ? ' · ' : '') + 'Ksh ' + money(price);
+            }
+            $row.find('.sx-inv-stock').text(hint);
             recalc();
         });
         $row.find('.sx-qt-qty, .sx-qt-price, .sx-qt-tax, .sx-qt-discount').on('input change', recalc);

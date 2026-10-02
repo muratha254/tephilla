@@ -88,8 +88,8 @@
                 <div class="pos-meta-field">
                     <label for="sx-pos-doctype">Inv No</label>
                     <select id="sx-pos-doctype" class="form-control">
-                        <option value="pos" selected>Receipt</option>
-                        <option value="invoice">Invoice</option>
+                        <option value="pos" @if(($documentType ?? 'pos') !== 'invoice') selected @endif>Receipt</option>
+                        <option value="invoice" @if(($documentType ?? '') === 'invoice') selected @endif>Invoice</option>
                     </select>
                 </div>
             </div>

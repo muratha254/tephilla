@@ -5,7 +5,7 @@
         if ($isEdit && $quotation->relationLoaded('items') && $quotation->items->count()) {
             $oldItems = $quotation->items->map(function ($item) {
                 return [
-                    'product_id' => $item->product_id,
+                    'product_key' => $item->product_id . ':' . (int) ($item->product_variant_id ?? 0),
                     'quantity' => (float) $item->quantity,
                     'unit_price' => (float) $item->unit_price,
                     'tax_rate' => (float) $item->tax_rate,
@@ -14,7 +14,7 @@
             })->values()->all();
         } else {
             $oldItems = [[
-                'product_id' => '',
+                'product_key' => '',
                 'quantity' => 1,
                 'unit_price' => '',
                 'tax_rate' => '',
@@ -43,8 +43,8 @@
                 <input type="date" name="valid_until" class="form-control" value="{{ old('valid_until', optional($quotation->valid_until)->format('Y-m-d')) }}">
             </div>
             <div class="form-group">
-                <label>Terms</label>
-                <textarea name="terms" class="form-control" rows="3" placeholder="Payment / delivery terms">{{ old('terms', $quotation->terms) }}</textarea>
+                <label>Terms and Conditions</label>
+                <textarea name="terms" class="form-control" rows="8" placeholder="{{ \App\Models\Quotation::DEFAULT_TERMS }}">{{ old('terms', $quotation->terms) }}</textarea>
             </div>
         </div>
         <div class="col-md-6">
@@ -87,17 +87,19 @@
             @foreach($oldItems as $index => $item)
                 <tr class="sx-qt-row">
                     <td>
-                        <select name="items[{{ $index }}][product_id]" class="form-control sx-qt-product" required>
+                        <select name="items[{{ $index }}][product_key]" class="form-control sx-qt-product" required>
                             <option value="">-Select-</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}"
-                                    data-price="{{ (float) $product->selling_price }}"
-                                    data-tax="{{ (float) (optional($product->tax)->rate ?? 0) }}"
-                                    @if((string) ($item['product_id'] ?? '') === (string) $product->id) selected @endif>
-                                    {{ $product->name }}@if($product->sku) ({{ $product->sku }})@endif
+                            @foreach($productOptions as $option)
+                                <option value="{{ $option['key'] }}"
+                                    data-price="{{ $option['price'] }}"
+                                    data-qty="{{ $option['quantity'] }}"
+                                    data-tax="{{ $option['tax_rate'] }}"
+                                    @if((string) ($item['product_key'] ?? '') === (string) $option['key']) selected @endif>
+                                    {{ $option['label'] }}
                                 </option>
                             @endforeach
                         </select>
+                        <small class="sx-inv-stock"></small>
                     </td>
                     <td>
                         <input type="number" step="0.0001" min="0.0001" name="items[{{ $index }}][quantity]" class="form-control sx-qt-qty" value="{{ $item['quantity'] ?? 1 }}" required>
@@ -144,16 +146,13 @@
 <template id="sx-qt-row-template">
     <tr class="sx-qt-row">
         <td>
-            <select name="items[__INDEX__][product_id]" class="form-control sx-qt-product" required>
+            <select name="items[__INDEX__][product_key]" class="form-control sx-qt-product" required>
                 <option value="">-Select-</option>
-                @foreach($products as $product)
-                    <option value="{{ $product->id }}"
-                        data-price="{{ (float) $product->selling_price }}"
-                        data-tax="{{ (float) (optional($product->tax)->rate ?? 0) }}">
-                        {{ $product->name }}@if($product->sku) ({{ $product->sku }})@endif
-                    </option>
+                @foreach($productOptions as $option)
+                    <option value="{{ $option['key'] }}" data-price="{{ $option['price'] }}" data-qty="{{ $option['quantity'] }}" data-tax="{{ $option['tax_rate'] }}">{{ $option['label'] }}</option>
                 @endforeach
             </select>
+            <small class="sx-inv-stock"></small>
         </td>
         <td>
             <input type="number" step="0.0001" min="0.0001" name="items[__INDEX__][quantity]" class="form-control sx-qt-qty" value="1" required>

@@ -199,6 +199,79 @@ class Product extends Model
         return $variantId;
     }
 
+    /**
+     * Options for sale and quotation product dropdowns.
+     *
+     * @return array<int, array{key: string, label: string, price: float, quantity: ?float, tax_rate: float}>
+     */
+    public static function pickerOptions(?int $branchId): array
+    {
+        $products = static::query()
+            ->with([
+                'tax',
+                'branchStock' => function ($query) use ($branchId) {
+                    $query->withoutGlobalScope('branch');
+                    if ($branchId) {
+                        $query->where('branch_id', $branchId);
+                    }
+                },
+                'variants' => function ($query) {
+                    $query->where('is_active', true)->with('colour')->orderBy('color')->orderBy('size');
+                },
+            ])
+            ->availableAtBranch($branchId)
+            ->where('is_active', true)
+            ->where('for_sale', true)
+            ->orderBy('name')
+            ->get();
+
+        $options = [];
+        foreach ($products as $product) {
+            $taxRate = (float) (optional($product->tax)->rate ?? 0);
+            $variants = $product->variants->where('is_active', true);
+            if ($variants->isEmpty()) {
+                $options[] = static::pickerOption($product, $product->name, 0, (float) $product->selling_price, $taxRate);
+                continue;
+            }
+            foreach ($variants as $variant) {
+                $colour = $variant->color ?: optional($variant->colour)->name;
+                $price = (float) $variant->selling_price > 0 ? (float) $variant->selling_price : (float) $product->selling_price;
+                $name = $colour ? $product->name . ' - ' . $colour : $product->name;
+                $options[] = static::pickerOption($product, $name, (int) $variant->id, $price, $taxRate);
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array{key: string, label: string, price: float, quantity: ?float, tax_rate: float}
+     */
+    private static function pickerOption(self $product, string $name, int $variantId, float $price, float $taxRate): array
+    {
+        $quantity = null;
+        if ($product->manage_stock) {
+            $quantity = round((float) $product->branchStock->where('product_variant_id', $variantId)->sum('quantity'), 4);
+        }
+
+        $details = [];
+        if ($quantity !== null) {
+            $text = rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.');
+            $details[] = 'Qty ' . ($text === '' ? '0' : $text);
+        }
+        if ($price > 0) {
+            $details[] = 'Ksh ' . number_format($price, 2);
+        }
+
+        return [
+            'key' => $product->id . ':' . $variantId,
+            'label' => $details ? $name . ' (' . implode(' · ', $details) . ')' : $name,
+            'price' => $price,
+            'quantity' => $quantity,
+            'tax_rate' => $taxRate,
+        ];
+    }
+
     public function taxLabel(): string
     {
         $rate = (float) optional($this->tax)->rate;

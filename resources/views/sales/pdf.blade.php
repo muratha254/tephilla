@@ -1,10 +1,16 @@
+@php
+    $letter = $sale->isInvoice() ? document_letterhead('invoice') : ['header_pdf' => null, 'footer_pdf' => null];
+    $footerPt = document_banner_height_pt($letter['footer_pdf'] ?? null);
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>{{ $sale->documentNumber() }}</title>
     <style>
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #222; }
+        @page { margin: 0 0 {{ $footerPt }}pt 0; }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #222; margin: 0; padding: 0; }
+        .sheet { padding: 12px 22px 10px; }
         h2, h3 { margin: 0 0 6px; }
         .muted { color: #666; font-size: 11px; }
         table { width: 100%; border-collapse: collapse; }
@@ -16,7 +22,11 @@
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { padding: 3px 0; border: 0; }
         .grand { font-weight: 700; font-size: 14px; }
-        img { max-height: 52px; max-width: 160px; }
+        .logo { max-height: 52px; max-width: 160px; }
+        .doc-letter { margin: 0; padding: 0; width: 100%; }
+        .doc-letter img { width: 595pt; max-width: 595pt; height: auto; display: block; }
+        .page-footer { position: fixed; left: 0; bottom: -{{ $footerPt }}pt; width: 595pt; height: {{ $footerPt }}pt; }
+        .page-footer img { width: 595pt; height: {{ $footerPt }}pt; }
     </style>
 </head>
 <body>
@@ -27,13 +37,19 @@
         return number_format((float) $amount, 2);
     };
 @endphp
+    @if(!empty($letter['header_pdf']))
+        <div class="doc-letter"><img src="{{ $letter['header_pdf'] }}" alt=""></div>
+    @endif
+
+    <div class="sheet">
     <table class="head">
         <tr>
             <td width="60%">
-                @if(!empty($logo_pdf_path) && file_exists($logo_pdf_path))
-                    <img src="{{ $logo_pdf_path }}" alt=""><br>
-                @endif
-                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+                @if(empty($letter['header_pdf']))
+                    @if(!empty($logo_pdf_path) && file_exists($logo_pdf_path))
+                        <img class="logo" src="{{ $logo_pdf_path }}" alt=""><br>
+                    @endif
+                    <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
                 @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
                     <div class="muted">{{ $profile['companyAddress'] }}</div>
                 @endif
@@ -43,6 +59,7 @@
                 </div>
                 @if(!empty($profile['companyTaxPin']))
                     <div class="muted">VAT PIN: {{ $profile['companyTaxPin'] }}</div>
+                @endif
                 @endif
             </td>
             <td width="40%" align="right">
@@ -118,5 +135,9 @@
         <p class="muted">Note: {{ $sale->notes }}</p>
     @endif
     <p class="muted">Served by: {{ optional($sale->cashier)->name }}</p>
+    </div>
+    @if(!empty($letter['footer_pdf']))
+        <div class="page-footer"><img src="{{ $letter['footer_pdf'] }}" alt=""></div>
+    @endif
 </body>
 </html>

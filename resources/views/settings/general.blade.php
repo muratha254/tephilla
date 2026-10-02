@@ -29,6 +29,7 @@
         <li class="{{ $tab === 'site' ? 'active' : '' }}"><a href="{{ route('settings.general', ['tab' => 'site']) }}">Site</a></li>
         <li class="{{ $tab === 'sales' ? 'active' : '' }}"><a href="{{ route('settings.general', ['tab' => 'sales']) }}">Sales</a></li>
         <li class="{{ $tab === 'prefixes' ? 'active' : '' }}"><a href="{{ route('settings.general', ['tab' => 'prefixes']) }}">Prefixes</a></li>
+        <li class="{{ $tab === 'documents' ? 'active' : '' }}"><a href="{{ route('settings.general', ['tab' => 'documents']) }}">Invoice &amp; Quotation</a></li>
     </ul>
 
     <div class="tab-content" style="padding:18px;">
@@ -206,6 +207,59 @@
                         <div class="form-group">
                             <label>Invoice Terms</label>
                             <textarea name="sales_invoice_terms" class="form-control" rows="4">{{ $v('sales_invoice_terms') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                @if($canUpdate)
+                    <div class="sx-form-actions text-center">
+                        <button type="submit" class="btn btn-success">Update</button>
+                        <a href="{{ route('dashboard') }}" class="btn btn-warning">Close</a>
+                    </div>
+                @endif
+            </form>
+        @elseif($tab === 'documents')
+            <form method="post" action="{{ route('settings.general.update') }}" enctype="multipart/form-data" class="sx-item-form">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="tab" value="documents">
+                <p class="text-muted">Upload a header and footer image for invoices and quotations. They print across the top and bottom of the document. JPG or PNG, up to 5 MB.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Invoice</h4>
+                        <div class="form-group">
+                            <label>Header image</label>
+                            <input type="file" name="invoice_header" class="form-control" accept="image/*">
+                            @if(!empty($site['invoice_header_path']))
+                                <div style="margin-top:8px;"><img src="{{ asset('storage/' . $site['invoice_header_path']) }}" alt="Invoice header" style="max-width:100%;max-height:90px;"></div>
+                                <label class="checkbox-inline"><input type="checkbox" name="remove_invoice_header" value="1"> Remove</label>
+                            @endif
+                        </div>
+                        <div class="form-group">
+                            <label>Footer image</label>
+                            <input type="file" name="invoice_footer" class="form-control" accept="image/*">
+                            @if(!empty($site['invoice_footer_path']))
+                                <div style="margin-top:8px;"><img src="{{ asset('storage/' . $site['invoice_footer_path']) }}" alt="Invoice footer" style="max-width:100%;max-height:90px;"></div>
+                                <label class="checkbox-inline"><input type="checkbox" name="remove_invoice_footer" value="1"> Remove</label>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Quotation</h4>
+                        <div class="form-group">
+                            <label>Header image</label>
+                            <input type="file" name="quotation_header" class="form-control" accept="image/*">
+                            @if(!empty($site['quotation_header_path']))
+                                <div style="margin-top:8px;"><img src="{{ asset('storage/' . $site['quotation_header_path']) }}" alt="Quotation header" style="max-width:100%;max-height:90px;"></div>
+                                <label class="checkbox-inline"><input type="checkbox" name="remove_quotation_header" value="1"> Remove</label>
+                            @endif
+                        </div>
+                        <div class="form-group">
+                            <label>Footer image</label>
+                            <input type="file" name="quotation_footer" class="form-control" accept="image/*">
+                            @if(!empty($site['quotation_footer_path']))
+                                <div style="margin-top:8px;"><img src="{{ asset('storage/' . $site['quotation_footer_path']) }}" alt="Quotation footer" style="max-width:100%;max-height:90px;"></div>
+                                <label class="checkbox-inline"><input type="checkbox" name="remove_quotation_footer" value="1"> Remove</label>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -42,6 +42,7 @@
             <div class="sx-invoice-label">Actions</div>
             <div class="sx-toolbar-actions" style="margin-top:6px;">
                 <a href="{{ route('quotations.print', $quotation) }}" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-print"></i> Print</a>
+                <a href="{{ route('quotations.pdf', $quotation) }}" class="btn btn-primary btn-sm"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
                 @if($canUpdate)
                     <a href="{{ route('quotations.edit', $quotation) }}" class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i> Edit</a>
                 @endif
@@ -54,7 +55,7 @@
                 @if($canConvert)
                     <form action="{{ route('quotations.convert', $quotation) }}" method="post" style="display:inline;" onsubmit="return confirm('Convert this quotation to an unpaid invoice?');">
                         @csrf
-                        <button type="submit" class="btn sx-btn-aqua btn-sm"><i class="fa fa-exchange"></i> Convert to Sale</button>
+                        <button type="submit" class="btn sx-btn-aqua btn-sm"><i class="fa fa-exchange"></i> Convert to Invoice</button>
                     </form>
                 @endif
                 @if($canDelete)
@@ -117,8 +118,8 @@
             @endif
             @if($quotation->terms)
                 <div class="form-group">
-                    <label>Terms</label>
-                    <div>{{ $quotation->terms }}</div>
+                    <label>Terms and Conditions</label>
+                    <div style="white-space:pre-line;">{{ $quotation->terms }}</div>
                 </div>
             @endif
         </div>

@@ -1,15 +1,17 @@
 @extends('layouts.fleet')
 
-@section('title', 'Sales Invoice')
+@section('title', $sale->document_type === \App\Models\Sale::TYPE_INVOICE ? 'Invoice' : 'Sales Invoice')
 
 @section('content')
 @include('layouts.partials.page-header', [
-    'title' => 'Sales Invoice',
-    'backUrl' => route('sales.index'),
+    'title' => $sale->document_type === \App\Models\Sale::TYPE_INVOICE ? 'Invoice' : 'Sales Invoice',
+    'backUrl' => $sale->document_type === \App\Models\Sale::TYPE_INVOICE ? route('sales.invoices') : route('sales.index'),
     'breadcrumbs' => [
         ['label' => 'Home', 'url' => route('dashboard'), 'icon' => 'fa-home'],
-        ['label' => 'Sales List', 'url' => route('sales.index')],
-        ['label' => 'Sales Invoice'],
+        $sale->document_type === \App\Models\Sale::TYPE_INVOICE
+            ? ['label' => 'Invoices', 'url' => route('sales.invoices')]
+            : ['label' => 'Sales List', 'url' => route('sales.index')],
+        ['label' => $sale->document_type === \App\Models\Sale::TYPE_INVOICE ? 'Invoice' : 'Sales Invoice'],
     ],
 ])
 

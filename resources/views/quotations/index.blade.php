@@ -93,10 +93,13 @@
                                         <li>
                                             <a href="{{ route('quotations.print', $row) }}" target="_blank"><i class="fa fa-print"></i> Print</a>
                                         </li>
+                                        <li>
+                                            <a href="{{ route('quotations.pdf', $row) }}"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
+                                        </li>
                                         @if($canConvert && in_array($row->status, ['draft', 'sent', 'accepted'], true) && ! $row->converted_sale_id)
                                             <li>
                                                 <a href="#" onclick="event.preventDefault(); if(confirm('Convert this quotation to an unpaid invoice?')) document.getElementById('qt-convert-{{ $row->id }}').submit();">
-                                                    <i class="fa fa-exchange"></i> Convert to Sale
+                                                    <i class="fa fa-exchange"></i> Convert to Invoice
                                                 </a>
                                                 <form id="qt-convert-{{ $row->id }}" action="{{ route('quotations.convert', $row) }}" method="post" class="hidden">
                                                     @csrf
@@ -137,6 +140,12 @@
         dom: 'lBfrtip',
         columnDefs: [{ targets: -1, orderable: false }]
     });
+    $('.sx-items-body .table-responsive').on('show.bs.dropdown', function () {
+        $(this).css('overflow', 'visible');
+    }).on('hide.bs.dropdown', function () {
+        $(this).css('overflow', 'auto');
+    });
+
     $('#qt-length').append($('#qt-table_length'));
     $('#qt-search').append($('#qt-table_filter'));
     $('#qt-export [data-export]').on('click', function () {

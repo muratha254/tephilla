@@ -19,7 +19,7 @@ class CompanySettingsController extends Controller
         abort_unless($user->hasPermission('settings.view') || $user->hasPermission('settings.company'), 403);
 
         $tab = $request->input('tab', 'site');
-        if (! in_array($tab, ['site', 'sales', 'prefixes'], true)) {
+        if (! in_array($tab, ['site', 'sales', 'prefixes', 'documents'], true)) {
             $tab = 'site';
         }
 
@@ -58,6 +58,44 @@ class CompanySettingsController extends Controller
             ]), 'site_sales');
 
             return redirect()->route('settings.general', ['tab' => 'sales'])->with('success', 'Sales settings saved.');
+        }
+
+        if ($tab === 'documents') {
+            $request->validate([
+                'invoice_header' => 'nullable|image|max:5120',
+                'invoice_footer' => 'nullable|image|max:5120',
+                'quotation_header' => 'nullable|image|max:5120',
+                'quotation_footer' => 'nullable|image|max:5120',
+                'remove_invoice_header' => 'nullable|boolean',
+                'remove_invoice_footer' => 'nullable|boolean',
+                'remove_quotation_header' => 'nullable|boolean',
+                'remove_quotation_footer' => 'nullable|boolean',
+            ]);
+
+            $settingValues = [];
+            foreach (['invoice_header', 'invoice_footer', 'quotation_header', 'quotation_footer'] as $input) {
+                $settingKey = $input . '_path';
+                if ($request->boolean('remove_' . $input)) {
+                    $current = $settings->get($company->id, $settingKey);
+                    if ($current) {
+                        Storage::disk('public')->delete($current);
+                    }
+                    $settingValues[$settingKey] = null;
+                }
+                if ($request->hasFile($input)) {
+                    $current = $settings->get($company->id, $settingKey);
+                    if ($current) {
+                        Storage::disk('public')->delete($current);
+                    }
+                    $settingValues[$settingKey] = $request->file($input)->store('document-letterheads', 'public');
+                }
+            }
+
+            if ($settingValues !== []) {
+                $settings->setMany($company->id, $settingValues, 'documents');
+            }
+
+            return redirect()->route('settings.general', ['tab' => 'documents'])->with('success', 'Invoice and quotation letterheads saved.');
         }
 
         if ($tab === 'prefixes') {
@@ -321,6 +359,10 @@ class CompanySettingsController extends Controller
             'logo_height' => '80px',
             'letter_head_path' => '',
             'letter_footer_path' => '',
+            'invoice_header_path' => '',
+            'invoice_footer_path' => '',
+            'quotation_header_path' => '',
+            'quotation_footer_path' => '',
             'login_wallpaper_path' => '',
             'e_signature_path' => '',
             'sales_default_tax' => '',
