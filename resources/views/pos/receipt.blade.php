@@ -49,7 +49,7 @@
         .totals .label { text-align: right; flex: 1; padding-right: 8px; }
         .no-print { text-align: center; margin: 12px 0; }
         .no-print button {
-            background: #c9a027;
+            background: #A2502B;
             color: #fff;
             border: 0;
             padding: 8px 16px;

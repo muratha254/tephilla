@@ -18,7 +18,7 @@
         .head { display: flex; justify-content: space-between; margin-bottom: 18px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; }
-        th { background: #c9a027; color: #fff; }
+        th { background: #A2502B; color: #fff; }
         @endif
         .no-print { margin-bottom: 12px; }
         @media print { .no-print { display: none; } }

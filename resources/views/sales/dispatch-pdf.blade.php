@@ -17,7 +17,7 @@
         .bar .date { text-align: right; }
         .items { margin-top: 10px; }
         .items th, .items td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-        .items th { background: #c9a027; color: #111; font-weight: 700; text-align: left; }
+        .items th { background: #A2502B; color: #fff; font-weight: 700; text-align: left; }
         .col-no { width: 12%; }
         .col-qty { width: 16%; text-align: center; }
         .items .qty { text-align: center; }

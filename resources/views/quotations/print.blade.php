@@ -30,7 +30,7 @@
         .split .totals { width: 260px; margin: 0; flex: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; text-align: left; }
-        th { background: #c9a027; color: #fff; }
+        th { background: #A2502B; color: #fff; }
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { border: 0; padding: 3px 0; }
         .totals .grand { font-weight: 700; font-size: 14px; }

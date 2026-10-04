@@ -17,7 +17,7 @@
         .bar td { border: 1px solid #000; padding: 6px 8px; width: 50%; }
         .items { margin-top: 10px; }
         .items th, .items td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-        .items th { background: #c9a027; color: #111; font-weight: 700; text-align: left; }
+        .items th { background: #A2502B; color: #fff; font-weight: 700; text-align: left; }
         .col-qty { width: 18%; text-align: center; }
         .col-uom { width: 16%; text-align: center; }
         .items .qty, .items .uom { text-align: center; }

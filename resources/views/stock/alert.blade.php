@@ -22,7 +22,7 @@
         <h3 class="sx-box-title" style="flex:none;margin:0;">
             Stock Alert
             <span class="sx-stock-badge">Out of stock {{ (int) ($outOfStockCount ?? 0) }}</span>
-            <span class="sx-stock-badge" style="background:#c9a027;">Low / alert {{ $products->count() }}</span>
+            <span class="sx-stock-badge" style="background:#A2502B;">Low / alert {{ $products->count() }}</span>
         </h3>
     </div>
 

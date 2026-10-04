@@ -70,7 +70,7 @@
     <div class="modal-dialog">
         <form method="post" action="{{ route('manufacturing.packaging.setups.store') }}" class="modal-content">
             @csrf
-            <div class="modal-header" style="background:#c9a227;color:#fff;">
+            <div class="modal-header" style="background:#A2502B;color:#fff;">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                 <h4 class="modal-title"><i class="fa fa-list"></i> Packaging Setup</h4>
             </div>

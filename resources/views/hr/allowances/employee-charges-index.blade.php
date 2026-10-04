@@ -100,7 +100,7 @@
         <form method="post" action="{{ route('hr.allowances.employee.store') }}" class="modal-content" id="sx-emp-charge-form">
             @csrf
             <input type="hidden" name="_method" id="sx-emp-charge-method" value="POST">
-            <div class="modal-header" style="background:#c9a027;color:#fff;">
+            <div class="modal-header" style="background:#A2502B;color:#fff;">
                 <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:1;">&times;</button>
                 <h4 class="modal-title" id="sx-emp-charge-title"><i class="fa fa-plus-square"></i> Record Emp. Allowance/Deduction</h4>
             </div>

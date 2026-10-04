@@ -1,6 +1,6 @@
 .sellix-app {
-    --sx-gold: #c9a027;
-    --sx-gold-dark: #b48e1c;
+    --sx-gold: #A2502B;
+    --sx-gold-dark: #86401F;
     --sx-sidebar: #1c252b;
     --sx-sidebar-hover: #243038;
     --sx-sidebar-active: #151c21;
@@ -988,7 +988,7 @@ body.sellix-app {
 .sx-gold-table > thead > tr > th {
     background: var(--sx-gold) !important;
     color: #fff !important;
-    border-color: #b89620 !important;
+    border-color: #86401F !important;
     font-weight: 600;
     font-size: 13px;
     white-space: nowrap;
@@ -1953,7 +1953,7 @@ table.dataTable thead .sorting_desc {
 .sx-po-items-more {
     display: inline-block;
     margin-left: 4px;
-    color: #8a6d1d;
+    color: #7A3A1C;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -2213,7 +2213,7 @@ table.dataTable thead .sorting_desc {
 }
 
 .sx-sale-invoice .sx-invoice-items > thead > tr > th {
-    background: #e6d08a;
+    background: #E9C7B7;
     color: #333;
 }
 
@@ -2396,8 +2396,8 @@ table.dataTable thead .sorting_desc {
 }
 
 body.pos-body {
-    --sx-gold: #c9a027;
-    --sx-gold-dark: #b48e1c;
+    --sx-gold: #A2502B;
+    --sx-gold-dark: #86401F;
     margin: 0;
     height: 100vh;
     overflow: hidden;
@@ -2410,7 +2410,7 @@ body.pos-body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #c9a027;
+    background: #A2502B;
     color: #fff;
     padding: 0 18px;
     height: 50px;
@@ -2433,7 +2433,7 @@ body.pos-body {
     height: 34px;
     border-radius: 50%;
     background: #fff;
-    color: #c9a027;
+    color: #A2502B;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2512,7 +2512,7 @@ body.pos-body {
     height: 28px;
     min-height: 28px;
     padding: 0 16px;
-    background: #c9a027;
+    background: #A2502B;
     color: #fff;
     font-size: 11px;
     font-weight: 600;
@@ -2618,7 +2618,7 @@ body.pos-body {
     padding: 7px 10px;
 }
 
-.pos-search-item:hover { background: #f7f3e6; }
+.pos-search-item:hover { background: #F8ECE6; }
 
 .pos-cart-wrap {
     flex: 1;
@@ -2639,7 +2639,7 @@ body.pos-body {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: #c9a027 !important;
+    background: #A2502B !important;
     color: #fff !important;
     font-size: 12px;
     font-weight: 700;
@@ -2843,7 +2843,7 @@ body.pos-body {
 }
 
 .pos-links a:hover {
-    color: #c9a027;
+    color: #A2502B;
     text-decoration: none;
 }
 
@@ -3101,7 +3101,7 @@ body.pos-body {
 }
 
 .pos-pay-head {
-    background: #c9a027;
+    background: #A2502B;
     color: #fff;
     text-align: center;
     font-size: 18px;
@@ -3380,7 +3380,7 @@ body.sx-order-screen {
     font-size: 20px;
 }
 
-.sx-order-back:hover { color: #c9a027; }
+.sx-order-back:hover { color: #A2502B; }
 
 .sx-order-refresh {
     background: #00c0ef;
@@ -3412,7 +3412,7 @@ body.sx-order-screen {
 .sx-order-card {
     width: 280px;
     border: 1px solid #e5e5e5;
-    border-top: 4px solid #c9a027;
+    border-top: 4px solid #A2502B;
     background: #fff;
     padding: 12px 14px;
     box-shadow: 0 1px 4px rgba(0,0,0,.06);
@@ -3666,7 +3666,7 @@ body.sx-order-screen {
     transition: box-shadow .15s ease, border-color .15s ease;
 }
 .sx-hr-report-card:hover {
-    border-color: #c9a027;
+    border-color: #A2502B;
     box-shadow: 0 2px 8px rgba(0,0,0,.08);
     color: #222;
 }
@@ -3734,7 +3734,7 @@ body.sx-order-screen {
 .sx-notify-header {
     padding: 12px 14px;
     font-weight: 600;
-    background: #faf7ef;
+    background: #FBF3EF;
     border-bottom: 1px solid #eee;
     white-space: normal;
     color: #333;
@@ -3768,7 +3768,7 @@ body.sx-order-screen {
     display: block;
     padding: 10px 14px;
     font-weight: 600;
-    color: #8a6d1d;
+    color: #7A3A1C;
 }
 .sx-row-out-of-stock td { background: #fff5f5; }
 

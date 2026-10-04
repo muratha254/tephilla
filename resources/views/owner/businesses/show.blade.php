@@ -42,11 +42,11 @@
 </div>
 
 <div class="progress" style="height:10px;margin:12px 0 20px;">
-    <div class="progress-bar" style="width: {{ $progress }}%; background:#c9a027;"></div>
+    <div class="progress-bar" style="width: {{ $progress }}%; background:#A2502B;"></div>
 </div>
 
 @if($sub && $st === 'pending_approval')
-<div class="sx-box" style="border-left:4px solid #c9a027;">
+<div class="sx-box" style="border-left:4px solid #A2502B;">
     <div class="sx-box-body">
         <h4>Pending subscription request</h4>
         <p>This client selected <strong>{{ optional($sub->plan)->name }}</strong> and is waiting for approval. They cannot access the dashboard until you approve.</p>

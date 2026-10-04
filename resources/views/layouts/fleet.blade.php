@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
     <link rel="stylesheet" href="{{ asset('css/fleet-theme.css') }}?v=11">
-    <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=60">
+    <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=61">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     @if (! empty($fleetSetting))
     <style>

@@ -154,7 +154,7 @@
         URL.revokeObjectURL(a.href);
     }
     function printTable(data, title) {
-        var html = '<html><head><title>' + title + '</title><style>body{font-family:sans-serif;font-size:13px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px}th{background:#c9a027;color:#fff}</style></head><body><h3>' + title + '</h3><table><thead><tr>';
+        var html = '<html><head><title>' + title + '</title><style>body{font-family:sans-serif;font-size:13px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px}th{background:#A2502B;color:#fff}</style></head><body><h3>' + title + '</h3><table><thead><tr>';
         data.headers.forEach(function (h) { html += '<th>' + h + '</th>'; });
         html += '</tr></thead><tbody>';
         data.rows.forEach(function (r) { html += '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; });

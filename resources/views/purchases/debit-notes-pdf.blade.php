@@ -8,7 +8,7 @@
         .header { width: 100%; margin-bottom: 28px; }
         .header td { vertical-align: top; }
         .logo { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-        .logo-sub { color: #c9a027; font-size: 18px; }
+        .logo-sub { color: #A2502B; font-size: 18px; }
         .logo img { max-height: 56px; max-width: 180px; }
         .company { text-align: right; font-size: 12px; line-height: 1.45; }
         .company strong { font-size: 13px; }

@@ -96,7 +96,7 @@
     <div class="modal-dialog">
         <form method="post" action="{{ route('hr.leave.manage.store') }}" class="modal-content">
             @csrf
-            <div class="modal-header" style="background:#c9a027;color:#fff;">
+            <div class="modal-header" style="background:#A2502B;color:#fff;">
                 <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:1;">&times;</button>
                 <h4 class="modal-title">Add Leave</h4>
             </div>

@@ -79,7 +79,7 @@
         <form method="post" action="{{ route('hr.leave.holidays.store') }}" class="modal-content" id="sx-holiday-form">
             @csrf
             <input type="hidden" name="_method" id="sx-holiday-method" value="POST">
-            <div class="modal-header" style="background:#c9a027;color:#fff;">
+            <div class="modal-header" style="background:#A2502B;color:#fff;">
                 <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:1;">&times;</button>
                 <h4 class="modal-title" id="sx-holiday-title">Add Holiday</h4>
             </div>

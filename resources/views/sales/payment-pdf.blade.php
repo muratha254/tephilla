@@ -10,7 +10,7 @@
         .muted { color: #666; font-size: 11px; }
         table { width: 100%; border-collapse: collapse; margin-top: 8px; }
         th, td { padding: 5px 6px; {{ $mode === 'a4' ? 'border: 1px solid #ccc;' : '' }} }
-        th { {{ $mode === 'a4' ? 'background: #c9a027; color: #fff;' : '' }} text-align: left; }
+        th { {{ $mode === 'a4' ? 'background: #A2502B; color: #fff;' : '' }} text-align: left; }
         .num { text-align: right; }
         .amount { font-size: 16px; font-weight: 700; text-align: center; margin: 10px 0; }
         .rule { border-top: 1px dashed #000; margin: 8px 0; }

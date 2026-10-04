@@ -9,7 +9,7 @@
         .muted { color: #666; font-size: 11px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; }
-        th { background: #c9a027; color: #111; text-align: left; }
+        th { background: #A2502B; color: #fff; text-align: left; }
         .num { text-align: right; }
     </style>
 </head>

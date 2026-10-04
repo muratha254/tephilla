@@ -17,7 +17,7 @@
         .head td { vertical-align: top; padding-bottom: 12px; border: 0; }
         .items { margin-top: 12px; }
         .items th, .items td { border: 1px solid #ccc; padding: 6px 8px; }
-        .items th { background: #c9a027; color: #fff; }
+        .items th { background: #A2502B; color: #fff; }
         .num { text-align: right; white-space: nowrap; }
         .split td { border: 0; vertical-align: top; padding-top: 14px; }
         .totals td { padding: 3px 0; border: 0; }

@@ -11,7 +11,7 @@
         .head img { max-height: 56px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; text-align: left; }
-        th { background: #c9a027; color: #fff; }
+        th { background: #A2502B; color: #fff; }
         .num { text-align: right; white-space: nowrap; }
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { border: 0; padding: 3px 0; }
