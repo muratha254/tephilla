@@ -2,12 +2,12 @@
 
 function fleet_system_name(): string
 {
-    return (string) config('fleet.system_name', 'TEPHILLA SYSTEM');
+    return (string) config('fleet.system_name', 'TEPHILLAH SYSTEM');
 }
 
 function fleet_system_short_name(): string
 {
-    return (string) config('fleet.system_short_name', 'TEPHILLA SYSTEM');
+    return (string) config('fleet.system_short_name', 'TEPHILLAH SYSTEM');
 }
 
 function fleet_document_profile(string $type): array

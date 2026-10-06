@@ -6,7 +6,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | {{ $sale->documentNumber() }}</title>
+    <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | {{ $sale->documentNumber() }}</title>
     <style>
         html, body { height: 100%; }
         body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; background: #fff; min-height: 100vh; display: flex; flex-direction: column; }
@@ -68,7 +68,7 @@
                 @if(!empty($companyLogoUrl))
                     <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}">
                 @endif
-                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
             @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
                 <div class="muted">{{ $profile['companyAddress'] }}</div>
             @endif

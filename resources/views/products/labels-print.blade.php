@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | Print Labels</title>
+    <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | Print Labels</title>
     <link rel="stylesheet" href="{{ asset('css/sellix-app.css') }}?v=15">
     <style>
         body { font-family: Arial, sans-serif; margin: 16px; background: #fff; }

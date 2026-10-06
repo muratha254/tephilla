@@ -50,7 +50,7 @@ class RuntimeSettings
 
     public function poweredByText(): string
     {
-        return (string) $this->get('powered_by', 'Powered by TEPHILLA SYSTEM');
+        return (string) $this->get('powered_by', 'Powered by TEPHILLAH SYSTEM');
     }
 
     public function poweredByWebsite(): string

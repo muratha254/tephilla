@@ -36,7 +36,7 @@
     </p>
 
     @if($mode === 'pos')
-        <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+        <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
         <div class="center">PAYMENT RECEIPT</div>
         <div class="rule"></div>
         <div class="row"><span>Invoice</span><span>{{ $sale->documentNumber() }}</span></div>
@@ -53,7 +53,7 @@
     @else
         <div class="head">
             <div>
-                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+                <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
                 @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
                     <div class="muted">{{ $profile['companyAddress'] }}</div>
                 @endif

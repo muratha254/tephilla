@@ -6,7 +6,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | {{ $quotation->number }}</title>
+    <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | {{ $quotation->number }}</title>
     <style>
         @page { margin: 0 0 {{ $footerPx }}px 0; }
         html, body { height: 100%; }
@@ -56,7 +56,7 @@
                 @if(!empty($companyLogoUrl))
                     <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}">
                 @endif
-                <h2>{{ $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+                <h2>{{ $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
             <div class="muted">{{ $companyProfile['companyAddress'] ?? '' }}</div>
             <div class="muted">{{ $companyProfile['companyPhone'] ?? '' }} @if(!empty($companyProfile['companyEmail'])) | {{ $companyProfile['companyEmail'] }} @endif</div>
             @endif

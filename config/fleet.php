@@ -12,8 +12,8 @@ return [
     |
     */
 
-    'system_name' => env('FLEET_SYSTEM_NAME', 'TEPHILLA SYSTEM'),
+    'system_name' => env('FLEET_SYSTEM_NAME', 'TEPHILLAH SYSTEM'),
 
-    'system_short_name' => env('FLEET_SYSTEM_SHORT_NAME', 'TEPHILLA SYSTEM'),
+    'system_short_name' => env('FLEET_SYSTEM_SHORT_NAME', 'TEPHILLAH SYSTEM'),
 
 ];

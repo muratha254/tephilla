@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'TEPHILLA SYSTEM' }} | {{ $receipt->number }}</title>
+    <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | {{ $receipt->number }}</title>
     <style>
         body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 24px; background: #fff; }
         h2, h3 { margin: 0 0 6px; }
@@ -19,7 +19,7 @@
         <button onclick="window.print()">Print</button>
         <button onclick="window.close()">Close</button>
     </p>
-    <h2>{{ $companyName ?? 'TEPHILLA SYSTEM' }}</h2>
+    <h2>{{ $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
     <h3>Goods Received Note</h3>
     <div class="muted">{{ $receipt->number }} | {{ optional($receipt->received_at)->format('d-m-Y') }}</div>
     <p>

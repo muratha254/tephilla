@@ -24,7 +24,7 @@ class SellixCoreSeeder extends Seeder
     public function run()
     {
         $company = Company::query()->create([
-            'name' => 'TEPHILLA SYSTEM',
+            'name' => 'TEPHILLAH SYSTEM',
             'slug' => 'sellix-pos',
             'address' => '',
             'city' => '',
@@ -112,7 +112,7 @@ class SellixCoreSeeder extends Seeder
             'tax_inclusive' => '1',
             'allow_pos_discount' => '1',
             'default_customer' => 'walk_in',
-            'powered_by' => 'Powered by TEPHILLA SYSTEM',
+            'powered_by' => 'Powered by TEPHILLAH SYSTEM',
             'powered_by_website' => '',
             'powered_by_email' => '',
         ];
@@ -194,7 +194,7 @@ class SellixCoreSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('TEPHILLA SYSTEM seeded. Admin: admin@mail.com / 1234');
+        $this->command->info('TEPHILLAH SYSTEM seeded. Admin: admin@mail.com / 1234');
         $this->command->info('Cashier: cashier@mail.com / 1234');
 
         return $admin;

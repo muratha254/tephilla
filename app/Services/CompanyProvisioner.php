@@ -164,7 +164,7 @@ class CompanyProvisioner
             'tax_inclusive' => '1',
             'allow_pos_discount' => '1',
             'default_customer' => 'walk_in',
-            'powered_by' => 'Powered by TEPHILLA SYSTEM',
+            'powered_by' => 'Powered by TEPHILLAH SYSTEM',
             'powered_by_website' => '',
             'powered_by_email' => '',
         ];

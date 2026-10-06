@@ -26,13 +26,13 @@
         <tr>
             <td width="42%">
                 @if(!empty($logo_pdf_path) && file_exists($logo_pdf_path))
-                    <img src="{{ $logo_pdf_path }}" alt="{{ $systemName ?? 'TEPHILLA SYSTEM' }}">
+                    <img src="{{ $logo_pdf_path }}" alt="{{ $systemName ?? 'TEPHILLAH SYSTEM' }}">
                 @else
-                    <div class="logo">{{ $systemName ?? 'TEPHILLA SYSTEM' }}</div>
+                    <div class="logo">{{ $systemName ?? 'TEPHILLAH SYSTEM' }}</div>
                 @endif
             </td>
             <td class="company">
-                <strong>{{ strtoupper($companyName ?? optional($company)->name ?? 'TEPHILLA SYSTEM') }}</strong><br>
+                <strong>{{ strtoupper($companyName ?? optional($company)->name ?? 'TEPHILLAH SYSTEM') }}</strong><br>
                 @if(!empty($companyProfile['companyAddress']) && $companyProfile['companyAddress'] !== '-')
                     {{ $companyProfile['companyAddress'] }}<br>
                 @endif

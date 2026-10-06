@@ -6,7 +6,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; color:#333; line-height:1.5;">
     <p>Hello {{ $invoice->company->owner_name ?: $invoice->company->name }},</p>
-    <p>Please find your TEPHILLA SYSTEM subscription invoice below.</p>
+    <p>Please find your TEPHILLAH SYSTEM subscription invoice below.</p>
     <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
         <tr><td>Invoice</td><td><strong>{{ $invoice->invoice_number }}</strong></td></tr>
         <tr><td>Business</td><td>{{ $invoice->company->name }}</td></tr>
@@ -17,7 +17,7 @@
     @if($invoice->notes)
         <p>{{ $invoice->notes }}</p>
     @endif
-    <p>Sign in to TEPHILLA SYSTEM and open <strong>Billing</strong> to view this invoice and your payment history.</p>
-    <p>Thank you,<br>TEPHILLA SYSTEM</p>
+    <p>Sign in to TEPHILLAH SYSTEM and open <strong>Billing</strong> to view this invoice and your payment history.</p>
+    <p>Thank you,<br>TEPHILLAH SYSTEM</p>
 </body>
 </html>
