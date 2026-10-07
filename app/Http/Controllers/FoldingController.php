@@ -51,9 +51,28 @@ class FoldingController extends Controller
             $query->whereHas('outputs', fn ($output) => $output->where('product_id', (int) $request->input('output_product_id')));
         }
 
+        $foldings = $query->paginate(25)->withQueryString();
+
+        $remaining = StockMovement::query()
+            ->withoutGlobalScope('branch')
+            ->where('reference_type', Folding::class)
+            ->whereIn('reference_id', $foldings->pluck('id'))
+            ->where('quantity_out', '>', 0)
+            ->get(['reference_id', 'product_id', 'product_variant_id', 'quantity_after'])
+            ->filter(function ($movement) use ($foldings) {
+                $folding = $foldings->firstWhere('id', $movement->reference_id);
+
+                return $folding
+                    && (int) $movement->product_id === (int) $folding->product_id
+                    && (int) $movement->product_variant_id === (int) $folding->product_variant_id;
+            })
+            ->mapWithKeys(fn ($movement) => [(int) $movement->reference_id => (float) $movement->quantity_after])
+            ->all();
+
         return view('folding.index', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'folding.index',
-            'foldings' => $query->paginate(25)->withQueryString(),
+            'foldings' => $foldings,
+            'remaining' => $remaining,
             'products' => Product::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'colours' => Colour::query()->where('is_active', true)->orderBy('name')->get(),
             'filters' => $request->only(['from', 'to', 'product_id', 'colour_id', 'employee', 'status', 'output_product_id']),

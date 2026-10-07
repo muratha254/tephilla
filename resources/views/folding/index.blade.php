@@ -82,6 +82,7 @@
                     <th>Raw material</th>
                     <th>Colour</th>
                     <th class="text-right">Used</th>
+                    <th class="text-right">Remaining</th>
                     <th>Produced</th>
                     <th>Narration</th>
                     <th>Status</th>
@@ -97,6 +98,13 @@
                         <td>{{ optional($folding->product)->name }}</td>
                         <td>{{ optional($folding->colour)->name ?: '—' }}</td>
                         <td class="text-right">{{ rtrim(rtrim(number_format((float) $folding->quantity, 4, '.', ''), '0'), '.') }}</td>
+                        <td class="text-right">
+                            @if(array_key_exists($folding->id, $remaining))
+                                {{ rtrim(rtrim(number_format($remaining[$folding->id], 4, '.', ''), '0'), '.') ?: '0' }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td>
                             @forelse($folding->outputs as $output)
                                 {{ optional($output->product)->name }} {{ optional($output->colour)->name }} {{ rtrim(rtrim(number_format((float) $output->quantity, 4, '.', ''), '0'), '.') }}<br>
@@ -117,7 +125,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">No folding records for this filter.</td></tr>
+                    <tr><td colspan="11">No folding records for this filter.</td></tr>
                 @endforelse
             </tbody>
         </table>
