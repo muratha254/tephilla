@@ -22,7 +22,7 @@
         $n = (float) $n;
         return fmod($n, 1.0) === 0.0 ? (string) (int) $n : number_format($n, 2);
     };
-    $actionIndex = $canViewCost ? 13 : 12;
+    $actionIndex = $canViewCost ? 15 : 14;
 @endphp
 
 <form method="get" action="{{ route('stock.manager') }}" class="sx-filter-card">
@@ -90,6 +90,8 @@
                         <th>Category</th>
                         <th>Unit</th>
                         <th class="sx-th-stock">Stock</th>
+                        <th>Sold/Used</th>
+                        <th>Remaining</th>
                         <th>Reorder</th>
                         @if($canViewCost)<th>Cost</th>@endif
                         <th>R.Price</th>
@@ -103,7 +105,9 @@
                 <tbody>
                     @foreach($products as $product)
                         @php
-                            $qty = (float) ($stock[$product->id] ?? 0);
+                            $remaining = (float) ($stock[$product->id] ?? 0);
+                            $usedQty = (float) ($used[$product->id] ?? 0);
+                            $qty = $remaining + $usedQty;
                             $reorder = (float) $product->reorder_level;
                         @endphp
                         <tr>
@@ -113,6 +117,8 @@
                             <td>{{ optional($product->category)->name }}</td>
                             <td>{{ optional($product->unit)->short_name }}</td>
                             <td data-order="{{ $qty }}">{{ $fmtQty($qty) }}</td>
+                            <td data-order="{{ $usedQty }}">{{ $fmtQty($usedQty) }}</td>
+                            <td data-order="{{ $remaining }}">{{ $fmtQty($remaining) }}</td>
                             <td data-order="{{ $reorder }}">{{ $fmtQty($reorder) }}</td>
                             @if($canViewCost)
                                 <td data-order="{{ (float) $product->purchase_price }}">{{ number_format((float) $product->purchase_price, 2) }}</td>

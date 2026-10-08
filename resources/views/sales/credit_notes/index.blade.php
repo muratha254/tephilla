@@ -94,6 +94,9 @@
                                 <a href="{{ route('sales.credit-notes.print', $note) }}" class="btn btn-xs btn-default" target="_blank" title="Print">
                                     <i class="fa fa-print"></i>
                                 </a>
+                                <a href="{{ route('sales.credit-notes.pdf', $note) }}" class="btn btn-xs btn-primary" title="Download PDF">
+                                    <i class="fa fa-file-pdf-o"></i>
+                                </a>
                             </td>
                         </tr>
                     @endforeach

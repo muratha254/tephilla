@@ -59,10 +59,13 @@ class ProductController extends Controller
                 });
         }
 
+        $usedByVariant = app(InventoryService::class)->consumedByVariant($branchId, $products->pluck('id'));
+
         return view('products.index', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
             'activeMenu' => 'products.index',
             'products' => $products,
             'stockByVariant' => $stockByVariant,
+            'usedByVariant' => $usedByVariant,
             'selectedBranchId' => $branchId,
             'filters' => $request->only(['category_id', 'status']),
             'canCreate' => auth()->user()->hasPermission('products.create'),

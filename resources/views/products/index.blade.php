@@ -90,6 +90,8 @@
                         <th>Colour</th>
                         <th>Unit</th>
                         <th>Stock</th>
+                        <th>Sold/Used</th>
+                        <th>Remaining</th>
                         <th>Reorder</th>
                         <th>Tax</th>
                         <th>Order Item <i class="fa fa-info-circle" title="Items marked for supplier ordering"></i></th>
@@ -109,8 +111,13 @@
                         @endphp
                         @foreach($colourLines as $colourLine)
                         @php
-                            $stockQty = (float) ($stockByVariant[$product->id . ':' . (int) $colourLine->id] ?? 0);
-                            $stockDisplay = fmod($stockQty, 1.0) === 0.0 ? (int) $stockQty : $stockQty;
+                            $variantKey = $product->id . ':' . (int) $colourLine->id;
+                            $remainingQty = (float) ($stockByVariant[$variantKey] ?? 0);
+                            $usedQty = (float) ($usedByVariant[$variantKey] ?? 0);
+                            $stockQty = $remainingQty + $usedQty;
+                            $fmtQty = function ($n) {
+                                return fmod($n, 1.0) === 0.0 ? (int) $n : $n;
+                            };
                         @endphp
                         <tr>
                             <td class="sx-check-col"><input type="checkbox" class="item-row-check" value="{{ $product->id }}"></td>
@@ -119,7 +126,9 @@
                             <td>{{ optional($product->category)->optionLabel() }}</td>
                             <td>{{ $colourLine->color ?: '—' }}</td>
                             <td>{{ optional($product->unit)->short_name }}</td>
-                            <td data-order="{{ $stockQty }}">{{ $product->manage_stock ? $stockDisplay : '—' }}</td>
+                            <td data-order="{{ $stockQty }}">{{ $product->manage_stock ? $fmtQty($stockQty) : '—' }}</td>
+                            <td data-order="{{ $usedQty }}">{{ $product->manage_stock ? $fmtQty($usedQty) : '—' }}</td>
+                            <td data-order="{{ $remainingQty }}">{{ $product->manage_stock ? $fmtQty($remainingQty) : '—' }}</td>
                             <td data-order="{{ $reorder }}">{{ $reorderDisplay }}</td>
                             <td>{{ $product->taxLabel() }}</td>
                             <td><span class="label label-danger">No</span></td>
@@ -197,7 +206,7 @@
         order: [[1, 'desc']],
         autoWidth: false,
         columnDefs: [
-            { targets: [0, 11], orderable: false, searchable: false }
+            { targets: [0, 13], orderable: false, searchable: false }
         ],
         language: {
             lengthMenu: 'Show _MENU_ entries',

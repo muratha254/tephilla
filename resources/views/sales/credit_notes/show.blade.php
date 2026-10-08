@@ -32,6 +32,9 @@
             <a href="{{ route('sales.credit-notes.print', $note) }}" class="btn btn-default" target="_blank">
                 <i class="fa fa-print"></i> Print
             </a>
+            <a href="{{ route('sales.credit-notes.pdf', $note) }}" class="btn btn-primary">
+                <i class="fa fa-file-pdf-o"></i> Download PDF
+            </a>
             @if(!empty($canPost))
                 <form method="post" action="{{ route('sales.credit-notes.post', $note) }}" style="display:inline;">
                     @csrf

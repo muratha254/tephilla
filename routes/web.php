@@ -392,6 +392,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales/credit-notes/{creditNote}/print', [CreditNoteController::class, 'print'])
         ->middleware('permission:sales.view')
         ->name('sales.credit-notes.print');
+    Route::get('/sales/credit-notes/{creditNote}/pdf', [CreditNoteController::class, 'pdf'])
+        ->middleware('permission:sales.view')
+        ->name('sales.credit-notes.pdf');
     Route::post('/sales/credit-notes/{creditNote}/post', [CreditNoteController::class, 'post'])
         ->middleware('permission:sales.return')
         ->name('sales.credit-notes.post');

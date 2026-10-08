@@ -35,20 +35,29 @@ class StockController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $productIds = $products->pluck('id');
+
         $stock = ProductBranchStock::query()
             ->withoutGlobalScope('branch')
             ->when($branchId, function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId);
             })
-            ->whereIn('product_id', $products->pluck('id'))
+            ->whereIn('product_id', $productIds)
             ->selectRaw('product_id, SUM(quantity) as quantity')
             ->groupBy('product_id')
             ->pluck('quantity', 'product_id');
+
+        $used = [];
+        foreach (app(InventoryService::class)->consumedByVariant($branchId, $productIds) as $key => $quantity) {
+            $productId = (int) explode(':', $key)[0];
+            $used[$productId] = round(($used[$productId] ?? 0) + $quantity, 4);
+        }
 
         return view('stock.manager', array_merge(fleet_shared_view_data(), $this->catalogLookups(), [
             'activeMenu' => 'stock.manager',
             'products' => $products,
             'stock' => $stock,
+            'used' => $used,
             'filters' => $request->only(['category_id', 'branch_id']),
             'canViewCost' => auth()->user()->hasPermission('products.view_cost'),
             'canCreate' => auth()->user()->hasPermission('products.create'),

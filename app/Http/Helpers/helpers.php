@@ -40,6 +40,18 @@ function document_letterhead(string $kind): array
         'footer_pdf' => null,
     ];
 
+    if ($kind === 'credit_note') {
+        $invoice = document_letterhead('invoice');
+        $quotation = document_letterhead('quotation');
+
+        return [
+            'header_url' => $invoice['header_url'] ?: $quotation['header_url'],
+            'header_pdf' => $invoice['header_pdf'] ?: $quotation['header_pdf'],
+            'footer_url' => $invoice['footer_url'] ?: $quotation['footer_url'],
+            'footer_pdf' => $invoice['footer_pdf'] ?: $quotation['footer_pdf'],
+        ];
+    }
+
     if (! in_array($kind, ['invoice', 'quotation'], true)) {
         return $empty;
     }

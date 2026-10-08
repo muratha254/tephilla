@@ -119,6 +119,68 @@ class InventoryService
         });
     }
 
+    /**
+     * Net quantity sold or consumed (sales, folding, issues, damage, conversion, reductions),
+     * after returns and folding reversals. Keys are "productId:variantId".
+     *
+     * @param  array<int, int>|Illuminate\Support\Collection  $productIds
+     * @return array<string, float>
+     */
+    public function consumedByVariant(?int $branchId, $productIds): array
+    {
+        $productIds = collect($productIds)->filter()->values();
+        if ($productIds->isEmpty()) {
+            return [];
+        }
+
+        $base = StockMovement::query()
+            ->withoutGlobalScope('branch')
+            ->whereIn('product_id', $productIds)
+            ->when($branchId, function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId);
+            });
+
+        $out = (clone $base)
+            ->whereIn('type', [
+                StockMovement::SALE,
+                StockMovement::POS_SALE,
+                StockMovement::FOLDING,
+                StockMovement::ISSUE,
+                StockMovement::DAMAGE,
+                StockMovement::CONVERSION,
+                StockMovement::ADJUSTMENT,
+            ])
+            ->selectRaw('product_id, product_variant_id, SUM(quantity_out) as quantity')
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+
+        $back = (clone $base)
+            ->whereIn('type', [
+                StockMovement::SALE_RETURN,
+                StockMovement::SALE_VOID,
+                StockMovement::FOLDING_REVERSAL,
+            ])
+            ->selectRaw('product_id, product_variant_id, SUM(quantity_in) as quantity')
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+
+        $used = [];
+        foreach ($out as $row) {
+            $key = $row->product_id . ':' . (int) $row->product_variant_id;
+            $used[$key] = round((float) $row->quantity, 4);
+        }
+        foreach ($back as $row) {
+            $key = $row->product_id . ':' . (int) $row->product_variant_id;
+            $used[$key] = round(($used[$key] ?? 0) - (float) $row->quantity, 4);
+        }
+
+        foreach ($used as $key => $quantity) {
+            $used[$key] = $quantity > 0 ? $quantity : 0.0;
+        }
+
+        return $used;
+    }
+
     public function quantityOnHand(int $companyId, int $branchId, int $productId, int $variantId = 0): float
     {
         $stock = ProductBranchStock::query()

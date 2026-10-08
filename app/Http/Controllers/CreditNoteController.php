@@ -18,6 +18,7 @@ use App\Services\InventoryService;
 use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class CreditNoteController extends Controller
 {
@@ -275,6 +276,23 @@ class CreditNoteController extends Controller
             'note' => $creditNote,
             'profile' => fleet_company_profile(),
         ]));
+    }
+
+    public function pdf(CreditNote $creditNote)
+    {
+        $this->authorizePermission('sales.view');
+
+        $creditNote->load(['sale', 'customer', 'user', 'items.product', 'items.saleItem', 'company', 'branch']);
+        $profile = fleet_company_profile();
+        $filename = 'credit-note-' . preg_replace('/[^A-Za-z0-9\-]+/', '-', $creditNote->number) . '.pdf';
+
+        $pdf = PDF::loadView('sales.credit_notes.pdf', array_merge(fleet_shared_view_data(), [
+            'note' => $creditNote,
+            'profile' => $profile,
+            'logo_pdf_path' => $profile['logo_pdf_path'] ?? null,
+        ]))->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
     }
 
     public function post(

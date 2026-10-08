@@ -1,14 +1,30 @@
+@php
+    $letter = document_letterhead('credit_note');
+    $footerPx = (int) round(document_banner_height_pt($letter['footer_pdf'] ?? null) * 1.333);
+    $companyTitle = trim((string) ($profile['companyName'] ?? $companyName ?? ''));
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | Credit Note {{ $note->number }}</title>
+    <title>{{ $companyTitle ?: 'Credit Note' }} | Credit Note {{ $note->number }}</title>
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 24px; background: #fff; }
-        h1, h2, h3 { margin: 0 0 6px; }
+        html, body { height: 100%; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; background: #fff; min-height: 100vh; display: flex; flex-direction: column; }
+        .sheet { padding: 16px 22px 12px; flex: 1 0 auto; }
+        .page-footer { margin-top: auto; width: 100%; }
+        .page-footer img { width: 100%; height: auto; display: block; }
+        @media print {
+            body { display: block; min-height: 0; }
+            .page-footer { position: fixed; left: 0; bottom: 0; width: 100%; margin: 0; }
+            .sheet { padding-bottom: {{ $footerPx + 16 }}px; }
+        }
+        h1, h2, h3 { margin: 0 0 6px; color: #222; }
         .muted { color: #666; font-size: 12px; }
         .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
         .head img { max-height: 56px; }
+        .doc-letter { margin: 0; }
+        .doc-letter img { width: 100%; max-width: 100%; height: auto; display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; text-align: left; }
         th { background: #A2502B; color: #fff; }
@@ -16,7 +32,7 @@
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { border: 0; padding: 3px 0; }
         .totals .grand { font-weight: 700; font-size: 14px; }
-        .no-print { margin-bottom: 12px; }
+        .no-print { margin: 12px 22px; }
         .meta { margin-top: 8px; font-size: 13px; }
         @media print { .no-print { display: none; } }
     </style>
@@ -28,27 +44,38 @@
     };
     $customer = optional($note->customer)->name
         ?: (optional($note->sale)->customerDisplayName() ?: 'WALK-IN');
+    $phone = trim((string) ($profile['companyPhone'] ?? ''));
+    $email = trim((string) ($profile['companyEmail'] ?? ''));
+    if ($phone === '-') { $phone = ''; }
+    if ($email === '-') { $email = ''; }
 @endphp
     <p class="no-print">
         <button onclick="window.print()">Print</button>
+        <a href="{{ route('sales.credit-notes.pdf', $note) }}">Download PDF</a>
         <button onclick="window.close()">Close</button>
     </p>
 
+    @if(!empty($letter['header_url']))
+        <div class="doc-letter"><img src="{{ $letter['header_url'] }}" alt=""></div>
+    @endif
+
+    <div class="sheet">
     <div class="head">
         <div>
-            @if(!empty($companyLogoUrl))
-                <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}">
+            @if(empty($letter['header_url']) && !empty($companyLogoUrl))
+                <img src="{{ $companyLogoUrl }}" alt="{{ $companyTitle }}">
             @endif
-            <h2>{{ $profile['companyName'] ?? $companyName ?? 'TEPHILLAH SYSTEM' }}</h2>
-            @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
-                <div class="muted">{{ $profile['companyAddress'] }}</div>
-            @endif
-            <div class="muted">
-                {{ $profile['companyPhone'] ?? '' }}
-                @if(!empty($profile['companyEmail'])) | {{ $profile['companyEmail'] }} @endif
-            </div>
-            @if(!empty($profile['companyTaxPin']))
-                <div class="muted">VAT PIN: {{ $profile['companyTaxPin'] }}</div>
+            <h2>{{ $companyTitle }}</h2>
+            @if(empty($letter['header_url']))
+                @if(!empty($profile['companyAddress']) && $profile['companyAddress'] !== '-')
+                    <div class="muted">{{ $profile['companyAddress'] }}</div>
+                @endif
+                @if($phone !== '' || $email !== '')
+                    <div class="muted">{{ $phone }}@if($phone !== '' && $email !== '') | @endif{{ $email }}</div>
+                @endif
+                @if(!empty($profile['companyTaxPin']))
+                    <div class="muted">VAT PIN: {{ $profile['companyTaxPin'] }}</div>
+                @endif
             @endif
         </div>
         <div>
@@ -114,6 +141,10 @@
 
     @if($note->notes)
         <p class="muted" style="margin-top:18px;"><strong>Notes:</strong> {{ $note->notes }}</p>
+    @endif
+    </div>
+    @if(!empty($letter['footer_url']))
+        <div class="page-footer"><img src="{{ $letter['footer_url'] }}" alt=""></div>
     @endif
 </body>
 </html>
