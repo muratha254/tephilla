@@ -1352,6 +1352,32 @@ table.dataTable thead .sorting_desc {
     font-weight: 600;
 }
 
+.sx-gold-table .sx-produced-table {
+    margin: 0;
+    background: #fff;
+}
+
+.sx-gold-table .sx-produced-table > thead > tr > th {
+    background: #00c0ef !important;
+    color: #fff !important;
+    border-color: #00acd6 !important;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 10px;
+}
+
+.sx-gold-table .sx-produced-table > tbody > tr > td {
+    background: #fff;
+    color: #333;
+    border-color: #d2d6de;
+    padding: 8px 10px;
+}
+
+.sx-produced-qty {
+    width: 72px;
+    text-align: left;
+}
+
 .sx-cyan-table > tbody > tr > td {
     font-size: 13px;
     vertical-align: middle;

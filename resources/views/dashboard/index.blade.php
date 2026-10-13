@@ -395,7 +395,7 @@
                 @if(($flatSheetStock ?? collect())->isNotEmpty())
                     <p><strong>Flat sheet</strong></p>
                     @foreach($flatSheetStock as $balance)
-                        <p>{{ optional($balance->variant)->color ?: 'Uncoloured' }}: {{ rtrim(rtrim(number_format((float) $balance->quantity, 4, '.', ''), '0'), '.') }}</p>
+                        <p>{{ optional($balance->product)->name }} {{ optional($balance->variant)->color ?: 'Uncoloured' }}: {{ rtrim(rtrim(number_format((float) $balance->quantity, 4, '.', ''), '0'), '.') }}</p>
                     @endforeach
                     <p>Total: {{ rtrim(rtrim(number_format((float) $flatSheetStock->sum('quantity'), 4, '.', ''), '0'), '.') }}</p>
                 @endif

@@ -15,11 +15,12 @@
 ])
 
 <div class="sx-box">
-    <h3 class="sx-box-title">{{ optional($product)->name ?: 'Flat Sheet' }}</h3>
+    <h3 class="sx-box-title">Flat sheets</h3>
     <div class="sx-box-body">
         <table class="table table-bordered sx-gold-table">
             <thead>
                 <tr>
+                    <th>Item</th>
                     <th>Colour</th>
                     <th class="text-right">Stock</th>
                     <th>Unit</th>
@@ -28,12 +29,13 @@
             <tbody>
                 @forelse($balances as $balance)
                     <tr>
+                        <td>{{ optional($balance->product)->name }}</td>
                         <td>{{ optional($balance->variant)->color ?: '—' }}</td>
                         <td class="text-right">{{ rtrim(rtrim(number_format((float) $balance->quantity, 4, '.', ''), '0'), '.') }}</td>
-                        <td>{{ optional(optional($product)->unit)->short_name ?: 'PCS' }}</td>
+                        <td>{{ optional(optional($balance->product)->unit)->short_name ?: 'PCS' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="3">No flat sheet colour balances at this branch.</td></tr>
+                    <tr><td colspan="4">No flat sheet colour balances at this branch.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -48,6 +50,7 @@
             <thead>
                 <tr>
                     <th>Date</th>
+                    <th>Item</th>
                     <th>Colour</th>
                     <th>Transaction</th>
                     <th class="text-right">O.S</th>
@@ -62,6 +65,7 @@
                 @forelse($movements as $movement)
                     <tr>
                         <td>{{ optional($movement->occurred_at)->format('d/m/Y') }}</td>
+                        <td>{{ optional($movement->product)->name }}</td>
                         <td>{{ optional($movement->variant)->color ?: '—' }}</td>
                         <td>{{ ucfirst(str_replace('_', ' ', $movement->type)) }}</td>
                         <td class="text-right">{{ number_format((float) $movement->quantity_before, 2) }}</td>
@@ -72,7 +76,7 @@
                         <td>{{ optional($movement->user)->name }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="9">No movements yet.</td></tr>
+                    <tr><td colspan="10">No movements yet.</td></tr>
                 @endforelse
             </tbody>
         </table>

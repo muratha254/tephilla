@@ -83,7 +83,8 @@
                     <th>Colour</th>
                     <th class="text-right">Used</th>
                     <th class="text-right">Remaining</th>
-                    <th>Produced</th>
+                    <th>Accessories produced</th>
+                    <th>Qty</th>
                     <th>Narration</th>
                     <th>Status</th>
                     <th></th>
@@ -91,30 +92,38 @@
             </thead>
             <tbody>
                 @forelse($foldings as $folding)
+                    @php
+                        $outputs = $folding->outputs;
+                        $span = max($outputs->count(), 1);
+                        $fmt = function ($n) {
+                            $text = rtrim(rtrim(number_format((float) $n, 4, '.', ''), '0'), '.');
+                            return $text === '' ? '0' : $text;
+                        };
+                    @endphp
                     <tr>
-                        <td>{{ $folding->number() }}</td>
-                        <td>{{ optional($folding->folded_on)->format('d/m/Y') }}</td>
-                        <td>{{ optional($folding->branch)->name }}</td>
-                        <td>{{ optional($folding->product)->name }}</td>
-                        <td>{{ optional($folding->colour)->name ?: '—' }}</td>
-                        <td class="text-right">{{ rtrim(rtrim(number_format((float) $folding->quantity, 4, '.', ''), '0'), '.') }}</td>
-                        <td class="text-right">
+                        <td rowspan="{{ $span }}">{{ $folding->number() }}</td>
+                        <td rowspan="{{ $span }}">{{ optional($folding->folded_on)->format('d/m/Y') }}</td>
+                        <td rowspan="{{ $span }}">{{ optional($folding->branch)->name }}</td>
+                        <td rowspan="{{ $span }}">{{ optional($folding->product)->name }}</td>
+                        <td rowspan="{{ $span }}">{{ optional($folding->colour)->name ?: '—' }}</td>
+                        <td rowspan="{{ $span }}" class="text-right">{{ $fmt($folding->quantity) }}</td>
+                        <td rowspan="{{ $span }}" class="text-right">
                             @if(array_key_exists($folding->id, $remaining))
-                                {{ rtrim(rtrim(number_format($remaining[$folding->id], 4, '.', ''), '0'), '.') ?: '0' }}
+                                {{ $fmt($remaining[$folding->id]) }}
                             @else
                                 —
                             @endif
                         </td>
-                        <td>
-                            @forelse($folding->outputs as $output)
-                                {{ optional($output->product)->name }} {{ optional($output->colour)->name }} {{ rtrim(rtrim(number_format((float) $output->quantity, 4, '.', ''), '0'), '.') }}<br>
-                            @empty
-                                —
-                            @endforelse
-                        </td>
-                        <td>{{ $folding->notes }}</td>
-                        <td>{{ ucfirst($folding->status ?: 'confirmed') }}</td>
-                        <td>
+                        @if($outputs->isEmpty())
+                            <td>—</td>
+                            <td>—</td>
+                        @else
+                            <td>{{ trim(optional($outputs->first()->product)->name . ' ' . optional($outputs->first()->colour)->name) }}</td>
+                            <td>{{ $fmt($outputs->first()->quantity) }}</td>
+                        @endif
+                        <td rowspan="{{ $span }}">{{ $folding->notes }}</td>
+                        <td rowspan="{{ $span }}">{{ ucfirst($folding->status ?: 'confirmed') }}</td>
+                        <td rowspan="{{ $span }}">
                             @if($canRecord && ($folding->status ?: 'confirmed') !== 'voided')
                                 <form method="post" action="{{ route('folding.void', $folding) }}">
                                     @csrf
@@ -124,8 +133,14 @@
                             @endif
                         </td>
                     </tr>
+                    @foreach($outputs->slice(1) as $output)
+                        <tr>
+                            <td>{{ trim(optional($output->product)->name . ' ' . optional($output->colour)->name) }}</td>
+                            <td>{{ $fmt($output->quantity) }}</td>
+                        </tr>
+                    @endforeach
                 @empty
-                    <tr><td colspan="11">No folding records for this filter.</td></tr>
+                    <tr><td colspan="12">No folding records for this filter.</td></tr>
                 @endforelse
             </tbody>
         </table>

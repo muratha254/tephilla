@@ -255,16 +255,16 @@ class DashboardService
 
     private function flatSheetStock(?int $branchId): Collection
     {
-        $product = Product::query()->whereIn('name', ['Flat Sheet', 'Flatsheets'])->orderBy('name')->first();
-        if (! $product) {
+        $productIds = Product::query()->rawFlatSheets()->pluck('id');
+        if ($productIds->isEmpty()) {
             return collect();
         }
 
         return ProductBranchStock::query()
-            ->with('variant')
+            ->with(['variant', 'product'])
             ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
-            ->where('product_id', $product->id)
-            ->where('product_variant_id', '>', 0)
+            ->whereIn('product_id', $productIds)
+            ->orderBy('product_id')
             ->orderBy('product_variant_id')
             ->get();
     }

@@ -272,6 +272,25 @@ class Product extends Model
         ];
     }
 
+    public function scopeRawFlatSheets($query)
+    {
+        $categoryIds = [];
+        $roots = ProductCategory::query()
+            ->whereIn('name', ['Flat Sheets / Raw Materials', 'Flat Sheet'])
+            ->pluck('id');
+        foreach ($roots as $id) {
+            $categoryIds = array_merge($categoryIds, ProductCategory::idsIncludingChildren((int) $id));
+        }
+        $categoryIds = array_values(array_unique($categoryIds));
+
+        return $query->where(function ($inner) use ($categoryIds) {
+            $inner->whereIn('name', ['Flat Sheet', 'Flatsheets']);
+            if ($categoryIds !== []) {
+                $inner->orWhereIn('category_id', $categoryIds);
+            }
+        });
+    }
+
     public function taxLabel(): string
     {
         $rate = (float) optional($this->tax)->rate;

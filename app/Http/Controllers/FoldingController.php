@@ -375,25 +375,26 @@ class FoldingController extends Controller
     {
         $this->authorizePermission('inventory.view');
         $branchId = $this->currentBranchId();
-        $product = Product::query()
-            ->whereIn('name', ['Flat Sheet', 'Flatsheets'])
+        $products = Product::query()
+            ->rawFlatSheets()
+            ->with('unit')
             ->orderBy('name')
-            ->first();
+            ->get();
 
         $balances = collect();
         $movements = collect();
-        if ($product && $branchId) {
+        if ($products->isNotEmpty() && $branchId) {
             $balances = ProductBranchStock::query()
                 ->withoutGlobalScope('branch')
-                ->with('variant')
+                ->with(['variant', 'product.unit'])
                 ->where('branch_id', $branchId)
-                ->where('product_id', $product->id)
-                ->where('product_variant_id', '>', 0)
+                ->whereIn('product_id', $products->pluck('id'))
+                ->orderBy('product_id')
                 ->orderBy('product_variant_id')
                 ->get();
             $movements = StockMovement::query()
-                ->with(['variant', 'user'])
-                ->where('product_id', $product->id)
+                ->with(['variant', 'user', 'product'])
+                ->whereIn('product_id', $products->pluck('id'))
                 ->orderByDesc('occurred_at')
                 ->orderByDesc('id')
                 ->limit(50)
@@ -402,7 +403,7 @@ class FoldingController extends Controller
 
         return view('folding.flat-sheet', array_merge(fleet_shared_view_data(), [
             'activeMenu' => 'folding.flat-sheet',
-            'product' => $product,
+            'products' => $products,
             'balances' => $balances,
             'movements' => $movements,
             'branchName' => optional(\App\Models\Branch::query()->find($branchId))->name,
