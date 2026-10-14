@@ -60,12 +60,17 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label class="sx-req">Product type *</label>
-                        <select name="category_id" id="category_id" class="form-control" required>
-                            <option value="">-Select-</option>
-                            @foreach($types as $type)
-                                <option value="{{ $type->id }}" @if($selectedTypeId === (string) $type->id) selected @endif>{{ $type->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="input-group">
+                            <select name="category_id" id="category_id" class="form-control" required>
+                                <option value="">-Select-</option>
+                                @foreach($types as $type)
+                                    <option value="{{ $type->id }}" @if($selectedTypeId === (string) $type->id) selected @endif>{{ $type->name }}</option>
+                                @endforeach
+                            </select>
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-info sx-plus-btn" data-quick="type" title="Add product type"><i class="fa fa-plus"></i></button>
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -336,7 +341,8 @@
     }
 
     var endpoints = {
-        unit: { url: @json(route('units.store')), select: 'unit_id', title: 'Add Unit' }
+        unit: { url: @json(route('units.store')), select: 'unit_id', title: 'Add Unit' },
+        type: { url: @json(route('products.types.store')), select: 'category_id', title: 'Add Product Type' }
     };
     var currentType = null;
     var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

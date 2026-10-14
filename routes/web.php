@@ -149,6 +149,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/products/price-log', [ProductController::class, 'priceLog'])
         ->middleware('permission:products.view')
         ->name('products.prices');
+    Route::get('/products/types', [CategoryController::class, 'types'])->name('products.types');
+    Route::post('/products/types', [CategoryController::class, 'storeType'])->name('products.types.store');
+    Route::delete('/products/types/{category}', [CategoryController::class, 'destroyType'])->name('products.types.destroy');
     Route::get('/products/create', [ProductController::class, 'create'])
         ->middleware('permission:products.create')
         ->name('products.create');

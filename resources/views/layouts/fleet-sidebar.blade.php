@@ -14,6 +14,7 @@
     };
     $itemChildren = [
         ['key' => 'products', 'label' => 'Products', 'url' => route('products.index'), 'show' => $can('products.view')],
+        ['key' => 'product-types', 'label' => 'Product types', 'url' => route('products.types'), 'show' => $can('products.view')],
         ['key' => 'colours', 'label' => 'Colours', 'url' => route('colours.index'), 'show' => $can('products.view')],
         ['key' => 'categories', 'label' => 'Categories', 'url' => route('categories.index'), 'show' => $can('categories.view')],
         ['key' => 'units', 'label' => 'Units', 'url' => route('units.index'), 'show' => $can('units.view')],
