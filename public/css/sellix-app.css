@@ -1984,6 +1984,7 @@ table.dataTable thead .sorting_desc {
     white-space: nowrap;
 }
 
+.sx-pay-open { background: #A2502B; }
 .sx-pay-paid { background: #00a65a; }
 .sx-pay-partial { background: #f39c12; }
 .sx-pay-unpaid { background: #dd4b39; }

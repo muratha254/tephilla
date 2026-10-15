@@ -59,7 +59,7 @@
                     </form>
                 @endif
                 @if($canDelete)
-                    <form action="{{ route('quotations.destroy', $quotation) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this draft quotation?');">
+                    <form action="{{ route('quotations.destroy', $quotation) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this quotation?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Delete</button>

@@ -20,7 +20,7 @@ class Quotation extends Model
     public const STATUS_EXPIRED = 'expired';
     public const STATUS_CANCELLED = 'cancelled';
 
-    public const DEFAULT_TERMS = "TERMS AND CONDITIONS.\n1. The above quotation is based on the roof estimates as per drawings provided.\n2. The quotation herein is valid for 30 (Thirty) days from the date of issue.\n3. Terms of sale; 100 % payment before delivery.\n4. Prices may change without prior notice unless paid for, wholly or partially.\n5. Labour and Supply contracts are to be treated as separate items\n6. This quotation is subjected to 5 - 10 % wastage depending on the roof design";
+    public const DEFAULT_TERMS = "Note:\n1. All our Roofing tiles and accessories are rust proof, guaranteed to last the Lifetime of the tiles and support safe water harvesting.\n2. Payments details.\n3. All Payments should be made to Tephillah Roofing Products Ltd\n4. UBA Bank, Westlands Branch. Acc No: 55010160031479\n5. Paybill:4320207 Accnt: 124857";
 
     protected $fillable = [
         'company_id', 'branch_id', 'customer_id', 'user_id', 'number',

@@ -135,7 +135,7 @@ class QuotationController extends Controller
     public function edit(Quotation $quotation)
     {
         $this->authorizePermission('quotations.update');
-        abort_unless(in_array($quotation->status, self::EDITABLE, true), 422, 'Only draft or sent quotations can be edited.');
+        abort_unless(in_array($quotation->status, self::EDITABLE, true), 422, 'Only an active or sent quotation can be edited.');
 
         $quotation->load('items.product');
 
@@ -147,7 +147,7 @@ class QuotationController extends Controller
     public function update(Request $request, Quotation $quotation, AuditLogger $audit)
     {
         $this->authorizePermission('quotations.update');
-        abort_unless(in_array($quotation->status, self::EDITABLE, true), 422, 'Only draft or sent quotations can be edited.');
+        abort_unless(in_array($quotation->status, self::EDITABLE, true), 422, 'Only an active or sent quotation can be edited.');
 
         $companyId = (int) auth()->user()->company_id;
         [$data, $lines, $totals] = $this->validatedPayload($request, $companyId);
@@ -181,7 +181,7 @@ class QuotationController extends Controller
     public function destroy(Quotation $quotation, AuditLogger $audit)
     {
         $this->authorizePermission('quotations.delete');
-        abort_unless($quotation->status === Quotation::STATUS_DRAFT, 422, 'Only draft quotations can be deleted.');
+        abort_unless($quotation->status === Quotation::STATUS_DRAFT, 422, 'Only an active quotation can be deleted.');
 
         $before = $quotation->only(['number', 'customer_id', 'status', 'total']);
         $number = $quotation->number;
@@ -199,7 +199,7 @@ class QuotationController extends Controller
     public function send(Quotation $quotation, AuditLogger $audit)
     {
         $this->authorizePermission('quotations.update');
-        abort_unless($quotation->status === Quotation::STATUS_DRAFT, 422, 'Only draft quotations can be marked as sent.');
+        abort_unless($quotation->status === Quotation::STATUS_DRAFT, 422, 'Only an active quotation can be marked as sent.');
 
         $before = ['status' => $quotation->status];
         $quotation->update(['status' => Quotation::STATUS_SENT]);
@@ -502,7 +502,7 @@ class QuotationController extends Controller
     private function statusLabels(): array
     {
         return [
-            Quotation::STATUS_DRAFT => 'Draft',
+            Quotation::STATUS_DRAFT => 'Active',
             Quotation::STATUS_SENT => 'Sent',
             Quotation::STATUS_ACCEPTED => 'Accepted',
             Quotation::STATUS_CONVERTED => 'Converted',

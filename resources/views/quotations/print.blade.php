@@ -36,6 +36,14 @@
         .totals .grand { font-weight: 700; font-size: 14px; }
         .no-print { margin: 0; padding: 12px 22px; }
         .notes { margin-top: 16px; font-size: 12px; }
+        .parties { width: 100%; margin-top: 8px; }
+        .parties td { border: 0; vertical-align: top; padding: 0; }
+        .bill-label { font-weight: 700; margin-bottom: 8px; }
+        .bill-name { font-weight: 700; font-size: 15px; }
+        .meta { margin-top: 0; }
+        .meta td { border: 3px solid #fff; padding: 7px 10px; font-weight: 700; }
+        .meta .lbl { background: #A2502B; color: #fff; width: 42%; }
+        .meta .val { background: #f4eae6; color: #1a1a1a; }
         @media print { .no-print { display: none; } }
     </style>
 </head>
@@ -61,23 +69,33 @@
             <div class="muted">{{ $companyProfile['companyPhone'] ?? '' }} @if(!empty($companyProfile['companyEmail'])) | {{ $companyProfile['companyEmail'] }} @endif</div>
             @endif
         </div>
-        <div>
-            <h3>Quotation</h3>
-            <div><strong>{{ $quotation->number }}</strong></div>
-            <div class="muted">Date: {{ optional($quotation->quote_date)->format('d-m-Y') }}</div>
-            <div class="muted">Valid until: {{ optional($quotation->valid_until)->format('d-m-Y') ?: '-' }}</div>
-            <div class="muted">Status: {{ $statuses[$quotation->status] ?? ucfirst($quotation->status) }}</div>
-        </div>
     </div>
 
-    <div>
-        <strong>Customer</strong><br>
-        {{ optional($quotation->customer)->name ?: '-' }}<br>
-        <span class="muted">
-            {{ optional($quotation->customer)->phone ?: '' }}
-            {{ optional($quotation->customer)->email ? ' | '.$quotation->customer->email : '' }}
-        </span>
-    </div>
+    @php
+        $customer = optional($quotation->customer);
+        $pin = trim((string) ($companyProfile['companyTaxPin'] ?? '')) ?: trim((string) ($customer->tax_number ?? ''));
+    @endphp
+    <table class="parties">
+        <tr>
+            <td width="46%">
+                <div class="bill-label">BILL TO:</div>
+                <div class="bill-name">{{ $customer->name ?: '-' }}</div>
+                @if($customer->phone)
+                    <div>{{ $customer->phone }}</div>
+                @endif
+            </td>
+            <td width="54%">
+                <table class="meta">
+                    <tr><td class="lbl">QUOTE NO:</td><td class="val">{{ $quotation->number }}</td></tr>
+                    <tr><td class="lbl">DATE:</td><td class="val">{{ optional($quotation->quote_date)->format('d F Y') ?: '-' }}</td></tr>
+                    <tr><td class="lbl">DUE DATE:</td><td class="val">{{ optional($quotation->valid_until)->format('d F Y') ?: '-' }}</td></tr>
+                    @if($pin !== '')
+                    <tr><td class="lbl">PIN:</td><td class="val">{{ $pin }}</td></tr>
+                    @endif
+                </table>
+            </td>
+        </tr>
+    </table>
 
     <table>
         <thead>

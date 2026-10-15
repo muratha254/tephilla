@@ -22,6 +22,11 @@
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { padding: 3px 0; border: 0; }
         .grand { font-weight: 700; font-size: 14px; }
+        .bill-label { font-weight: 700; font-size: 12px; margin-bottom: 8px; }
+        .bill-name { font-weight: 700; font-size: 14px; }
+        .meta td { border: 3px solid #fff; padding: 7px 10px; font-weight: 700; font-size: 11px; }
+        .meta .lbl { background: #A2502B; color: #fff; width: 42%; }
+        .meta .val { background: #f4eae6; color: #1a1a1a; }
         .logo { max-height: 52px; max-width: 160px; }
         .doc-letter { margin: 0; padding: 0; width: 100%; }
         .doc-letter img { width: 595pt; max-width: 595pt; height: auto; display: block; }
@@ -31,8 +36,10 @@
 </head>
 <body>
 @php
-    $title = $sale->isInvoice() ? 'TAX INVOICE' : 'RECEIPT';
-    $customer = $sale->customerDisplayName() === 'WALK-IN' ? 'WALK IN' : $sale->customerDisplayName();
+    $docLabel = $sale->isInvoice() ? 'INVOICE NO:' : 'RECEIPT NO:';
+    $customerName = $sale->customerDisplayName() === 'WALK-IN' ? 'WALK IN' : $sale->customerDisplayName();
+    $customerModel = optional($sale->customer);
+    $pin = trim((string) ($profile['companyTaxPin'] ?? '')) ?: trim((string) ($customerModel->tax_number ?? ''));
     $money = function ($amount) {
         return number_format((float) $amount, 2);
     };
@@ -62,22 +69,43 @@
                 @endif
                 @endif
             </td>
-            <td width="40%" align="right">
-                <h3>{{ $title }}</h3>
-                <div><strong>{{ $sale->documentNumber() }}</strong></div>
-                <div class="muted">Date: {{ optional($sale->sale_date)->format('d-m-Y H:i') }}</div>
-                <div class="muted">Branch: {{ optional($sale->branch)->name }}</div>
-            </td>
+            <td width="40%"></td>
         </tr>
     </table>
 
-    <div>
-        <strong>Customer</strong><br>
-        {{ $customer }}
-        @if(optional($sale->customer)->phone && ! optional($sale->customer)->is_walk_in)
-            <div class="muted">{{ $sale->customer->phone }}</div>
-        @endif
-    </div>
+    <table>
+        <tr>
+            <td width="46%" style="vertical-align:top;border:0;">
+                <div class="bill-label">BILL TO:</div>
+                <div class="bill-name">{{ $customerName }}</div>
+                @if($customerModel->phone && ! $customerModel->is_walk_in)
+                    <div>{{ $customerModel->phone }}</div>
+                @endif
+            </td>
+            <td width="54%" style="vertical-align:top;border:0;">
+                <table class="meta">
+                    <tr>
+                        <td class="lbl">{{ $docLabel }}</td>
+                        <td class="val">{{ $sale->documentNumber() }}</td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">DATE:</td>
+                        <td class="val">{{ optional($sale->sale_date)->format('d F Y') ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="lbl">DUE DATE:</td>
+                        <td class="val">{{ optional($sale->due_date)->format('d F Y') ?: '-' }}</td>
+                    </tr>
+                    @if($pin !== '')
+                    <tr>
+                        <td class="lbl">PIN:</td>
+                        <td class="val">{{ $pin }}</td>
+                    </tr>
+                    @endif
+                </table>
+            </td>
+        </tr>
+    </table>
 
     <table class="items">
         <thead>

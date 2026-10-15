@@ -59,7 +59,7 @@
                     @foreach($quotations as $row)
                         @php
                             $statusClass = [
-                                'draft' => 'sx-pay-unpaid',
+                                'draft' => 'sx-pay-open',
                                 'sent' => 'sx-pay-partial',
                                 'accepted' => 'sx-pay-paid',
                                 'converted' => 'sx-pay-paid',
@@ -108,7 +108,7 @@
                                         @endif
                                         @if($canDelete && $row->status === 'draft')
                                             <li>
-                                                <a href="#" class="text-danger" onclick="event.preventDefault(); if(confirm('Delete this draft quotation?')) document.getElementById('qt-delete-{{ $row->id }}').submit();">
+                                                <a href="#" class="text-danger" onclick="event.preventDefault(); if(confirm('Delete this quotation?')) document.getElementById('qt-delete-{{ $row->id }}').submit();">
                                                     <i class="fa fa-trash"></i> Delete
                                                 </a>
                                                 <form id="qt-delete-{{ $row->id }}" action="{{ route('quotations.destroy', $row) }}" method="post" class="hidden">
