@@ -83,6 +83,8 @@
             <tr>
                 <th>#</th>
                 <th>Item</th>
+                <th>Colour</th>
+                <th>UOM</th>
                 <th class="num">Qty</th>
                 <th class="num">Price</th>
                 <th class="num">Tax</th>
@@ -91,9 +93,16 @@
         </thead>
         <tbody>
             @foreach($quotation->items as $item)
+                @php
+                    $unit = optional(optional($item->product)->unit);
+                    $uom = $unit->short_name ?: $unit->name;
+                    $colour = $item->color ?: optional($item->variant)->color ?: optional($item->product)->color;
+                @endphp
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $item->description ?: optional($item->product)->name }}</td>
+                    <td>{{ $colour ?: '—' }}</td>
+                    <td>{{ $uom ?: '—' }}</td>
                     <td class="num">{{ rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.') }}</td>
                     <td class="num">{{ number_format((float) $item->unit_price, 2) }}</td>
                     <td class="num">{{ number_format((float) $item->tax_amount, 2) }}</td>

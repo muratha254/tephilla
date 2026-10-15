@@ -84,6 +84,8 @@
             <tr>
                 <th>#</th>
                 <th>Particulars</th>
+                <th>Colour</th>
+                <th>UOM</th>
                 <th class="num">Qty</th>
                 <th class="num">Price</th>
                 <th class="num">Tax</th>
@@ -92,9 +94,16 @@
         </thead>
         <tbody>
             @foreach($sale->items as $item)
+                @php
+                    $unit = optional(optional($item->product)->unit);
+                    $uom = $unit->short_name ?: $unit->name;
+                    $colour = $item->color ?: optional($item->variant)->color ?: optional($item->product)->color;
+                @endphp
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $item->name }}</td>
+                    <td>{{ $colour ?: '—' }}</td>
+                    <td>{{ $uom ?: '—' }}</td>
                     <td class="num">{{ rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.') }}</td>
                     <td class="num">{{ $money($item->unit_price) }}</td>
                     <td class="num">{{ $money($item->tax_amount) }}</td>

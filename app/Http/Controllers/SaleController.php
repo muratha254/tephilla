@@ -789,7 +789,7 @@ class SaleController extends Controller
             return $this->deliveryPdf($sale);
         }
 
-        $sale->load(['items', 'customer', 'cashier', 'branch', 'payments', 'company']);
+        $sale->load(['items.product.unit', 'items.variant', 'customer', 'cashier', 'branch', 'payments', 'company']);
 
         return view('sales.print', array_merge(fleet_shared_view_data(), [
             'sale' => $sale,
@@ -843,7 +843,7 @@ class SaleController extends Controller
         $this->authorizePermission('sales.view');
         abort_unless($sale->status === Sale::STATUS_COMPLETED, 404);
 
-        $sale->load(['items', 'customer', 'cashier', 'branch', 'payments', 'company']);
+        $sale->load(['items.product.unit', 'items.variant', 'customer', 'cashier', 'branch', 'payments', 'company']);
         $profile = fleet_company_profile();
         $filename = 'sale-' . preg_replace('/[^A-Za-z0-9\-]+/', '-', $sale->documentNumber()) . '.pdf';
 

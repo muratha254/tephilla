@@ -338,7 +338,7 @@ class QuotationController extends Controller
     {
         $this->authorizePermission('quotations.view');
 
-        $quotation->load(['customer', 'user', 'items.product', 'company', 'branch']);
+        $quotation->load(['customer', 'user', 'items.product.unit', 'items.variant', 'company', 'branch']);
 
         return view('quotations.print', array_merge(fleet_shared_view_data(), [
             'quotation' => $quotation,
@@ -350,7 +350,7 @@ class QuotationController extends Controller
     {
         $this->authorizePermission('quotations.view');
 
-        $quotation->load(['customer', 'user', 'items.product', 'company', 'branch']);
+        $quotation->load(['customer', 'user', 'items.product.unit', 'items.variant', 'company', 'branch']);
         $profile = fleet_company_profile();
         $filename = 'quotation-' . preg_replace('/[^A-Za-z0-9\-]+/', '-', $quotation->number) . '.pdf';
 
