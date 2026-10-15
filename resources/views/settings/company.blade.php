@@ -25,6 +25,7 @@
         <li class="{{ $tab === 'basic' ? 'active' : '' }}"><a href="{{ route('settings.company', ['tab' => 'basic']) }}">Basic Settings</a></li>
         <li class="{{ $tab === 'receipt' ? 'active' : '' }}"><a href="{{ route('settings.company', ['tab' => 'receipt']) }}">Receipt Settings</a></li>
         <li class="{{ $tab === 'till' ? 'active' : '' }}"><a href="{{ route('settings.company', ['tab' => 'till']) }}">Till/Paybill Settings</a></li>
+        <li class="{{ $tab === 'documents' ? 'active' : '' }}"><a href="{{ route('settings.company', ['tab' => 'documents']) }}">Quotation &amp; Invoice</a></li>
     </ul>
 
     <div class="tab-content" style="padding:18px;">
@@ -360,6 +361,19 @@
                         </div>
                     </div>
                 </div>
+                @if($canUpdate)
+                    <div class="sx-form-actions text-center">
+                        <button type="submit" class="btn btn-success">Update</button>
+                        <a href="{{ route('dashboard') }}" class="btn btn-warning">Close</a>
+                    </div>
+                @endif
+            </form>
+        @elseif($tab === 'documents')
+            <form method="post" action="{{ route('settings.company.update') }}" enctype="multipart/form-data" class="sx-item-form">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="tab" value="documents">
+                @include('settings.partials.document-letterheads')
                 @if($canUpdate)
                     <div class="sx-form-actions text-center">
                         <button type="submit" class="btn btn-success">Update</button>

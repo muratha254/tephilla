@@ -76,8 +76,17 @@ function document_letterhead(string $kind): array
             return [asset('storage/' . $path), $diskPath];
         };
 
-        [$headerUrl, $headerPdf] = $resolve($settings->get($companyId, $kind . '_header_path', ''));
-        [$footerUrl, $footerPdf] = $resolve($settings->get($companyId, $kind . '_footer_path', ''));
+        $headerPath = (string) $settings->get($companyId, $kind . '_header_path', '');
+        $footerPath = (string) $settings->get($companyId, $kind . '_footer_path', '');
+        if ($kind === 'invoice') {
+            $headerPath = $headerPath !== '' ? $headerPath : (string) $settings->get($companyId, 'quotation_header_path', '');
+            $footerPath = $footerPath !== '' ? $footerPath : (string) $settings->get($companyId, 'quotation_footer_path', '');
+        }
+        $headerPath = $headerPath !== '' ? $headerPath : (string) $settings->get($companyId, 'letter_head_path', '');
+        $footerPath = $footerPath !== '' ? $footerPath : (string) $settings->get($companyId, 'letter_footer_path', '');
+
+        [$headerUrl, $headerPdf] = $resolve($headerPath);
+        [$footerUrl, $footerPdf] = $resolve($footerPath);
 
         return [
             'header_url' => $headerUrl,

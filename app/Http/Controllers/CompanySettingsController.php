@@ -61,41 +61,9 @@ class CompanySettingsController extends Controller
         }
 
         if ($tab === 'documents') {
-            $request->validate([
-                'invoice_header' => 'nullable|image|max:5120',
-                'invoice_footer' => 'nullable|image|max:5120',
-                'quotation_header' => 'nullable|image|max:5120',
-                'quotation_footer' => 'nullable|image|max:5120',
-                'remove_invoice_header' => 'nullable|boolean',
-                'remove_invoice_footer' => 'nullable|boolean',
-                'remove_quotation_header' => 'nullable|boolean',
-                'remove_quotation_footer' => 'nullable|boolean',
-            ]);
+            $this->saveDocumentLetterheads($request, $settings, $company);
 
-            $settingValues = [];
-            foreach (['invoice_header', 'invoice_footer', 'quotation_header', 'quotation_footer'] as $input) {
-                $settingKey = $input . '_path';
-                if ($request->boolean('remove_' . $input)) {
-                    $current = $settings->get($company->id, $settingKey);
-                    if ($current) {
-                        Storage::disk('public')->delete($current);
-                    }
-                    $settingValues[$settingKey] = null;
-                }
-                if ($request->hasFile($input)) {
-                    $current = $settings->get($company->id, $settingKey);
-                    if ($current) {
-                        Storage::disk('public')->delete($current);
-                    }
-                    $settingValues[$settingKey] = $request->file($input)->store('document-letterheads', 'public');
-                }
-            }
-
-            if ($settingValues !== []) {
-                $settings->setMany($company->id, $settingValues, 'documents');
-            }
-
-            return redirect()->route('settings.general', ['tab' => 'documents'])->with('success', 'Invoice and quotation letterheads saved.');
+            return redirect()->route('settings.general', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading and footer saved.');
         }
 
         if ($tab === 'prefixes') {
@@ -200,7 +168,7 @@ class CompanySettingsController extends Controller
 
         $company = $user->company;
         $tab = $request->input('tab', 'basic');
-        if (! in_array($tab, ['basic', 'receipt', 'till'], true)) {
+        if (! in_array($tab, ['basic', 'receipt', 'till', 'documents'], true)) {
             $tab = 'basic';
         }
 
@@ -217,6 +185,12 @@ class CompanySettingsController extends Controller
             'counties' => SettingLookup::query()->ofType(SettingLookup::TYPE_COUNTY)->where('is_active', true)->orderBy('name')->get(),
             'cities' => SettingLookup::query()->ofType(SettingLookup::TYPE_CITY)->where('is_active', true)->orderBy('name')->get(),
             'canUpdate' => $user->hasPermission('settings.company'),
+            'letterheads' => [
+                'invoice_header_path' => $settings->get($company->id, 'invoice_header_path', ''),
+                'invoice_footer_path' => $settings->get($company->id, 'invoice_footer_path', ''),
+                'quotation_header_path' => $settings->get($company->id, 'quotation_header_path', ''),
+                'quotation_footer_path' => $settings->get($company->id, 'quotation_footer_path', ''),
+            ],
         ]));
     }
 
@@ -251,6 +225,12 @@ class CompanySettingsController extends Controller
             ]), 'receipt');
 
             return redirect()->route('settings.company', ['tab' => 'receipt'])->with('success', 'Receipt settings saved.');
+        }
+
+        if ($tab === 'documents') {
+            $this->saveDocumentLetterheads($request, $settings, $company);
+
+            return redirect()->route('settings.company', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading and footer saved.');
         }
 
         if ($tab === 'till') {
@@ -343,6 +323,43 @@ class CompanySettingsController extends Controller
         $settings->setMany($company->id, array_intersect_key($data, array_flip($settingKeys)), 'company_profile');
 
         return redirect()->route('settings.company', ['tab' => 'basic'])->with('success', 'Company profile saved.');
+    }
+
+    private function saveDocumentLetterheads(Request $request, SettingsService $settings, Company $company): void
+    {
+        $request->validate([
+            'invoice_header' => 'nullable|image|max:5120',
+            'invoice_footer' => 'nullable|image|max:5120',
+            'quotation_header' => 'nullable|image|max:5120',
+            'quotation_footer' => 'nullable|image|max:5120',
+            'remove_invoice_header' => 'nullable|boolean',
+            'remove_invoice_footer' => 'nullable|boolean',
+            'remove_quotation_header' => 'nullable|boolean',
+            'remove_quotation_footer' => 'nullable|boolean',
+        ]);
+
+        $settingValues = [];
+        foreach (['invoice_header', 'invoice_footer', 'quotation_header', 'quotation_footer'] as $input) {
+            $settingKey = $input . '_path';
+            if ($request->boolean('remove_' . $input)) {
+                $current = $settings->get($company->id, $settingKey);
+                if ($current) {
+                    Storage::disk('public')->delete($current);
+                }
+                $settingValues[$settingKey] = null;
+            }
+            if ($request->hasFile($input)) {
+                $current = $settings->get($company->id, $settingKey);
+                if ($current) {
+                    Storage::disk('public')->delete($current);
+                }
+                $settingValues[$settingKey] = $request->file($input)->store('document-letterheads', 'public');
+            }
+        }
+
+        if ($settingValues !== []) {
+            $settings->setMany($company->id, $settingValues, 'documents');
+        }
     }
 
     /**
