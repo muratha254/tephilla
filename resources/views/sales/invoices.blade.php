@@ -105,6 +105,14 @@
                                                 <a href="{{ route('sales.pdf', $invoice) }}"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
                                             </li>
                                         @endif
+                                        @if($isFinal)
+                                            <li>
+                                                <a href="#" class="sx-share-doc" data-share-url="{{ route('sales.share', $invoice) }}" data-share-channel="whatsapp"><i class="fa fa-whatsapp"></i> WhatsApp</a>
+                                            </li>
+                                            <li>
+                                                <a href="#" class="sx-share-doc" data-share-url="{{ route('sales.share', $invoice) }}" data-share-channel="email"><i class="fa fa-envelope"></i> Email</a>
+                                            </li>
+                                        @endif
                                     </ul>
                                 </div>
                             </td>

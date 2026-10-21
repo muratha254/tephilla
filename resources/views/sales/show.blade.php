@@ -287,6 +287,14 @@
         <a href="{{ route('sales.print', $sale) }}" target="_blank" class="btn btn-warning">
             <i class="fa fa-print"></i> Print
         </a>
+        @if($sale->status === \App\Models\Sale::STATUS_COMPLETED)
+            <button type="button" class="btn sx-btn-whatsapp sx-share-doc" data-share-url="{{ route('sales.share', $sale) }}" data-share-channel="whatsapp">
+                <i class="fa fa-whatsapp"></i> WhatsApp
+            </button>
+            <button type="button" class="btn btn-info sx-share-doc" data-share-url="{{ route('sales.share', $sale) }}" data-share-channel="email">
+                <i class="fa fa-envelope"></i> Email
+            </button>
+        @endif
         @if(!empty($canPrint) && $sale->status === \App\Models\Sale::STATUS_COMPLETED)
             <a href="{{ route('sales.pdf', $sale) }}" class="btn btn-primary">
                 <i class="fa fa-file-pdf-o"></i> PDF

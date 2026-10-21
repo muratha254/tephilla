@@ -43,6 +43,8 @@
             <div class="sx-toolbar-actions" style="margin-top:6px;">
                 <a href="{{ route('quotations.print', $quotation) }}" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-print"></i> Print</a>
                 <a href="{{ route('quotations.pdf', $quotation) }}" class="btn btn-primary btn-sm"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
+                <button type="button" class="btn sx-btn-whatsapp btn-sm sx-share-doc" data-share-url="{{ route('quotations.share', $quotation) }}" data-share-channel="whatsapp"><i class="fa fa-whatsapp"></i> WhatsApp</button>
+                <button type="button" class="btn btn-info btn-sm sx-share-doc" data-share-url="{{ route('quotations.share', $quotation) }}" data-share-channel="email"><i class="fa fa-envelope"></i> Email</button>
                 @if($canUpdate)
                     <a href="{{ route('quotations.edit', $quotation) }}" class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i> Edit</a>
                 @endif

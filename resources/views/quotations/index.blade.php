@@ -96,6 +96,12 @@
                                         <li>
                                             <a href="{{ route('quotations.pdf', $row) }}"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
                                         </li>
+                                        <li>
+                                            <a href="#" class="sx-share-doc" data-share-url="{{ route('quotations.share', $row) }}" data-share-channel="whatsapp"><i class="fa fa-whatsapp"></i> WhatsApp</a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="sx-share-doc" data-share-url="{{ route('quotations.share', $row) }}" data-share-channel="email"><i class="fa fa-envelope"></i> Email</a>
+                                        </li>
                                         @if($canConvert && in_array($row->status, ['draft', 'sent', 'accepted'], true) && ! $row->converted_sale_id)
                                             <li>
                                                 <a href="#" onclick="event.preventDefault(); if(this.dataset.busy) return; if(confirm('Convert this quotation to an unpaid invoice?')) { this.dataset.busy='1'; document.getElementById('qt-convert-{{ $row->id }}').submit(); }">

@@ -65,7 +65,8 @@ class EnsureSubscription
             'subscription.blocked',
             'billing.index',
             'billing.invoices.show',
-            'owner.*'
+            'owner.*',
+            'share.*'
         );
     }
 }

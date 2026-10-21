@@ -58,6 +58,9 @@ function document_letterhead(string $kind): array
 
     try {
         $companyId = (int) optional(auth()->user())->company_id;
+        if ($companyId < 1 && app()->bound('currentCompanyId')) {
+            $companyId = (int) app('currentCompanyId');
+        }
         if ($companyId < 1) {
             return $empty;
         }
@@ -120,7 +123,13 @@ function fleet_company_profile(): array
         if ($user && method_exists($user, 'isSystemOwner') && $user->isSystemOwner()) {
             throw new RuntimeException('System owner has no tenant profile');
         }
-        $company = optional($user)->company ?? \App\Models\Company::query()->orderBy('id')->first();
+        $company = optional($user)->company;
+        if (! $company && app()->bound('currentCompanyId') && app('currentCompanyId')) {
+            $company = \App\Models\Company::query()->find(app('currentCompanyId'));
+        }
+        if (! $company) {
+            $company = \App\Models\Company::query()->orderBy('id')->first();
+        }
         if (! $company) {
             throw new RuntimeException('No company');
         }

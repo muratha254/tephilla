@@ -22,6 +22,7 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\DocumentFileController;
 use App\Http\Controllers\CreditNoteController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\DocumentShareController;
 use App\Http\Controllers\HrDashboardController;
 use App\Http\Controllers\HrDepartmentController;
 use App\Http\Controllers\HrDesignationController;
@@ -77,6 +78,13 @@ Route::get('/', function () {
         ? redirect()->route('owner.dashboard')
         : redirect()->route('dashboard');
 });
+
+Route::get('/share/quotations/{quotation}', [DocumentShareController::class, 'publicQuotation'])
+    ->middleware('signed')
+    ->name('share.quotations');
+Route::get('/share/invoices/{sale}', [DocumentShareController::class, 'publicInvoice'])
+    ->middleware('signed')
+    ->name('share.invoices');
 
 Route::get('/login', function () {
     return view('auth.login');
@@ -426,6 +434,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'pdf'])
         ->middleware('permission:sales.view')
         ->name('sales.pdf');
+    Route::get('/sales/{sale}/share', [DocumentShareController::class, 'invoice'])
+        ->middleware('permission:sales.view')
+        ->name('sales.share');
+    Route::post('/sales/{sale}/share/email', [DocumentShareController::class, 'emailInvoice'])
+        ->middleware('permission:sales.view')
+        ->name('sales.share.email');
     Route::get('/sales/{sale}/pos-pdf', [SaleController::class, 'posPdf'])
         ->middleware('permission:sales.view')
         ->name('sales.pos-pdf');
@@ -477,6 +491,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotations/{quotation}/pdf', [QuotationController::class, 'pdf'])
         ->middleware('permission:quotations.view')
         ->name('quotations.pdf');
+    Route::get('/quotations/{quotation}/share', [DocumentShareController::class, 'quotation'])
+        ->middleware('permission:quotations.view')
+        ->name('quotations.share');
+    Route::post('/quotations/{quotation}/share/email', [DocumentShareController::class, 'emailQuotation'])
+        ->middleware('permission:quotations.view')
+        ->name('quotations.share.email');
     Route::put('/quotations/{quotation}', [QuotationController::class, 'update'])
         ->middleware('permission:quotations.update')
         ->name('quotations.update');

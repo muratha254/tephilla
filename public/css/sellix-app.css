@@ -3959,6 +3959,19 @@ body.sx-order-screen {
     text-transform: uppercase;
     letter-spacing: .02em;
 }
+.sx-btn-whatsapp {
+    background: #25d366;
+    border-color: #1ebe57;
+    color: #fff;
+}
+.sx-btn-whatsapp:hover,
+.sx-btn-whatsapp:focus,
+.sx-btn-whatsapp:active {
+    background: #1ebe57;
+    border-color: #18a64c;
+    color: #fff;
+}
+
 .sx-sub-active { background: #dff0d8; color: #3c763d; }
 .sx-sub-trial { background: #d9edf7; color: #31708f; }
 .sx-sub-soon { background: #fcf8e3; color: #8a6d3b; }
