@@ -20,6 +20,7 @@
                             data-walk-in="{{ $customer->is_walk_in ? '1' : '0' }}"
                             data-credit-limit="{{ (float) $customer->credit_limit }}"
                             data-credit-used="{{ $customer->creditAmount() }}"
+                            data-points="{{ (float) $customer->loyalty_points }}"
                             @if((int) $customer->id === (int) $walkInId) selected @endif
                         >
                             {{ $customer->is_walk_in ? 'WALK-IN' : $customer->name }}{{ $customer->phone ? ' - '.$customer->phone : '' }}
@@ -38,7 +39,7 @@
             </div>
             <div class="pos-search-wrap">
                 <span class="pos-search-icon"><i class="fa fa-th"></i></span>
-                <input type="text" id="sx-pos-search" class="form-control" placeholder="Item name/Barcode/Itemcode (F10)" autocomplete="off">
+                <input type="text" id="sx-pos-search" class="form-control" placeholder="Scan barcode or type item name (F10)" autocomplete="off">
                 <div id="sx-pos-results" class="pos-search-results" hidden></div>
             </div>
         </div>
@@ -95,7 +96,6 @@
             </div>
 
             <div class="pos-actions">
-                <button type="button" class="btn pos-btn-order" id="sx-pos-order"><i class="fa fa-check"></i> ORDER</button>
                 <button type="button" class="btn pos-btn-hold" id="sx-pos-hold"><i class="fa fa-hand-stop-o"></i> HOLD (F4)</button>
                 <button type="button" class="btn pos-btn-cust" id="sx-pos-cust"><i class="fa fa-user"></i> CUST (F7)</button>
             </div>
@@ -108,18 +108,90 @@
     </div>
 
     <div class="pos-right">
-        <div class="pos-cats" id="sx-pos-cats"></div>
-        <div class="pos-grid-wrap">
-            <div class="pos-grid" id="sx-pos-grid"></div>
-            <div class="pos-nav" id="sx-pos-nav">
-                <button type="button" class="pos-nav-btn" id="sx-pos-prev" title="Previous page" aria-label="Previous page"><i class="fa fa-arrow-left"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-next" title="Next page" aria-label="Next page"><i class="fa fa-arrow-right"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-ok" title="Reload items" aria-label="Reload items"><i class="fa fa-thumbs-up"></i></button>
-                <button type="button" class="pos-nav-btn" id="sx-pos-cust-nav" title="Add customer" aria-label="Add customer"><i class="fa fa-user"></i></button>
-                <div class="pos-page-indicator" id="sx-pos-page" aria-live="polite">1 / 1</div>
-                <button type="button" class="pos-nav-btn pos-nav-refresh" id="sx-pos-refresh" title="Refresh catalog" aria-label="Refresh catalog"><i class="fa fa-refresh"></i></button>
-            </div>
+        <div class="pos-receive-head">
+            <i class="fa fa-money"></i> RECEIVE PAYMENT
         </div>
+        <form id="sx-pos-pay-form" class="pos-receive">
+            <div class="pos-receive-label">PAYMENT METHOD</div>
+            <div class="pos-methods">
+                <button type="button" class="pos-method is-active" data-method="cash">
+                    <i class="fa fa-money"></i>
+                    <span>Cash</span>
+                </button>
+                <button type="button" class="pos-method" data-method="mpesa">
+                    <i class="fa fa-mobile"></i>
+                    <span>M-Pesa</span>
+                </button>
+                <button type="button" class="pos-method" data-method="card">
+                    <i class="fa fa-credit-card"></i>
+                    <span>Card</span>
+                </button>
+            </div>
+
+            <label class="pos-check">
+                <input type="checkbox" id="sx-pay-split">
+                <span>
+                    <strong>Split payment</strong>
+                    <small>Cash, M-Pesa and Card together</small>
+                </span>
+            </label>
+
+            <div id="sx-pay-single">
+                <div class="pos-receive-label" id="sx-pay-amount-label">CASH RECEIVED</div>
+                <div class="pos-receive-box">
+                    <span>Ksh</span>
+                    <input type="number" step="0.01" min="0" id="sx-pay-received-input" value="0.00">
+                </div>
+                <div class="pos-change-row">
+                    <span>Change to return</span>
+                    <strong>Ksh <span id="sx-pay-change">0.00</span></strong>
+                </div>
+            </div>
+
+            <div id="sx-pay-split-fields" hidden>
+                <div class="pos-split-row">
+                    <label for="sx-pay-cash">Cash</label>
+                    <input type="number" step="0.01" min="0" id="sx-pay-cash" class="form-control pos-tender" data-method="cash" value="0.00">
+                </div>
+                <div class="pos-split-row">
+                    <label for="sx-pay-mpesa">M-Pesa</label>
+                    <input type="number" step="0.01" min="0" id="sx-pay-mpesa" class="form-control pos-tender" data-method="mpesa" value="0.00">
+                </div>
+                <div class="pos-split-row">
+                    <label for="sx-pay-card">Card</label>
+                    <input type="number" step="0.01" min="0" id="sx-pay-card" class="form-control pos-tender" data-method="card" value="0.00">
+                </div>
+                <div class="pos-change-row">
+                    <span>Change to return</span>
+                    <strong>Ksh <span id="sx-pay-change-split">0.00</span></strong>
+                </div>
+            </div>
+
+            <div class="pos-pay-extra" id="sx-mpesa-extra" hidden>
+                <label for="sx-pay-mpesa-code">Trans Code</label>
+                <input type="text" id="sx-pay-mpesa-code" class="form-control" placeholder="Transaction Code">
+            </div>
+
+            <label class="pos-check">
+                <input type="checkbox" id="sx-pay-points">
+                <span>
+                    <strong>Pay with points</strong>
+                    <small id="sx-pay-points-hint">Select a customer account</small>
+                </span>
+            </label>
+
+            <div class="pos-receive-label">NOTE (OPTIONAL)</div>
+            <input type="text" id="sx-pay-note" class="form-control pos-note-input" placeholder="What's this payment for?">
+
+            <div class="pos-pay-credit-note" id="sx-pay-credit-note" hidden>
+                Credit sale allowed for this customer. Leave unpaid amount as account balance.
+            </div>
+
+            <div class="pos-receive-actions">
+                <button type="button" class="pos-pay-credit" id="sx-pay-credit" hidden><i class="fa fa-book"></i> Charge Account</button>
+                <button type="submit" class="pos-pay-complete"><i class="fa fa-check"></i> Complete transaction <i class="fa fa-arrow-right"></i></button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -150,91 +222,6 @@
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="sx-pos-pay-modal" tabindex="-1">
-    <div class="modal-dialog pos-pay-dialog">
-        <div class="modal-content pos-pay-modal">
-            <div class="pos-pay-head">
-                <i class="fa fa-money"></i> RECEIVE PAYMENT
-            </div>
-            <form id="sx-pos-pay-form">
-                <div class="pos-pay-body">
-                    <div class="pos-pay-fields">
-                        <div class="pos-pay-row">
-                            <label for="sx-pay-cash">Cash (F1)</label>
-                            <input type="number" step="0.01" min="0" id="sx-pay-cash" class="form-control pos-tender" data-method="cash" value="0.00">
-                        </div>
-                        <div class="pos-pay-row pos-pay-mpesa">
-                            <label for="sx-pay-mpesa">Mpesa (F2)</label>
-                            <div class="pos-pay-stack">
-                                <input type="number" step="0.01" min="0" id="sx-pay-mpesa" class="form-control pos-tender" data-method="mpesa" value="0.00">
-                                <div class="pos-pay-extra" id="sx-mpesa-extra" hidden>
-                                    <label for="sx-pay-mpesa-code">Trans Code</label>
-                                    <input type="text" id="sx-pay-mpesa-code" class="form-control" placeholder="Transaction Code">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pos-pay-row pos-pay-bank">
-                            <label for="sx-pay-bank">Bank (F3)</label>
-                            <div class="pos-pay-stack">
-                                <input type="number" step="0.01" min="0" id="sx-pay-bank" class="form-control pos-tender" data-method="bank_transfer" value="0.00">
-                                <div class="pos-pay-extra" id="sx-bank-extra" hidden>
-                                    <label for="sx-pay-bank-name">Bank Name</label>
-                                    <input type="text" id="sx-pay-bank-name" class="form-control" placeholder="Enter bank name">
-                                    <label for="sx-pay-bank-ref">Reference</label>
-                                    <input type="text" id="sx-pay-bank-ref" class="form-control" placeholder="Ref No">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pos-pay-row">
-                            <label for="sx-pay-comp">COMPLEMENTARY</label>
-                            <input type="number" step="0.01" min="0" id="sx-pay-comp" class="form-control pos-tender" data-method="complementary" placeholder="COMPLEMENTARY">
-                        </div>
-                        <div class="pos-pay-row">
-                            <label for="sx-pay-advance">Advance pay</label>
-                            <input type="number" step="0.01" min="0" id="sx-pay-advance" class="form-control pos-tender" data-method="advance" value="0.00">
-                        </div>
-                        <div class="pos-pay-row">
-                            <label for="sx-pay-note">SALES NOTE</label>
-                            <textarea id="sx-pay-note" class="form-control" rows="2" placeholder="SALES NOTE"></textarea>
-                        </div>
-                        <div class="pos-pay-row">
-                            <label for="sx-pay-service">EAT IN / TAKE AWAY</label>
-                            <select id="sx-pay-service" class="form-control">
-                                <option value="">Select</option>
-                                <option value="eat_in">Eat In</option>
-                                <option value="take_away">Take Away</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="pos-pay-summary">
-                        <div><span>Total items:</span><strong id="sx-pay-items">0</strong></div>
-                        <div><span>Total:</span><strong id="sx-pay-exclusive">0.00</strong></div>
-                        <div><span>Discount (-):</span><strong id="sx-pay-discount">0.00</strong></div>
-                        <div><span>Tax (+):</span><strong id="sx-pay-tax">0.00</strong></div>
-                        <div class="is-red"><span>Cur payable amt:</span><strong id="sx-pay-payable">0.00</strong></div>
-                        <div class="is-red"><span>Grand To payable:</span><strong id="sx-pay-grand-due">0.00</strong></div>
-                        <div><span>Total Received:</span><strong id="sx-pay-received">0.00</strong></div>
-                        <div><span>Balance:</span><strong id="sx-pay-balance">0.00</strong></div>
-                        <div class="is-orange"><span>Change Return:</span><strong id="sx-pay-change">0.00</strong></div>
-                        <div class="pos-pay-credit-note" id="sx-pay-credit-note" hidden>
-                            Credit sale allowed for this customer. Leave unpaid amount as account balance.
-                        </div>
-                    </div>
-                </div>
-                <div class="pos-pay-actions">
-                    <button type="button" class="pos-pay-close" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
-                    <button type="button" class="pos-pay-credit" id="sx-pay-credit" hidden><i class="fa fa-book"></i> Charge Account</button>
-                    <button type="submit" class="pos-pay-complete"><i class="fa fa-check"></i> Complete</button>
-                    <select id="sx-pay-logout" class="pos-pay-logout">
-                        <option value="stay">Don't Logout</option>
-                        <option value="logout">Logout</option>
-                    </select>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -271,7 +258,6 @@
 @push('scripts')
 <script>
 (function ($) {
-    var catalogUrl = @json(route('pos.catalog'));
     var searchUrl = @json(route('pos.search'));
     var customerUrl = @json(route('pos.customers.store'));
     var holdUrl = @json(route('pos.hold'));
@@ -283,10 +269,9 @@
     var saleBusy = false;
     var discount = 0;
     var holdId = null;
-    var categoryId = null;
-    var page = 1;
-    var pages = 1;
     var searchTimer = null;
+    var lastAutoReceived = 0;
+    var payMethod = 'cash';
 
     function money(n) {
         return (Math.round((n || 0) * 100) / 100).toFixed(2);
@@ -351,6 +336,14 @@
         $('#sx-pos-amount').text(money(t.amount));
         $('#sx-pos-discount').text(money(t.discount));
         $('#sx-pos-grand').text(money(t.grand));
+        if (!$('#sx-pay-split').is(':checked')) {
+            var current = Math.round((parseFloat($('#sx-pay-received-input').val()) || 0) * 100) / 100;
+            if (current <= 0 || current === lastAutoReceived) {
+                $('#sx-pay-received-input').val(money(t.grand));
+                lastAutoReceived = t.grand;
+            }
+        }
+        refreshPayPanel();
     }
 
     function priceMissing(item) {
@@ -485,121 +478,15 @@
         cart = [];
         discount = 0;
         holdId = null;
+        lastAutoReceived = 0;
         checkoutKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+        $('#sx-pay-received-input').val('0.00');
+        $('#sx-pay-cash, #sx-pay-mpesa, #sx-pay-card').val('0.00');
+        $('#sx-pay-mpesa-code, #sx-pay-note').val('');
+        $('#sx-pay-points').prop('checked', false);
+        $('#sx-mpesa-extra').prop('hidden', true);
         renderCart();
     }
-
-    function updateNavState() {
-        pages = Math.max(1, pages || 1);
-        page = Math.min(Math.max(1, page), pages);
-        $('#sx-pos-page').text(page + ' / ' + pages);
-        $('#sx-pos-prev').prop('disabled', page <= 1).toggleClass('is-disabled', page <= 1);
-        $('#sx-pos-next').prop('disabled', page >= pages).toggleClass('is-disabled', page >= pages);
-    }
-
-    function flashNav($btn) {
-        $btn.addClass('is-flash');
-        setTimeout(function () { $btn.removeClass('is-flash'); }, 280);
-    }
-
-    function loadCatalog(opts) {
-        opts = opts || {};
-        var $busy = $('#sx-pos-nav .pos-nav-btn');
-        $busy.addClass('is-busy');
-        return $.getJSON(catalogUrl, { category_id: categoryId || '', page: page })
-            .done(function (data) {
-                pages = data.pages || 1;
-                if (data.page) {
-                    page = data.page;
-                }
-                updateNavState();
-                var cats = '<button type="button" class="pos-cat' + (!categoryId ? ' is-active' : '') + '" data-id="">All</button>';
-                (data.categories || []).forEach(function (cat) {
-                    cats += '<button type="button" class="pos-cat' + (String(categoryId) === String(cat.id) ? ' is-active' : '') + '" data-id="' + cat.id + '">' + escapeHtml(cat.name) + '</button>';
-                });
-                $('#sx-pos-cats').html(cats);
-                var tiles = '';
-                (data.products || []).forEach(function (item) {
-                    var empty = !(item.qty > 0);
-                    tiles += '<button type="button" class="pos-tile' + (empty ? ' is-empty' : '') + '" data-item=\'' + JSON.stringify(item).replace(/'/g, '&#39;') + '\'>';
-                    tiles += '<div class="pos-tile-meta">Qty: ' + item.qty + ' Price: ' + Number(item.price || 0).toFixed(0) + '</div>';
-                    tiles += '<div class="pos-tile-icon">';
-                    if (item.image) {
-                        tiles += '<img src="' + item.image + '" alt="">';
-                    } else {
-                        tiles += '<span class="pos-no-photo"><i class="fa fa-camera"></i></span>';
-                    }
-                    tiles += '</div><div class="pos-tile-name">' + escapeHtml(item.name) + '</div></button>';
-                });
-                $('#sx-pos-grid').html(tiles || '<div class="pos-empty">No items</div>');
-                if (opts.notify) {
-                    var $grid = $('#sx-pos-grid');
-                    $grid.addClass('is-reloaded');
-                    setTimeout(function () { $grid.removeClass('is-reloaded'); }, 450);
-                }
-            })
-            .fail(function (xhr) {
-                updateNavState();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Catalog failed',
-                    text: (xhr.responseJSON && xhr.responseJSON.message) || 'Could not load POS items.'
-                });
-            })
-            .always(function () {
-                $busy.removeClass('is-busy');
-            });
-    }
-
-    $(document).on('click', '.pos-cat', function () {
-        categoryId = $(this).data('id') || null;
-        page = 1;
-        loadCatalog();
-    });
-    $(document).on('click', '#sx-pos-prev', function (e) {
-        e.preventDefault();
-        flashNav($(this));
-        if (page <= 1) {
-            return;
-        }
-        page -= 1;
-        loadCatalog();
-    });
-    $(document).on('click', '#sx-pos-next', function (e) {
-        e.preventDefault();
-        flashNav($(this));
-        if (page >= pages) {
-            return;
-        }
-        page += 1;
-        loadCatalog();
-    });
-    $(document).on('click', '#sx-pos-refresh, #sx-pos-ok', function (e) {
-        e.preventDefault();
-        flashNav($(this));
-        if ($(this).is('#sx-pos-refresh') && $(this).find('i').length) {
-            $(this).find('i').addClass('fa-spin');
-            var $icon = $(this).find('i');
-            loadCatalog({ notify: true }).always(function () {
-                setTimeout(function () { $icon.removeClass('fa-spin'); }, 400);
-            });
-            return;
-        }
-        loadCatalog({ notify: true });
-    });
-    $(document).on('click', '#sx-pos-cust-nav', function (e) {
-        e.preventDefault();
-        flashNav($(this));
-        openCustomer();
-    });
-
-    $(document).on('click', '.pos-tile', function () {
-        var item = $(this).data('item');
-        if (typeof item === 'string') {
-            item = JSON.parse(item.replace(/&#39;/g, "'"));
-        }
-        addProduct(item, 1);
-    });
 
     $('#sx-pos-search').on('input', function () {
         var q = $.trim($(this).val());
@@ -697,6 +584,7 @@
             $opt.attr('data-walk-in', '0');
             $opt.attr('data-credit-limit', data.credit_limit != null ? data.credit_limit : 0);
             $opt.attr('data-credit-used', data.credit_used != null ? data.credit_used : 0);
+            $opt.attr('data-points', data.loyalty_points != null ? data.loyalty_points : 0);
             $('#sx-pos-customer').append($opt);
             updateCreditUi();
             $('#sx-pos-customer-modal').modal('hide');
@@ -750,12 +638,39 @@
         var creditOk = canSellOnCredit();
         $('#sx-pay-credit-note').prop('hidden', !creditOk);
         $('#sx-pay-credit').prop('hidden', !creditOk);
+        var $opt = selectedCustomerOption();
+        var walkIn = String($opt.data('walk-in')) === '1' || (walkInId && String($opt.val()) === String(walkInId));
+        var points = parseFloat($opt.data('points')) || 0;
+        if (walkIn) {
+            $('#sx-pay-points-hint').text('Select a customer account');
+        } else if (points > 0) {
+            $('#sx-pay-points-hint').text('Available points: ' + money(points));
+        } else {
+            $('#sx-pay-points-hint').text('This customer has no points yet');
+        }
     }
 
     function roundMoney(n) {
         return Math.round((n || 0) * 100) / 100;
     }
+    function isSplit() {
+        return $('#sx-pay-split').is(':checked');
+    }
+    function syncSingleTenders() {
+        var amount = roundMoney(parseFloat($('#sx-pay-received-input').val()) || 0);
+        $('#sx-pay-cash, #sx-pay-mpesa, #sx-pay-card').val('0.00');
+        if (payMethod === 'mpesa') {
+            $('#sx-pay-mpesa').val(money(amount));
+        } else if (payMethod === 'card') {
+            $('#sx-pay-card').val(money(amount));
+        } else {
+            $('#sx-pay-cash').val(money(amount));
+        }
+    }
     function tendered($except) {
+        if (!isSplit()) {
+            syncSingleTenders();
+        }
         var total = 0;
         $('.pos-tender').each(function () {
             if ($except && this === $except[0]) return;
@@ -769,48 +684,85 @@
     function refreshPayPanel() {
         var t = totals();
         var received = tendered();
-        $('#sx-pay-items').text(t.qty);
-        $('#sx-pay-exclusive').text(money(t.exclusive));
-        $('#sx-pay-discount').text(money(t.discount));
-        $('#sx-pay-tax').text(money(t.tax));
-        $('#sx-pay-payable').text(money(t.grand));
-        $('#sx-pay-grand-due').text(money(Math.max(0, t.grand - received)));
-        $('#sx-pay-received').text(money(received));
-        $('#sx-pay-balance').text(money(Math.max(0, t.grand - received)));
-        $('#sx-pay-change').text(money(Math.max(0, received - t.grand)));
+        var change = money(Math.max(0, received - t.grand));
+        $('#sx-pay-change').text(change);
+        $('#sx-pay-change-split').text(change);
+        var labels = { cash: 'CASH RECEIVED', mpesa: 'M-PESA RECEIVED', card: 'CARD RECEIVED' };
+        $('#sx-pay-amount-label').text(labels[payMethod] || 'CASH RECEIVED');
+        $('#sx-mpesa-extra').prop('hidden', payMethod !== 'mpesa' && !(isSplit() && (parseFloat($('#sx-pay-mpesa').val()) || 0) > 0));
         updateCreditUi();
     }
-    $('#sx-pos-customer').on('change', updateCreditUi);
-    $('#sx-pos-order').on('click', function () {
-        if (!requireCart()) return;
-        $('.pos-tender').val('0.00');
-        $('#sx-pay-comp').val('');
-        $('#sx-pay-note').val('');
-        $('#sx-pay-service').val('');
-        $('#sx-pay-mpesa-code, #sx-pay-bank-name, #sx-pay-bank-ref').val('');
-        $('#sx-mpesa-extra, #sx-bank-extra').prop('hidden', true);
+    function setPayMethod(method) {
+        payMethod = method || 'cash';
+        $('.pos-method').removeClass('is-active');
+        $('.pos-method[data-method="' + payMethod + '"]').addClass('is-active');
+        if (!isSplit()) {
+            var t = totals();
+            $('#sx-pay-received-input').val(money(t.grand));
+            lastAutoReceived = t.grand;
+        }
         refreshPayPanel();
-        $('#sx-pos-pay-modal').modal('show');
+    }
+    function toggleSplitUi() {
+        var split = isSplit();
+        $('#sx-pay-single').prop('hidden', split);
+        $('#sx-pay-split-fields').prop('hidden', !split);
+        $('.pos-method').toggleClass('is-split', split);
+        if (split) {
+            $('.pos-method').addClass('is-active');
+            var due = remainingDue($('#sx-pay-cash'));
+            if ((parseFloat($('#sx-pay-cash').val()) || 0) <= 0 && due > 0) {
+                $('#sx-pay-cash').val(money(due));
+            }
+        } else {
+            setPayMethod(payMethod);
+            return;
+        }
+        refreshPayPanel();
+    }
+    $('#sx-pos-customer').on('change', updateCreditUi);
+    $('.pos-method').on('click', function () {
+        if (isSplit()) {
+            return;
+        }
+        setPayMethod($(this).data('method'));
+    });
+    $('#sx-pay-split').on('change', toggleSplitUi);
+    $('#sx-pay-points').on('change', function () {
+        if (!this.checked) {
+            return;
+        }
+        if (!canSellOnCredit()) {
+            this.checked = false;
+            $('#sx-pos-customer').focus();
+            Swal.fire({ icon: 'info', title: 'Select a customer account', text: 'Walk-in customers cannot pay with points.' });
+            return;
+        }
+        var points = parseFloat(selectedCustomerOption().data('points')) || 0;
+        if (points <= 0) {
+            this.checked = false;
+            Swal.fire({ icon: 'info', title: 'No points', text: 'This customer has no loyalty points yet.' });
+        }
+    });
+    $('#sx-pay-received-input').on('input', function () {
+        lastAutoReceived = -1;
+        refreshPayPanel();
     });
     function fillTender($input) {
         if ((parseFloat($input.val()) || 0) <= 0) {
-            // Fill only the unpaid remainder — never re-apply the full total onto a second method.
             $input.val(money(remainingDue($input)));
             refreshPayPanel();
         }
-        if ($input.is('#sx-pay-mpesa')) {
-            $('#sx-mpesa-extra').prop('hidden', false);
-        }
-        if ($input.is('#sx-pay-bank')) {
-            $('#sx-bank-extra').prop('hidden', false);
-        }
     }
-    $(document).on('focus click', '#sx-pay-cash, #sx-pay-mpesa, #sx-pay-bank', function () {
+    $(document).on('focus click', '#sx-pay-cash, #sx-pay-mpesa, #sx-pay-card', function () {
         fillTender($(this));
     });
     $(document).on('input', '.pos-tender', refreshPayPanel);
 
     function buildPaymentsFromTenders() {
+        if (!isSplit()) {
+            syncSingleTenders();
+        }
         var t = totals();
         var remaining = t.grand;
         var payments = [];
@@ -833,10 +785,6 @@
             var row = { method: method, amount: amount };
             if ($(this).is('#sx-pay-mpesa')) {
                 row.reference = $.trim($('#sx-pay-mpesa-code').val());
-            }
-            if ($(this).is('#sx-pay-bank')) {
-                row.bank_name = $.trim($('#sx-pay-bank-name').val());
-                row.reference = $.trim($('#sx-pay-bank-ref').val());
             }
             payments.push(row);
         });
@@ -888,7 +836,6 @@
         saleBusy = true;
         var payload = cartPayload();
         payload.notes = $('#sx-pay-note').val();
-        payload.service_type = $('#sx-pay-service').val();
         payload.payments = payments;
         payload.payment_amount = Math.min(t.grand, paySum);
         payload.payment_method = payments[0] ? payments[0].method : 'cash';
@@ -902,21 +849,14 @@
             headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
             data: payload
         }).done(function (data) {
-            $('#sx-pos-pay-modal').modal('hide');
-            // Refresh credit used for selected customer after a credit sale.
             if (balanceDue > 0.009) {
                 var $opt = selectedCustomerOption();
                 var used = parseFloat($opt.data('credit-used')) || 0;
                 $opt.attr('data-credit-used', roundMoney(used + balanceDue));
             }
             resetCart();
-            loadCatalog();
             if (data.receipt_url) {
                 window.open(data.receipt_url, 'sx-pos-receipt', 'width=380,height=720');
-            }
-            if ($('#sx-pay-logout').val() === 'logout') {
-                $('.pos-logout-form').first().trigger('submit');
-                return;
             }
             var msg = data.receipt_number || data.invoice_number || data.number;
             if (balanceDue > 0.009) {
@@ -942,6 +882,7 @@
 
     $('#sx-pos-pay-form').on('submit', function (e) {
         e.preventDefault();
+        if (!requireCart()) return;
         var built = buildPaymentsFromTenders();
         var paySum = built.payments.reduce(function (sum, row) { return sum + row.amount; }, 0);
         if (paySum <= 0 && !canSellOnCredit()) {
@@ -952,7 +893,7 @@
             Swal.fire({
                 icon: 'info',
                 title: 'Split payment adjusted',
-                text: 'Bank/M-Pesa was limited to the unpaid balance. Extra change must be cash only.'
+                text: 'Card/M-Pesa was limited to the unpaid balance. Extra change must be cash only.'
             });
         }
         submitSale(built.payments);
@@ -1017,12 +958,9 @@
     }
 
     $(document).on('keydown', function (e) {
-        if ($('#sx-pos-pay-modal').is(':visible')) {
-            if (e.key === 'F1') { e.preventDefault(); $('#sx-pay-cash').focus().select(); }
-            if (e.key === 'F2') { e.preventDefault(); $('#sx-pay-mpesa').focus().select(); }
-            if (e.key === 'F3') { e.preventDefault(); $('#sx-pay-bank').focus().select(); }
-            return;
-        }
+        if (e.key === 'F1') { e.preventDefault(); setPayMethod('cash'); $('#sx-pay-received-input').focus().select(); }
+        if (e.key === 'F2') { e.preventDefault(); setPayMethod('mpesa'); $('#sx-pay-received-input').focus().select(); }
+        if (e.key === 'F3') { e.preventDefault(); setPayMethod('card'); $('#sx-pay-received-input').focus().select(); }
         if (e.key === 'F10') {
             e.preventDefault();
             $('#sx-pos-search').focus();
@@ -1038,7 +976,6 @@
     });
 
     renderCart();
-    loadCatalog();
 })(jQuery);
 </script>
 @endpush

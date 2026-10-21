@@ -2423,12 +2423,12 @@ table.dataTable thead .sorting_desc {
 }
 
 body.pos-body {
-    --sx-gold: #A2502B;
-    --sx-gold-dark: #86401F;
+    --sx-gold: #e3b52a;
+    --sx-gold-dark: #c99a16;
     margin: 0;
     height: 100vh;
     overflow: hidden;
-    background: #ecf0f5;
+    background: #fff;
     font-family: 'Source Sans Pro', 'Segoe UI', sans-serif;
     color: #333;
 }
@@ -2437,7 +2437,7 @@ body.pos-body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #A2502B;
+    background: #e3b52a;
     color: #fff;
     padding: 0 18px;
     height: 50px;
@@ -2460,7 +2460,7 @@ body.pos-body {
     height: 34px;
     border-radius: 50%;
     background: #fff;
-    color: #A2502B;
+    color: #e3b52a;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2529,7 +2529,7 @@ body.pos-body {
 .pos-wrap {
     display: flex;
     height: calc(100vh - 78px);
-    background: #ecf0f5;
+    background: #fff;
 }
 
 .pos-bottombar {
@@ -2539,7 +2539,7 @@ body.pos-body {
     height: 28px;
     min-height: 28px;
     padding: 0 16px;
-    background: #A2502B;
+    background: #e3b52a;
     color: #fff;
     font-size: 11px;
     font-weight: 600;
@@ -2555,18 +2555,19 @@ body.pos-body {
 
 .pos-left {
     padding: 16px 18px 10px;
-    background: #ecf0f5;
+    background: #fff;
     display: flex;
     flex-direction: column;
     min-width: 0;
 }
 
 .pos-right {
-    padding: 22px 18px 16px 28px;
+    padding: 18px 28px 16px;
     background: #fff;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    border-left: 1px solid #f0f0f0;
 }
 
 .pos-filters {
@@ -2666,7 +2667,7 @@ body.pos-body {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: #A2502B !important;
+    background: #e3b52a !important;
     color: #fff !important;
     font-size: 12px;
     font-weight: 700;
@@ -2838,7 +2839,7 @@ body.pos-body {
 
 .pos-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     margin: 6px 0 8px;
 }
 
@@ -2848,11 +2849,10 @@ body.pos-body {
     font-weight: 700;
     border: 0;
     border-radius: 2px;
-    padding: 11px 8px;
+    padding: 12px 8px;
     font-size: 15px;
 }
 
-.pos-btn-order { background: #00a65a; }
 .pos-btn-hold { background: #f39c12; }
 .pos-btn-cust { background: #00c0ef; }
 
@@ -2870,8 +2870,160 @@ body.pos-body {
 }
 
 .pos-links a:hover {
-    color: #A2502B;
+    color: #c99a16;
     text-decoration: none;
+}
+
+.pos-receive-head {
+    color: #444;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    margin: 6px 0 18px;
+}
+
+.pos-receive-head .fa { margin-right: 8px; }
+
+.pos-receive {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pos-receive-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #777;
+    letter-spacing: .3px;
+    margin: 12px 0 8px;
+}
+
+.pos-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.pos-method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 78px;
+    border: 1px solid #eee;
+    background: #faf8f3;
+    color: #555;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pos-method i { font-size: 22px; }
+
+.pos-method.is-active {
+    border-color: #e3b52a;
+    box-shadow: inset 0 0 0 1px #e3b52a;
+    background: #fffdf5;
+    color: #333;
+}
+
+.pos-method.is-split {
+    border-color: #e3b52a;
+    background: #fffdf5;
+}
+
+.pos-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 16px 0 4px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.pos-check input { margin-top: 3px; }
+
+.pos-check strong { display: block; color: #333; }
+
+.pos-check small {
+    display: block;
+    color: #888;
+    font-weight: 400;
+}
+
+.pos-receive-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+.pos-receive-box span {
+    padding: 0 12px;
+    font-weight: 700;
+    color: #666;
+}
+
+.pos-receive-box input {
+    flex: 1;
+    border: 0;
+    height: 42px;
+    box-shadow: none;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pos-change-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0 4px;
+    color: #666;
+    font-weight: 600;
+}
+
+.pos-change-row strong { color: #333; }
+
+.pos-split-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.pos-split-row label {
+    width: 80px;
+    margin: 0;
+    font-weight: 700;
+}
+
+.pos-note-input {
+    height: 42px;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.pos-receive-actions {
+    margin-top: auto;
+    padding-top: 18px;
+}
+
+.pos-receive .pos-pay-complete {
+    width: 100%;
+    min-width: 0;
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 16px;
+}
+
+.pos-receive .pos-pay-credit {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 10px;
+    border-radius: 4px;
 }
 
 .pos-cats {

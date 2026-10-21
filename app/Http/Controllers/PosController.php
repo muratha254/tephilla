@@ -148,6 +148,7 @@ class PosController extends Controller
             'phone' => $customer->phone,
             'credit_limit' => (float) $customer->credit_limit,
             'credit_used' => $customer->creditAmount(),
+            'loyalty_points' => (float) $customer->loyalty_points,
         ]);
     }
 
