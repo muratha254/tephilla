@@ -38,7 +38,7 @@
         </div>
     </header>
     @if(session('success'))
-        <div class="alert alert-success" style="margin:8px 16px 0;">{{ session('success') }}</div>
+        <div class="alert alert-success sx-flash-alert" style="margin:8px 16px 0;">{{ session('success') }}</div>
     @endif
     @yield('content')
     <footer class="pos-bottombar">
@@ -48,6 +48,11 @@
     <script src="{{ asset('AdminLTE-2/bower_components/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ asset('AdminLTE-2/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        setTimeout(function () {
+            $('.sx-flash-alert').fadeOut(350, function () { $(this).remove(); });
+        }, 2500);
+    </script>
     @stack('scripts')
 </body>
 </html>

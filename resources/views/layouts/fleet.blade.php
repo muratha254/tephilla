@@ -47,7 +47,7 @@
                 </div>
                 @endif
                 @if(session('success'))
-                <div class="alert alert-success alert-dismissible">
+                <div class="alert alert-success alert-dismissible sx-flash-alert">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                     {{ session('success') }}
                 </div>
@@ -103,6 +103,15 @@
                 HTMLFormElement.prototype.submit.call(form);
             });
         });
+
+        setTimeout(function () {
+            $('.sx-flash-alert').each(function () {
+                var $alert = $(this);
+                $alert.fadeOut(350, function () {
+                    $alert.alert('close');
+                });
+            });
+        }, 2500);
 
         $(document).on('click', '.sx-swal-delete[data-url]', function (e) {
             e.preventDefault();
