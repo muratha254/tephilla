@@ -63,7 +63,7 @@ class CompanySettingsController extends Controller
         if ($tab === 'documents') {
             $this->saveDocumentLetterheads($request, $settings, $company);
 
-            return redirect()->route('settings.general', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading and footer saved.');
+            return redirect()->route('settings.general', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading, footer, and notes saved.');
         }
 
         if ($tab === 'prefixes') {
@@ -230,7 +230,7 @@ class CompanySettingsController extends Controller
         if ($tab === 'documents') {
             $this->saveDocumentLetterheads($request, $settings, $company);
 
-            return redirect()->route('settings.company', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading and footer saved.');
+            return redirect()->route('settings.company', ['tab' => 'documents'])->with('success', 'Invoice and quotation heading, footer, and notes saved.');
         }
 
         if ($tab === 'till') {
@@ -262,7 +262,6 @@ class CompanySettingsController extends Controller
             'employer_code' => 'nullable|string|max:64',
             'website' => 'nullable|string|max:255',
             'bank_details' => 'nullable|string|max:5000',
-            'quotation_terms' => 'nullable|string|max:5000',
             'country' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
             'city' => 'nullable|string|max:100',
@@ -307,7 +306,7 @@ class CompanySettingsController extends Controller
 
         $companyFields = [
             'name', 'phone', 'phone_alt', 'email', 'tax_pin', 'vat_number', 'employer_code',
-            'website', 'bank_details', 'quotation_terms', 'country', 'state', 'city', 'postcode', 'address', 'logo_path',
+            'website', 'bank_details', 'country', 'state', 'city', 'postcode', 'address', 'logo_path',
         ];
         $companyData = array_intersect_key($data, array_flip($companyFields));
         $companyData['slug'] = Str::slug($companyData['name']) ?: $company->slug;
@@ -327,7 +326,7 @@ class CompanySettingsController extends Controller
 
     private function saveDocumentLetterheads(Request $request, SettingsService $settings, Company $company): void
     {
-        $request->validate([
+        $data = $request->validate([
             'invoice_header' => 'nullable|image|max:5120',
             'invoice_footer' => 'nullable|image|max:5120',
             'quotation_header' => 'nullable|image|max:5120',
@@ -336,6 +335,13 @@ class CompanySettingsController extends Controller
             'remove_invoice_footer' => 'nullable|boolean',
             'remove_quotation_header' => 'nullable|boolean',
             'remove_quotation_footer' => 'nullable|boolean',
+            'quotation_terms' => 'nullable|string|max:5000',
+            'invoice_note' => 'nullable|string|max:5000',
+        ]);
+
+        $company->update([
+            'quotation_terms' => $data['quotation_terms'] ?? null,
+            'invoice_note' => $data['invoice_note'] ?? null,
         ]);
 
         $settingValues = [];

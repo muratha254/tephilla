@@ -135,6 +135,12 @@
         </tbody>
     </table>
 
+    @php
+        $documentNote = trim((string) $quotation->terms);
+        if ($documentNote === '') {
+            $documentNote = optional($quotation->company)->documentNote('quotation') ?: \App\Models\Quotation::DEFAULT_TERMS;
+        }
+    @endphp
     @if($quotation->notes)
         <div class="notes"><strong>Notes:</strong> {{ $quotation->notes }}</div>
     @endif
@@ -142,8 +148,8 @@
     <table class="split">
         <tr>
             <td width="58%">
-                @if($quotation->terms)
-                    <div class="terms-frame">{!! nl2br(e($quotation->terms)) !!}</div>
+                @if($documentNote !== '')
+                    <div class="terms-frame">{!! nl2br(e($documentNote)) !!}</div>
                 @endif
             </td>
             <td width="42%">

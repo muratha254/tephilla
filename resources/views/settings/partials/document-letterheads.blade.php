@@ -1,5 +1,8 @@
 @php
     $paths = $letterheads ?? $site ?? [];
+    $defaultNote = \App\Models\Quotation::DEFAULT_TERMS;
+    $quotationNote = old('quotation_terms', $company->quotation_terms ?? '');
+    $invoiceNote = old('invoice_note', $company->invoice_note ?? '');
 @endphp
 <p class="text-muted">Upload a heading and a footer for quotations and invoices. They print across the top and bottom of the PDF and the printed page. JPG or PNG, up to 5 MB. An invoice uses the quotation images when its own images are not uploaded.</p>
 <div class="row">
@@ -21,6 +24,11 @@
                 <label class="checkbox-inline"><input type="checkbox" name="remove_quotation_footer" value="1"> Remove</label>
             @endif
         </div>
+        <div class="form-group">
+            <label>Note</label>
+            <textarea name="quotation_terms" class="form-control" rows="8" placeholder="{{ $defaultNote }}">{{ $quotationNote !== '' ? $quotationNote : $defaultNote }}</textarea>
+            <small class="text-muted">Filled in automatically on new quotations. You can still change it on each quotation.</small>
+        </div>
     </div>
     <div class="col-md-6">
         <h4>Invoice</h4>
@@ -39,6 +47,11 @@
                 <div style="margin-top:8px;"><img src="{{ asset('storage/' . $paths['invoice_footer_path']) }}" alt="Invoice footer" style="max-width:100%;max-height:90px;"></div>
                 <label class="checkbox-inline"><input type="checkbox" name="remove_invoice_footer" value="1"> Remove</label>
             @endif
+        </div>
+        <div class="form-group">
+            <label>Note</label>
+            <textarea name="invoice_note" class="form-control" rows="8" placeholder="{{ $defaultNote }}">{{ $invoiceNote }}</textarea>
+            <small class="text-muted">Filled in automatically on new invoices. Leave blank to use the quotation note.</small>
         </div>
     </div>
 </div>

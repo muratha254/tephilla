@@ -22,6 +22,8 @@
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { padding: 3px 0; border: 0; }
         .grand { font-weight: 700; font-size: 14px; }
+        .split td { border: 0; vertical-align: top; padding-top: 14px; }
+        .terms-frame { border: 1px solid #999; padding: 8px 10px; font-size: 10px; line-height: 1.35; }
         .bill-label { font-weight: 700; font-size: 12px; margin-bottom: 8px; }
         .bill-name { font-weight: 700; font-size: 14px; }
         .meta td { border: 3px solid #fff; padding: 7px 10px; font-weight: 700; font-size: 11px; }
@@ -141,36 +143,49 @@
         </tbody>
     </table>
 
-    <table class="totals">
+    @php
+        $documentNote = trim((string) $sale->notes);
+        if ($documentNote === '' && $sale->isInvoice()) {
+            $documentNote = optional($sale->company)->documentNote('invoice') ?: \App\Models\Quotation::DEFAULT_TERMS;
+        }
+    @endphp
+    <table class="split">
         <tr>
-            <td>Subtotal</td>
-            <td class="num">{{ $money($sale->subtotal) }}</td>
-        </tr>
-        <tr>
-            <td>Discount</td>
-            <td class="num">{{ $money($sale->discount_amount) }}</td>
-        </tr>
-        <tr>
-            <td>Tax</td>
-            <td class="num">{{ $money($sale->tax_amount) }}</td>
-        </tr>
-        <tr class="grand">
-            <td>Total</td>
-            <td class="num">Ksh {{ $money($sale->total) }}</td>
-        </tr>
-        <tr>
-            <td>Paid</td>
-            <td class="num">{{ $money($sale->paid_amount) }}</td>
-        </tr>
-        <tr>
-            <td>Balance</td>
-            <td class="num">{{ $money($sale->remainingBalance()) }}</td>
+            <td width="58%">
+                @if($documentNote !== '')
+                    <div class="terms-frame">{!! nl2br(e($documentNote)) !!}</div>
+                @endif
+            </td>
+            <td width="42%">
+                <table class="totals">
+                    <tr>
+                        <td>Subtotal</td>
+                        <td class="num">{{ $money($sale->subtotal) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Discount</td>
+                        <td class="num">{{ $money($sale->discount_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Tax</td>
+                        <td class="num">{{ $money($sale->tax_amount) }}</td>
+                    </tr>
+                    <tr class="grand">
+                        <td>Total</td>
+                        <td class="num">Ksh {{ $money($sale->total) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Paid</td>
+                        <td class="num">{{ $money($sale->paid_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Balance</td>
+                        <td class="num">{{ $money($sale->remainingBalance()) }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
-
-    @if($sale->notes)
-        <p class="muted">Note: {{ $sale->notes }}</p>
-    @endif
     <p class="muted">Served by: {{ optional($sale->cashier)->name }}</p>
     </div>
     @if(!empty($letter['footer_pdf']))

@@ -28,6 +28,7 @@ class Company extends Model
         'employer_code',
         'bank_details',
         'quotation_terms',
+        'invoice_note',
         'currency_code',
         'currency_symbol',
         'date_format',
@@ -47,6 +48,20 @@ class Company extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function documentNote(string $kind = 'quotation'): string
+    {
+        if ($kind === 'invoice') {
+            $note = trim((string) $this->invoice_note);
+            if ($note !== '') {
+                return $note;
+            }
+        }
+
+        $quote = trim((string) $this->quotation_terms);
+
+        return $quote !== '' ? $quote : Quotation::DEFAULT_TERMS;
     }
 
     public function defaultBranch()

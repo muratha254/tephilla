@@ -43,8 +43,9 @@
                 <input type="date" name="valid_until" class="form-control" value="{{ old('valid_until', optional($quotation->valid_until)->format('Y-m-d')) }}">
             </div>
             <div class="form-group">
-                <label>Terms and Conditions</label>
+                <label>Note</label>
                 <textarea name="terms" class="form-control" rows="8" placeholder="{{ \App\Models\Quotation::DEFAULT_TERMS }}">{{ old('terms', $quotation->terms) }}</textarea>
+                <small class="text-muted">Filled from Company Profile. You can change it on this quotation.</small>
             </div>
         </div>
         <div class="col-md-6">

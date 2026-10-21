@@ -131,13 +131,19 @@
         </tbody>
     </table>
 
+    @php
+        $documentNote = trim((string) $quotation->terms);
+        if ($documentNote === '') {
+            $documentNote = optional($quotation->company)->documentNote('quotation') ?: \App\Models\Quotation::DEFAULT_TERMS;
+        }
+    @endphp
     @if($quotation->notes)
         <div class="notes"><strong>Notes:</strong> {{ $quotation->notes }}</div>
     @endif
 
     <div class="split">
-        @if($quotation->terms)
-            <div class="terms-frame">{{ $quotation->terms }}</div>
+        @if($documentNote !== '')
+            <div class="terms-frame">{{ $documentNote }}</div>
         @endif
         <table class="totals">
             <tr><td>Subtotal</td><td>Ksh {{ number_format((float) $quotation->subtotal, 2) }}</td></tr>

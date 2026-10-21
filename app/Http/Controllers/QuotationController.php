@@ -60,14 +60,12 @@ class QuotationController extends Controller
     {
         $this->authorizePermission('quotations.create');
 
-        $companyTerms = trim((string) optional(auth()->user()->company)->quotation_terms);
-
         return view('quotations.create', array_merge(fleet_shared_view_data(), $this->formData(new Quotation([
             'quote_date' => now()->toDateString(),
             'valid_until' => now()->addDays(30)->toDateString(),
             'status' => Quotation::STATUS_DRAFT,
             'discount_amount' => 0,
-            'terms' => $companyTerms !== '' ? $companyTerms : Quotation::DEFAULT_TERMS,
+            'terms' => optional(auth()->user()->company)->documentNote('quotation') ?: Quotation::DEFAULT_TERMS,
         ])), [
             'activeMenu' => 'quotations.create',
         ]));
@@ -231,10 +229,17 @@ class QuotationController extends Controller
                     throw new \RuntimeException('This quotation was already converted or is not convertible.');
                 }
 
-                $locked->load(['items.product']);
+                $locked->load(['items.product', 'company']);
                 $companyId = (int) $locked->company_id;
                 $branchId = (int) $locked->branch_id;
                 $total = round((float) $locked->total, 2);
+                $invoiceNote = trim((string) $locked->terms);
+                if ($invoiceNote === '') {
+                    $invoiceNote = trim((string) $locked->notes);
+                }
+                if ($invoiceNote === '') {
+                    $invoiceNote = optional($locked->company)->documentNote('invoice') ?: Quotation::DEFAULT_TERMS;
+                }
 
                 $sale = Sale::query()->create([
                     'company_id' => $companyId,
@@ -256,10 +261,7 @@ class QuotationController extends Controller
                     'total' => $total,
                     'paid_amount' => 0,
                     'balance' => $total,
-                    'notes' => trim(implode("\n", array_filter([
-                        $locked->notes,
-                        'Converted from quotation ' . $locked->number,
-                    ]))) ?: null,
+                    'notes' => $invoiceNote !== '' ? $invoiceNote : null,
                 ]);
 
                 foreach ($locked->items as $item) {

@@ -109,6 +109,7 @@ class SaleController extends Controller
             'productOptions' => Product::pickerOptions($this->currentBranchId()),
             'invoiceDate' => now()->toDateString(),
             'dueDate' => now()->addDays(30)->toDateString(),
+            'defaultNote' => optional(auth()->user()->company)->documentNote('invoice') ?: \App\Models\Quotation::DEFAULT_TERMS,
             'canAddCustomer' => auth()->user()->hasPermission('customers.create'),
         ]));
     }

@@ -50,8 +50,8 @@
                     <input type="date" name="invoice_date" class="form-control" value="{{ old('invoice_date', $invoiceDate) }}" required>
                 </div>
                 <div class="form-group">
-                    <label>Notes</label>
-                    <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                    <label>Note</label>
+                    <textarea name="notes" class="form-control" rows="8">{{ old('notes', $defaultNote ?? '') }}</textarea>
                 </div>
             </div>
         </div>

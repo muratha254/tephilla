@@ -32,6 +32,9 @@
         .totals { width: 280px; margin-left: auto; margin-top: 12px; }
         .totals td { border: 0; padding: 3px 0; }
         .totals .grand { font-weight: 700; font-size: 14px; }
+        .split { display: flex; align-items: flex-start; gap: 18px; margin-top: 16px; }
+        .terms-frame { flex: 1; border: 1px solid #999; padding: 8px 10px; font-size: 12px; white-space: pre-line; }
+        .split .totals { width: 280px; margin: 0; flex: none; }
         .no-print { margin-bottom: 12px; }
         .parties { width: 100%; margin-top: 8px; }
         .parties td { border: 0; vertical-align: top; padding: 0; }
@@ -157,32 +160,43 @@
     </table>
 
     @unless($hidePrices)
-        <table class="totals">
-            <tr>
-                <td>Subtotal</td>
-                <td class="num">{{ $money($sale->subtotal) }}</td>
-            </tr>
-            <tr>
-                <td>Discount</td>
-                <td class="num">{{ $money($sale->discount_amount) }}</td>
-            </tr>
-            <tr>
-                <td>Tax</td>
-                <td class="num">{{ $money($sale->tax_amount) }}</td>
-            </tr>
-            <tr class="grand">
-                <td>Total</td>
-                <td class="num">Ksh {{ $money($sale->total) }}</td>
-            </tr>
-            <tr>
-                <td>Paid</td>
-                <td class="num">{{ $money($sale->paid_amount) }}</td>
-            </tr>
-            <tr>
-                <td>Balance</td>
-                <td class="num">{{ $money($sale->remainingBalance()) }}</td>
-            </tr>
-        </table>
+        @php
+            $documentNote = trim((string) $sale->notes);
+            if ($documentNote === '' && $sale->isInvoice()) {
+                $documentNote = optional($sale->company)->documentNote('invoice') ?: \App\Models\Quotation::DEFAULT_TERMS;
+            }
+        @endphp
+        <div class="split">
+            @if($documentNote !== '')
+                <div class="terms-frame">{{ $documentNote }}</div>
+            @endif
+            <table class="totals">
+                <tr>
+                    <td>Subtotal</td>
+                    <td class="num">{{ $money($sale->subtotal) }}</td>
+                </tr>
+                <tr>
+                    <td>Discount</td>
+                    <td class="num">{{ $money($sale->discount_amount) }}</td>
+                </tr>
+                <tr>
+                    <td>Tax</td>
+                    <td class="num">{{ $money($sale->tax_amount) }}</td>
+                </tr>
+                <tr class="grand">
+                    <td>Total</td>
+                    <td class="num">Ksh {{ $money($sale->total) }}</td>
+                </tr>
+                <tr>
+                    <td>Paid</td>
+                    <td class="num">{{ $money($sale->paid_amount) }}</td>
+                </tr>
+                <tr>
+                    <td>Balance</td>
+                    <td class="num">{{ $money($sale->remainingBalance()) }}</td>
+                </tr>
+            </table>
+        </div>
     @endunless
 
     @if($mode === 'delivery')
@@ -192,7 +206,7 @@
         </div>
     @endif
 
-    @if($sale->notes && $mode !== 'dispatch')
+    @if($mode !== 'dispatch' && ! $sale->isInvoice() && $sale->notes)
         <p class="muted">Note: {{ $sale->notes }}</p>
     @endif
 
