@@ -116,6 +116,8 @@ class FoldingController extends Controller
             'outputs.*.product_id' => ['nullable', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'outputs.*.colour_id' => ['nullable', Rule::exists('colours', 'id')->where('company_id', $companyId)],
             'outputs.*.quantity' => 'nullable|numeric|min:0',
+            'outputs.*.purchase_price' => 'nullable|numeric|min:0',
+            'outputs.*.selling_price' => 'nullable|numeric|min:0',
         ]);
 
         $product = Product::query()->with('unit')->findOrFail($data['product_id']);
@@ -148,6 +150,8 @@ class FoldingController extends Controller
                 'product_id' => (int) $row['product_id'],
                 'colour_id' => ! empty($row['colour_id']) ? (int) $row['colour_id'] : null,
                 'quantity' => round((float) $row['quantity'], 4),
+                'purchase_price' => $this->optionalPrice($row['purchase_price'] ?? null),
+                'selling_price' => $this->optionalPrice($row['selling_price'] ?? null),
             ])->all(),
         ]);
 
@@ -170,16 +174,16 @@ class FoldingController extends Controller
 
             $buyingPrice = null;
             if ($outputs->isNotEmpty()) {
-                $onHandForCost = $inventory->quantityOnHand($companyId, $branchId, $product->id, $variantId);
-                $sheetPrice = (float) $product->purchase_price;
-                $basis = $this->materialBasis($branchId, (int) $product->id, $variantId, $onHandForCost);
-                $producedQty = round((float) $outputs->sum(fn ($row) => (float) $row['quantity']), 4);
-                if ($sheetPrice <= 0 || $basis <= 0 || $producedQty <= 0) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'product_id' => "Enter a purchase price and quantity for {$product->name} before the buying price can be calculated.",
-                    ]);
+                $needsCalculatedCost = $outputs->contains(fn ($row) => $this->optionalPrice($row['purchase_price'] ?? null) === null);
+                if ($needsCalculatedCost) {
+                    $onHandForCost = $inventory->quantityOnHand($companyId, $branchId, $product->id, $variantId);
+                    $sheetPrice = (float) $product->purchase_price;
+                    $basis = $this->materialBasis($branchId, (int) $product->id, $variantId, $onHandForCost);
+                    $producedQty = round((float) $outputs->sum(fn ($row) => (float) $row['quantity']), 4);
+                    if ($sheetPrice > 0 && $basis > 0 && $producedQty > 0) {
+                        $buyingPrice = round(($sheetPrice / $basis) * $quantity / $producedQty, 2);
+                    }
                 }
-                $buyingPrice = round(($sheetPrice / $basis) * $quantity / $producedQty, 2);
             }
 
             $folding = Folding::query()->create([
@@ -224,10 +228,19 @@ class FoldingController extends Controller
                     ]);
                 }
                 $finishedQty = round((float) $row['quantity'], 4);
-                if ($buyingPrice !== null) {
-                    $finished->update(['purchase_price' => $buyingPrice]);
+                $lineCost = $this->optionalPrice($row['purchase_price'] ?? null) ?? $buyingPrice;
+                $lineSell = $this->optionalPrice($row['selling_price'] ?? null);
+                $priceUpdate = [];
+                if ($lineCost !== null) {
+                    $priceUpdate['purchase_price'] = $lineCost;
+                }
+                if ($lineSell !== null) {
+                    $priceUpdate['selling_price'] = $lineSell;
+                }
+                if ($priceUpdate !== []) {
+                    $finished->update($priceUpdate);
                     if ($finishedVariant) {
-                        ProductVariant::query()->whereKey($finishedVariant)->update(['purchase_price' => $buyingPrice]);
+                        ProductVariant::query()->whereKey($finishedVariant)->update($priceUpdate);
                     }
                 }
 
@@ -239,7 +252,7 @@ class FoldingController extends Controller
                     'colour_id' => $finishedColour ? $finishedColour->id : null,
                     'unit_id' => $finished->unit_id,
                     'quantity' => $finishedQty,
-                    'unit_cost' => $buyingPrice,
+                    'unit_cost' => $lineCost,
                 ]);
 
                 $inventory->apply([
@@ -249,7 +262,7 @@ class FoldingController extends Controller
                     'product_variant_id' => $finishedVariant,
                     'type' => StockMovement::FOLDING,
                     'quantity_in' => $finishedQty,
-                    'unit_cost' => $buyingPrice ?? $finished->purchase_price,
+                    'unit_cost' => $lineCost ?? $finished->purchase_price,
                     'reference_type' => Folding::class,
                     'reference_id' => $folding->id,
                     'reference_number' => 'FLD-' . $folding->id,
@@ -519,6 +532,19 @@ class FoldingController extends Controller
         }
 
         return round($onHand + $usedSince, 4);
+    }
+
+    private function optionalPrice($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (! is_numeric($value)) {
+            return null;
+        }
+        $amount = round((float) $value, 2);
+
+        return $amount > 0 ? $amount : null;
     }
 
     private function shortageMessage(Product $product, ?Colour $colour, float $available): string

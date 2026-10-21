@@ -89,6 +89,10 @@ class FlatSheetProductionTest extends TestCase
             ->assertOk()
             ->assertSee('Available')
             ->assertSee('Balance')
+            ->assertSee('Buying Price')
+            ->assertSee('Selling Price')
+            ->assertSee('Buying and selling prices are optional')
+            ->assertDontSee('readonly tabindex="-1"')
             ->assertViewHas('materialStock', function ($stock) {
                 $rows = collect($stock[(string) $this->sheet->id] ?? []);
                 $black = $rows->firstWhere('id', (string) $this->black->id);
@@ -554,8 +558,40 @@ class FlatSheetProductionTest extends TestCase
             'outputs' => [
                 ['product_id' => $this->valley->id, 'colour_id' => $this->black->id, 'quantity' => 1],
             ],
-        ])->assertSessionHasErrors('product_id');
-        $this->assertStock($this->sheet, $this->blackSheet->id, 10);
+        ])->assertRedirect()->assertSessionHas('success');
+        $this->assertStock($this->sheet, $this->blackSheet->id, 9);
+        $this->valley->refresh();
+        $this->assertSame('500.00', number_format((float) $this->valley->purchase_price, 2, '.', ''));
+        $this->assertSame('900.00', number_format((float) $this->valley->selling_price, 2, '.', ''));
+    }
+
+    public function test_produced_item_prices_can_be_set_optionally(): void
+    {
+        $this->receive($this->sheet, $this->blackSheet, 10, 'Opening 10 metres');
+        $this->valley->update(['purchase_price' => 10, 'selling_price' => 90]);
+
+        $this->actingAsAdmin()->post(route('folding.store'), [
+            'folded_on' => now()->toDateString(),
+            'product_id' => $this->sheet->id,
+            'colour_id' => $this->black->id,
+            'quantity' => 2,
+            'idempotency_key' => 'optional-prices',
+            'outputs' => [
+                [
+                    'product_id' => $this->valley->id,
+                    'colour_id' => $this->black->id,
+                    'quantity' => 1,
+                    'purchase_price' => 120,
+                    'selling_price' => 250,
+                ],
+            ],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->valley->refresh();
+        $this->assertSame('120.00', number_format((float) $this->valley->purchase_price, 2, '.', ''));
+        $this->assertSame('250.00', number_format((float) $this->valley->selling_price, 2, '.', ''));
+        $output = Folding::query()->latest('id')->first()->outputs->first();
+        $this->assertSame('120.00', number_format((float) $output->unit_cost, 2, '.', ''));
     }
 
     private function colour(string $name): Colour

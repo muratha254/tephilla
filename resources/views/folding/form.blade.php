@@ -84,7 +84,7 @@
             </div>
 
             <h4>Produced items</h4>
-            <p>Choose the finished item. If it is not in the list, <a href="{{ route('products.create') }}">register it under Products</a> first, using product type Roofing Accessory, then open Production again.</p>
+            <p>Choose the finished item. If it is not in the list, <a href="{{ route('products.create') }}">register it under Products</a> first, using product type Roofing Accessory, then open Production again. Buying and selling prices are optional.</p>
             <table class="table table-bordered" id="output-table">
                 <thead>
                     <tr>
@@ -92,6 +92,7 @@
                         <th>Colour</th>
                         <th>Quantity</th>
                         <th>Buying Price</th>
+                        <th>Selling Price</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -118,7 +119,10 @@
                                 <input type="number" name="outputs[{{ $index }}][quantity]" class="form-control output-qty" min="0" step="0.0001" value="{{ $output['quantity'] ?? '' }}">
                             </td>
                             <td>
-                                <input type="text" class="form-control output-cost" value="" readonly tabindex="-1">
+                                <input type="number" name="outputs[{{ $index }}][purchase_price]" class="form-control output-cost" min="0" step="0.01" value="{{ $output['purchase_price'] ?? '' }}" placeholder="Optional" @if(filled($output['purchase_price'] ?? null)) data-manual="1" @endif>
+                            </td>
+                            <td>
+                                <input type="number" name="outputs[{{ $index }}][selling_price]" class="form-control output-sell" min="0" step="0.01" value="{{ $output['selling_price'] ?? '' }}" placeholder="Optional">
                             </td>
                             <td><button type="button" class="btn btn-danger btn-xs remove-output">Remove</button></td>
                         </tr>
@@ -229,7 +233,10 @@
         if (price > 0 && basis > 0 && usedQty > 0 && produced > 0 && usedQty <= onHand + 0.00005) {
             each = (Math.round(((price / basis) * usedQty / produced) * 100) / 100).toFixed(2);
         }
-        boxes.forEach(function (box) { box.value = each; });
+        boxes.forEach(function (box) {
+            if (box.dataset.manual === '1') return;
+            box.value = each;
+        });
     }
 
     function syncOutputColours(onlyEmpty) {
@@ -272,12 +279,18 @@
                 field.selectedIndex = 0;
             } else {
                 field.value = '';
+                delete field.dataset.manual;
             }
         });
         table.appendChild(row);
         refreshBuyingPrices();
     });
-    table.addEventListener('input', refreshBuyingPrices);
+    table.addEventListener('input', function (event) {
+        if (event.target.classList.contains('output-cost')) {
+            event.target.dataset.manual = event.target.value === '' ? '0' : '1';
+        }
+        refreshBuyingPrices();
+    });
     table.addEventListener('click', function (event) {
         if (!event.target.classList.contains('remove-output')) return;
         if (table.rows.length === 1) return;
