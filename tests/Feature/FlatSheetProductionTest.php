@@ -7,6 +7,7 @@ use App\Models\Colour;
 use App\Models\Folding;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
+use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use Illuminate\Http\UploadedFile;
@@ -563,6 +564,31 @@ class FlatSheetProductionTest extends TestCase
         $this->valley->refresh();
         $this->assertSame('500.00', number_format((float) $this->valley->purchase_price, 2, '.', ''));
         $this->assertSame('900.00', number_format((float) $this->valley->selling_price, 2, '.', ''));
+    }
+
+    public function test_flat_sheet_page_lists_typed_flat_sheets_even_without_stock(): void
+    {
+        $type = ProductCategory::query()->create([
+            'company_id' => $this->company->id,
+            'name' => 'Flat sheets',
+            'is_active' => true,
+        ]);
+        $sheet = $this->item('Black red Flat sheets', false);
+        $sheet->update(['category_id' => $type->id]);
+        $red = $this->colour('Black Red');
+        $this->variant($sheet, $red);
+
+        $this->actingAsAdmin()
+            ->get(route('folding.flat-sheet'))
+            ->assertOk()
+            ->assertSee('Black red Flat sheets')
+            ->assertSee('Black Red')
+            ->assertDontSee('No flat sheet colour balances at this branch.');
+
+        $this->actingAsAdmin()
+            ->get(route('folding.create'))
+            ->assertOk()
+            ->assertSee('Black red Flat sheets');
     }
 
     public function test_produced_item_prices_can_be_set_optionally(): void

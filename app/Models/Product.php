@@ -276,7 +276,9 @@ class Product extends Model
     {
         $categoryIds = [];
         $roots = ProductCategory::query()
-            ->whereIn('name', ['Flat Sheets / Raw Materials', 'Flat Sheet'])
+            ->where(function ($inner) {
+                static::applyFlatSheetNameMatch($inner);
+            })
             ->pluck('id');
         foreach ($roots as $id) {
             $categoryIds = array_merge($categoryIds, ProductCategory::idsIncludingChildren((int) $id));
@@ -284,11 +286,17 @@ class Product extends Model
         $categoryIds = array_values(array_unique($categoryIds));
 
         return $query->where(function ($inner) use ($categoryIds) {
-            $inner->whereIn('name', ['Flat Sheet', 'Flatsheets']);
+            static::applyFlatSheetNameMatch($inner);
             if ($categoryIds !== []) {
                 $inner->orWhereIn('category_id', $categoryIds);
             }
         });
+    }
+
+    private static function applyFlatSheetNameMatch($query): void
+    {
+        $query->whereRaw('LOWER(name) LIKE ?', ['%flat sheet%'])
+            ->orWhereRaw("LOWER(REPLACE(name, ' ', '')) LIKE ?", ['%flatsheet%']);
     }
 
     public function taxLabel(): string

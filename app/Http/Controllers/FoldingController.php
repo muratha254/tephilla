@@ -8,7 +8,6 @@ use App\Models\Folding;
 use App\Models\FoldingOutput;
 use App\Models\Product;
 use App\Models\ProductBranchStock;
-use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\AuditLogger;
@@ -390,21 +389,23 @@ class FoldingController extends Controller
         $branchId = $this->currentBranchId();
         $products = Product::query()
             ->rawFlatSheets()
-            ->with('unit')
+            ->with(['unit', 'variants.colour'])
             ->orderBy('name')
             ->get();
 
         $balances = collect();
         $movements = collect();
-        if ($products->isNotEmpty() && $branchId) {
-            $balances = ProductBranchStock::query()
-                ->withoutGlobalScope('branch')
-                ->with(['variant', 'product.unit'])
-                ->where('branch_id', $branchId)
-                ->whereIn('product_id', $products->pluck('id'))
-                ->orderBy('product_id')
-                ->orderBy('product_variant_id')
-                ->get();
+        if ($products->isNotEmpty()) {
+            $stocks = collect();
+            if ($branchId) {
+                $stocks = ProductBranchStock::query()
+                    ->withoutGlobalScope('branch')
+                    ->with(['variant', 'product.unit'])
+                    ->where('branch_id', $branchId)
+                    ->whereIn('product_id', $products->pluck('id'))
+                    ->get();
+            }
+            $balances = $this->flatSheetBalances($products, $stocks);
             $movements = StockMovement::query()
                 ->with(['variant', 'user', 'product'])
                 ->whereIn('product_id', $products->pluck('id'))
@@ -428,28 +429,15 @@ class FoldingController extends Controller
      */
     private function productionProducts(): array
     {
-        $flatIds = ProductCategory::query()
-            ->whereIn('name', ['Flat Sheets / Raw Materials', 'Flat Sheet'])
-            ->pluck('id');
-        $materialCategoryIds = [];
-        foreach ($flatIds as $id) {
-            $materialCategoryIds = array_merge($materialCategoryIds, ProductCategory::idsIncludingChildren((int) $id));
-        }
-        $materialCategoryIds = array_values(array_unique($materialCategoryIds));
-
         $materials = Product::query()
             ->where('is_active', true)
-            ->when($materialCategoryIds !== [], fn ($query) => $query->whereIn('category_id', $materialCategoryIds))
+            ->rawFlatSheets()
             ->with('unit')
             ->orderBy('name')
             ->get();
         $finished = Product::query()
             ->where('is_active', true)
-            ->when($materialCategoryIds !== [], function ($query) use ($materialCategoryIds) {
-                $query->where(function ($inner) use ($materialCategoryIds) {
-                    $inner->whereNotIn('category_id', $materialCategoryIds)->orWhereNull('category_id');
-                });
-            })
+            ->when($materials->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $materials->pluck('id')))
             ->with('unit')
             ->orderBy('name')
             ->get();
@@ -459,6 +447,48 @@ class FoldingController extends Controller
         }
 
         return [$materials, $finished];
+    }
+
+    private function flatSheetBalances($products, $stocks)
+    {
+        $stocks = $stocks->keyBy(fn ($row) => $row->product_id . ':' . (int) $row->product_variant_id);
+        $used = [];
+        $balances = collect();
+
+        foreach ($products as $product) {
+            $variants = $product->variants->where('is_active', true)->values();
+            if ($variants->isEmpty()) {
+                $key = $product->id . ':0';
+                $stock = $stocks->get($key);
+                $used[$key] = true;
+                $balances->push($this->flatSheetBalanceRow($product, null, $stock ? (float) $stock->quantity : 0));
+                continue;
+            }
+            foreach ($variants as $variant) {
+                $key = $product->id . ':' . $variant->id;
+                $stock = $stocks->get($key);
+                $used[$key] = true;
+                $balances->push($this->flatSheetBalanceRow($product, $variant, $stock ? (float) $stock->quantity : 0));
+            }
+        }
+
+        foreach ($stocks as $key => $stock) {
+            if (! empty($used[$key])) {
+                continue;
+            }
+            $balances->push($stock);
+        }
+
+        return $balances->values();
+    }
+
+    private function flatSheetBalanceRow(Product $product, ?ProductVariant $variant, float $quantity)
+    {
+        return (object) [
+            'product' => $product,
+            'variant' => $variant,
+            'quantity' => $quantity,
+        ];
     }
 
     /**

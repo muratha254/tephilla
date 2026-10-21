@@ -30,7 +30,7 @@
                 @forelse($balances as $balance)
                     <tr>
                         <td>{{ optional($balance->product)->name }}</td>
-                        <td>{{ optional($balance->variant)->color ?: '—' }}</td>
+                        <td>{{ optional($balance->variant)->color ?: optional(optional($balance->variant)->colour)->name ?: '—' }}</td>
                         <td class="text-right">{{ rtrim(rtrim(number_format((float) $balance->quantity, 4, '.', ''), '0'), '.') }}</td>
                         <td>{{ optional(optional($balance->product)->unit)->short_name ?: 'PCS' }}</td>
                     </tr>
