@@ -98,7 +98,7 @@
                                         </li>
                                         @if($canConvert && in_array($row->status, ['draft', 'sent', 'accepted'], true) && ! $row->converted_sale_id)
                                             <li>
-                                                <a href="#" onclick="event.preventDefault(); if(confirm('Convert this quotation to an unpaid invoice?')) document.getElementById('qt-convert-{{ $row->id }}').submit();">
+                                                <a href="#" onclick="event.preventDefault(); if(this.dataset.busy) return; if(confirm('Convert this quotation to an unpaid invoice?')) { this.dataset.busy='1'; document.getElementById('qt-convert-{{ $row->id }}').submit(); }">
                                                     <i class="fa fa-exchange"></i> Convert to Invoice
                                                 </a>
                                                 <form id="qt-convert-{{ $row->id }}" action="{{ route('quotations.convert', $row) }}" method="post" class="hidden">

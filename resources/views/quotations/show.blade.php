@@ -53,7 +53,7 @@
                     </form>
                 @endif
                 @if($canConvert)
-                    <form action="{{ route('quotations.convert', $quotation) }}" method="post" style="display:inline;" onsubmit="return confirm('Convert this quotation to an unpaid invoice?');">
+                    <form action="{{ route('quotations.convert', $quotation) }}" method="post" style="display:inline;" onsubmit="if(!confirm('Convert this quotation to an unpaid invoice?')) return false; var b=this.querySelector('button[type=submit]'); if(b.disabled) return false; b.disabled=true; b.innerHTML='Converting...';">
                         @csrf
                         <button type="submit" class="btn sx-btn-aqua btn-sm"><i class="fa fa-exchange"></i> Convert to Invoice</button>
                     </form>

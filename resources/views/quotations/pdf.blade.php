@@ -31,7 +31,7 @@
         .meta .val { background: #f4eae6; color: #1a1a1a; }
         .logo { max-height: 52px; max-width: 160px; }
         .doc-letter { margin: 0; padding: 0; width: 100%; }
-        .doc-letter img { width: 595pt; max-width: 595pt; height: auto; display: block; }
+        .doc-letter img { width: 595pt; max-width: 595pt; max-height: 120pt; height: auto; display: block; }
         .page-footer { position: fixed; left: 0; bottom: -{{ $footerPt }}pt; width: 595pt; height: {{ $footerPt }}pt; }
         .page-footer img { width: 595pt; height: {{ $footerPt }}pt; }
     </style>

@@ -85,6 +85,13 @@
     });
 
     $('#sx-qt-header-discount').on('input change', recalc);
+    $('#sx-quotation-form').on('submit', function () {
+        var $btn = $(this).find('button[type="submit"]');
+        if ($btn.prop('disabled')) {
+            return false;
+        }
+        $btn.prop('disabled', true).text('Saving...');
+    });
     recalc();
 })(jQuery);
 </script>

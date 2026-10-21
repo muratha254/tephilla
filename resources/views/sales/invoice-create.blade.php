@@ -304,6 +304,13 @@
     });
 
     $('#sx-inv-header-discount, #sx-inv-header-type').on('input change', recalc);
+    $('#sx-invoice-form').on('submit', function () {
+        var $btn = $(this).find('button[type="submit"]');
+        if ($btn.prop('disabled')) {
+            return false;
+        }
+        $btn.prop('disabled', true).text('Saving...');
+    });
     recalc();
 
     $('#sx-inv-add-customer').on('click', function () {

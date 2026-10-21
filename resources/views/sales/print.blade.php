@@ -8,13 +8,13 @@
     <meta charset="utf-8">
     <title>{{ $systemName ?? 'TEPHILLAH SYSTEM' }} | {{ $sale->documentNumber() }}</title>
     <style>
-        html, body { height: 100%; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; background: #fff; min-height: 100vh; display: flex; flex-direction: column; }
-        .sheet { padding: 16px 22px 12px; flex: 1 0 auto; }
-        .page-footer { margin-top: auto; width: 100%; }
+        html, body { height: auto; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; background: #fff; }
+        .sheet { padding: 16px 22px 12px; }
+        .page-footer { width: 100%; }
         .page-footer img { width: 100%; height: auto; display: block; }
         @media print {
-            body { display: block; min-height: 0; }
+            html, body { height: auto; min-height: 0; }
             .page-footer { position: fixed; left: 0; bottom: 0; width: 100%; margin: 0; }
             .sheet { padding-bottom: {{ $footerPx + 16 }}px; }
         }
@@ -24,7 +24,7 @@
         .head img { max-height: 56px; }
         .doc-letter { margin: 0 0 12px; }
         .doc-letter-footer { margin: 24px 0 0; }
-        .doc-letter img { width: 100%; max-width: 100%; max-height: none; height: auto; display: block; }
+        .doc-letter img { width: 100%; max-width: 100%; max-height: 150px; height: auto; object-fit: contain; object-position: top; display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; text-align: left; }
         th { background: #A2502B; color: #fff; }
@@ -61,8 +61,8 @@
     };
 @endphp
     <p class="no-print">
-        <button onclick="window.print()">Print</button>
-        <button onclick="window.close()">Close</button>
+        <button type="button" onclick="sxPrintOnce()">Print</button>
+        <button type="button" onclick="window.close()">Close</button>
     </p>
 
     @if(!empty($letter['header_url']))
@@ -201,6 +201,13 @@
     @if(!empty($letter['footer_url']))
         <div class="page-footer"><img src="{{ $letter['footer_url'] }}" alt=""></div>
     @endif
-    <script>window.addEventListener('load', function () { window.print(); });</script>
+    <script>
+        var sxPrinted = false;
+        function sxPrintOnce() {
+            if (sxPrinted) return;
+            sxPrinted = true;
+            window.print();
+        }
+    </script>
 </body>
 </html>

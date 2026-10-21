@@ -165,12 +165,21 @@
         <div class="center muted">{{ $website }}</div>
     @endif
     <div class="no-print">
-        <button type="button" onclick="window.print()">Print Receipt</button>
+        <button type="button" onclick="sxPrintOnce()">Print Receipt</button>
     </div>
 </div>
 <script>
+    var sxPrinted = false;
+    function sxPrintOnce() {
+        if (sxPrinted) return;
+        sxPrinted = true;
+        window.print();
+    }
     window.addEventListener('load', function () {
-        setTimeout(function () { window.print(); }, 250);
+        setTimeout(sxPrintOnce, 250);
+    });
+    window.addEventListener('afterprint', function () {
+        sxPrinted = true;
     });
 </script>
 </body>

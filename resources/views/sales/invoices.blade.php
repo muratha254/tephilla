@@ -99,7 +99,10 @@
                                         @endif
                                         @if($canPrint && $isFinal)
                                             <li>
-                                                <a href="{{ route('sales.pdf', $invoice) }}"><i class="fa fa-file-text-o"></i> Print</a>
+                                                <a href="{{ route('sales.print', $invoice) }}" target="_blank"><i class="fa fa-print"></i> Print</a>
+                                            </li>
+                                            <li>
+                                                <a href="{{ route('sales.pdf', $invoice) }}"><i class="fa fa-file-pdf-o"></i> Download PDF</a>
                                             </li>
                                         @endif
                                     </ul>
