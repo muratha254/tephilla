@@ -150,9 +150,8 @@ class DocumentShareService
         $amount = 'Ksh ' . number_format($total, 2);
         $greeting = $customerName !== '' ? $customerName : 'Customer';
         $message = "Hello {$greeting},\n\n"
-            . "Please find your {$kindLabel} {$number} from {$companyName}.\n"
+            . "Please find your {$kindLabel} {$number} from {$companyName} attached as a PDF.\n"
             . "Total: {$amount}\n\n"
-            . "View or download: {$shareUrl}\n\n"
             . 'Thank you.';
 
         $whatsapp = $this->whatsappNumber($phone);

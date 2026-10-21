@@ -6,7 +6,7 @@
                 <h4 class="modal-title" id="sx-share-title">Share</h4>
             </div>
             <div class="modal-body">
-                <p class="text-muted" id="sx-share-help">Send this document on WhatsApp or email. The customer gets a link to open the PDF.</p>
+                <p class="text-muted" id="sx-share-help">Email sends the PDF as an attachment. On a phone, WhatsApp sends the PDF file. On a computer the PDF downloads so you can attach it in WhatsApp.</p>
                 <div class="form-group">
                     <label>WhatsApp number</label>
                     <input type="text" class="form-control" id="sx-share-phone" placeholder="0712 000 000">
@@ -25,8 +25,6 @@
             <div class="modal-footer" style="border-top:0;padding:0 20px 16px;">
                 <button type="button" class="btn sx-btn-whatsapp" id="sx-share-whatsapp"><i class="fa fa-whatsapp"></i> WhatsApp</button>
                 <button type="button" class="btn btn-primary" id="sx-share-email-send"><i class="fa fa-envelope"></i> Send email</button>
-                <a href="#" class="btn btn-default" id="sx-share-mailto" target="_blank"><i class="fa fa-external-link"></i> Email app</a>
-                <button type="button" class="btn btn-default" id="sx-share-copy"><i class="fa fa-link"></i> Copy link</button>
             </div>
         </div>
     </div>
@@ -60,11 +58,38 @@
         return 'https://wa.me/' + (phone || '') + '?text=' + encodeURIComponent(currentMessage());
     }
 
-    function mailtoUrl() {
-        var email = $.trim($('#sx-share-email').val() || '');
-        return 'mailto:' + encodeURIComponent(email)
-            + '?subject=' + encodeURIComponent(shareState.title || '')
-            + '&body=' + encodeURIComponent(currentMessage());
+    function fetchPdf() {
+        if (!shareState.pdf_url) {
+            return Promise.reject(new Error('pdf'));
+        }
+        return fetch(shareState.pdf_url, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) throw new Error('pdf');
+            return res.blob();
+        });
+    }
+
+    function downloadBlob(blob, filename) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = filename || 'document.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    function sharePdfFile(blob) {
+        var filename = shareState.filename || 'document.pdf';
+        if (!navigator.share || !navigator.canShare) {
+            return Promise.reject(new Error('noshare'));
+        }
+        var file = new File([blob], filename, { type: 'application/pdf' });
+        var payload = { title: shareState.title || 'Document', text: currentMessage(), files: [file] };
+        if (!navigator.canShare(payload)) {
+            return Promise.reject(new Error('noshare'));
+        }
+        return navigator.share(payload);
     }
 
     $(document).on('click', '.sx-share-doc', function (e) {
@@ -79,7 +104,6 @@
             $('#sx-share-phone').val(shareState.phone || '');
             $('#sx-share-email').val(shareState.email || '');
             $('#sx-share-message').val(shareState.message || '');
-            $('#sx-share-mailto').attr('href', shareState.mailto || '#');
             $('#sx-share-modal').modal('show');
             if (channel === 'email') {
                 setTimeout(function () { $('#sx-share-email').focus(); }, 400);
@@ -92,34 +116,22 @@
     });
 
     $('#sx-share-whatsapp').on('click', function () {
-        var wa = whatsappUrl();
-        var pdfUrl = shareState.pdf_url;
-        var filename = shareState.filename || 'document.pdf';
-        if (navigator.share && pdfUrl) {
-            fetch(pdfUrl, { credentials: 'same-origin' }).then(function (res) {
-                if (!res.ok) throw new Error('pdf');
-                return res.blob();
-            }).then(function (blob) {
-                var file = new File([blob], filename, { type: 'application/pdf' });
-                var payload = { title: shareState.title || 'Document', text: currentMessage(), files: [file] };
-                if (navigator.canShare && navigator.canShare(payload)) {
-                    return navigator.share(payload);
-                }
-                window.open(wa, '_blank');
-            }).catch(function () {
-                window.open(wa, '_blank');
+        var btn = $(this);
+        btn.prop('disabled', true);
+        showAlert('', '');
+        fetchPdf().then(function (blob) {
+            return sharePdfFile(blob).catch(function () {
+                downloadBlob(blob, shareState.filename || 'document.pdf');
+                window.open(whatsappUrl(), '_blank');
+                showAlert('ok', 'PDF downloaded. Attach that file in WhatsApp.');
             });
-            return;
-        }
-        window.open(wa, '_blank');
-    });
-
-    $('#sx-share-mailto').on('click', function (e) {
-        this.href = mailtoUrl();
-        if (!$.trim($('#sx-share-email').val() || '')) {
-            e.preventDefault();
-            showAlert('error', 'Enter an email address first.');
-        }
+        }).catch(function () {
+            showAlert('error', 'Could not prepare the PDF.');
+        }).then(function () {
+            btn.prop('disabled', false);
+        }, function () {
+            btn.prop('disabled', false);
+        });
     });
 
     $('#sx-share-email-send').on('click', function () {
@@ -140,7 +152,7 @@
         }).done(function (res) {
             showAlert('ok', (res && res.message) ? res.message : 'Email sent.');
         }).fail(function (xhr) {
-            var msg = 'Could not send email. Use Email app instead, or check mail settings.';
+            var msg = 'Could not send the PDF. Check mail settings.';
             if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.email) {
                 msg = xhr.responseJSON.errors.email[0];
             } else if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -150,20 +162,6 @@
         }).always(function () {
             btn.prop('disabled', false);
         });
-    });
-
-    $('#sx-share-copy').on('click', function () {
-        var link = shareState.share_url || '';
-        if (!link) return;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(link).then(function () {
-                showAlert('ok', 'Link copied.');
-            }).catch(function () {
-                window.prompt('Copy this link', link);
-            });
-            return;
-        }
-        window.prompt('Copy this link', link);
     });
 })(jQuery);
 </script>

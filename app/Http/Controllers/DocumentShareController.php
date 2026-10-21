@@ -35,7 +35,7 @@ class DocumentShareController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'ok' => false,
-                'message' => 'Could not send email. Use Email app or check mail settings.',
+                'message' => 'Could not send the PDF. Check mail settings.',
             ], 422);
         }
 
@@ -57,7 +57,7 @@ class DocumentShareController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'ok' => false,
-                'message' => 'Could not send email. Use Email app or check mail settings.',
+                'message' => 'Could not send the PDF. Check mail settings.',
             ], 422);
         }
 

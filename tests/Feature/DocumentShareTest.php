@@ -102,6 +102,8 @@ class DocumentShareTest extends TestCase
         $this->assertSame('acme@example.com', $quote['email']);
         $this->assertStringContainsString('254712345678', $quote['whatsapp_url']);
         $this->assertStringContainsString('QT-SHARE-1', $quote['message']);
+        $this->assertStringContainsString('attached as a PDF', $quote['message']);
+        $this->assertStringNotContainsString('/share/', $quote['message']);
         $this->assertStringContainsString('/share/quotations/', $quote['share_url']);
 
         $invoice = $this->actingAsAdmin()
@@ -144,7 +146,10 @@ class DocumentShareTest extends TestCase
 
         Mail::assertSent(DocumentShareMail::class, function (DocumentShareMail $mail) {
             return $mail->hasTo('buyer@example.com')
-                && $mail->payload['number'] === 'QT-SHARE-1';
+                && $mail->payload['number'] === 'QT-SHARE-1'
+                && $mail->filename !== ''
+                && $mail->pdfBinary !== ''
+                && strpos($mail->payload['message'], '/share/') === false;
         });
 
         $this->actingAsAdmin()
@@ -155,7 +160,8 @@ class DocumentShareTest extends TestCase
 
         Mail::assertSent(DocumentShareMail::class, function (DocumentShareMail $mail) {
             return $mail->hasTo('accounts@example.com')
-                && $mail->payload['number'] === 'INV-SHARE-1';
+                && $mail->payload['number'] === 'INV-SHARE-1'
+                && $mail->pdfBinary !== '';
         });
     }
 
